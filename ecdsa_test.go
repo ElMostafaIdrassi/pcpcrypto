@@ -40,7 +40,7 @@ func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, cur
 	require.Equal(t, key.Size(), (curve.Params().BitSize+7)/8)
 
 	// Find the key
-	keyBis, err := findKey(key.Name(), password)
+	keyBis, err := FindKey(key.Name(), password)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())

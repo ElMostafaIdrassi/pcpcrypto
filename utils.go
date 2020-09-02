@@ -30,65 +30,65 @@ const (
 
 //	From C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\shared\bcrypt.h
 const (
-	BcryptNoKeyValidation = 0x00000008
+	bcryptNoKeyValidation = 0x00000008
 
 	//
 	// RSA padding schemes.
 	//
-	BcryptPadNone                 = 0x00000001
-	BcryptPadPkcs1                = 0x00000002 // BCryptEncrypt/Decrypt BCryptSignHash/VerifySignature
-	BcryptPadOaep                 = 0x00000004 // BCryptEncrypt/Decrypt
-	BcryptPadPss                  = 0x00000008 // BCryptSignHash/VerifySignature
-	BcryptPadPkcs1OptionalHashOid = 0x00000010 // BCryptVerifySignature
+	bcryptPadNone                 = 0x00000001
+	bcryptPadPkcs1                = 0x00000002 // BCryptEncrypt/Decrypt BCryptSignHash/VerifySignature
+	bcryptPadOaep                 = 0x00000004 // BCryptEncrypt/Decrypt
+	bcryptPadPss                  = 0x00000008 // BCryptSignHash/VerifySignature
+	bcryptPadPkcs1OptionalHashOid = 0x00000010 // BCryptVerifySignature
 
 	//
 	// Common algorithm identifiers.
 	//
-	BCRYPT_RSA_ALGORITHM               = "RSA"
-	BCRYPT_RSA_SIGN_ALGORITHM          = "RSA_SIGN"
-	BCRYPT_DH_ALGORITHM                = "DH"
-	BCRYPT_DSA_ALGORITHM               = "DSA"
-	BCRYPT_RC2_ALGORITHM               = "RC2"
-	BCRYPT_RC4_ALGORITHM               = "RC4"
-	BCRYPT_AES_ALGORITHM               = "AES"
-	BCRYPT_DES_ALGORITHM               = "DES"
-	BCRYPT_DESX_ALGORITHM              = "DESX"
-	BCRYPT_3DES_ALGORITHM              = "3DES"
-	BCRYPT_3DES_112_ALGORITHM          = "3DES_112"
-	BCRYPT_MD2_ALGORITHM               = "MD2"
-	BCRYPT_MD4_ALGORITHM               = "MD4"
-	BCRYPT_MD5_ALGORITHM               = "MD5"
-	BCRYPT_SHA1_ALGORITHM              = "SHA1"
-	BCRYPT_SHA256_ALGORITHM            = "SHA256"
-	BCRYPT_SHA384_ALGORITHM            = "SHA384"
-	BCRYPT_SHA512_ALGORITHM            = "SHA512"
-	BCRYPT_AES_GMAC_ALGORITHM          = "AES-GMAC"
-	BCRYPT_AES_CMAC_ALGORITHM          = "AES-CMAC"
-	BCRYPT_ECDSA_P256_ALGORITHM        = "ECDSA_P256"
-	BCRYPT_ECDSA_P384_ALGORITHM        = "ECDSA_P384"
-	BCRYPT_ECDSA_P521_ALGORITHM        = "ECDSA_P521"
-	BCRYPT_ECDH_P256_ALGORITHM         = "ECDH_P256"
-	BCRYPT_ECDH_P384_ALGORITHM         = "ECDH_P384"
-	BCRYPT_ECDH_P521_ALGORITHM         = "ECDH_P521"
-	BCRYPT_RNG_ALGORITHM               = "RNG"
-	BCRYPT_RNG_FIPS186_DSA_ALGORITHM   = "FIPS186DSARNG"
-	BCRYPT_RNG_DUAL_EC_ALGORITHM       = "DUALECRNG"
-	BCRYPT_SP800108_CTR_HMAC_ALGORITHM = "SP800_108_CTR_HMAC"
-	BCRYPT_SP80056A_CONCAT_ALGORITHM   = "SP800_56A_CONCAT"
-	BCRYPT_PBKDF2_ALGORITHM            = "PBKDF2"
-	BCRYPT_CAPI_KDF_ALGORITHM          = "CAPI_KDF"
-	BCRYPT_TLS1_1_KDF_ALGORITHM        = "TLS1_1_KDF"
-	BCRYPT_TLS1_2_KDF_ALGORITHM        = "TLS1_2_KDF"
-	BCRYPT_ECDSA_ALGORITHM             = "ECDSA"
-	BCRYPT_ECDH_ALGORITHM              = "ECDH"
-	BCRYPT_XTS_AES_ALGORITHM           = "XTS-AES"
-	BCRYPT_HKDF_ALGORITHM              = "HKDF"
+	bcryptRsaAlgorithm             = "RSA"
+	bcryptRsaSignAlgorithm         = "RSA_SIGN"
+	bcryptDhAlgorithm              = "DH"
+	bcryptDsaAlgorithm             = "DSA"
+	bcryptRc2Algorithm             = "RC2"
+	bcryptRc4Algorithm             = "RC4"
+	bcryptAesAlgorithm             = "AES"
+	bcryptDesAlgorithm             = "DES"
+	bcryptDesxAlgorithm            = "DESX"
+	bcrypt3DesAlgorithm            = "3DES"
+	bcrypt3Des112Algorithm         = "3DES_112"
+	bcryptMd2Algorithm             = "MD2"
+	bcryptMd4Algorithm             = "MD4"
+	bcryptMd5Algorithm             = "MD5"
+	bcryptSha1Algorithm            = "SHA1"
+	bcryptSha256Algorithm          = "SHA256"
+	bcryptSha384Algorithm          = "SHA384"
+	bcryptSha512Algorithm          = "SHA512"
+	bcryptAesGmacAlgorithm         = "AES-GMAC"
+	bcryptAesCmacAlgorithm         = "AES-CMAC"
+	bcryptEcdsaP256Algorithm       = "ECDSA_P256"
+	bcryptEcdsaP384Algorithm       = "ECDSA_P384"
+	bcryptEcdsaP521Algorithm       = "ECDSA_P521"
+	bcryptEcdhP256Algorithm        = "ECDH_P256"
+	bcryptEcdhP384Algorithm        = "ECDH_P384"
+	bcryptEcdhP521Algorithm        = "ECDH_P521"
+	bcryptRngAlgorithm             = "RNG"
+	bcryptRngFips186DsaAlgorithm   = "FIPS186DSARNG"
+	bcryptRngDualEcAlgorithm       = "DUALECRNG"
+	bcryptSp800108CtrHmacAlgorithm = "SP800_108_CTR_HMAC"
+	bcryptSp80056AConcatAlgorithm  = "SP800_56A_CONCAT"
+	bcryptPbkdf2Algorithm          = "PBKDF2"
+	bcryptCapiKdfAlgorithm         = "CAPI_KDF"
+	bcryptTls11KdfAlgorithm        = "TLS1_1_KDF"
+	bcryptTls12KdfAlgorithm        = "TLS1_2_KDF"
+	bcryptEcdsaAlgorithm           = "ECDSA"
+	bcryptEcdhAlgorithm            = "ECDH"
+	bcryptXtsAesAlgorithm          = "XTS-AES"
+	bcryptHkdfAlgorithm            = "HKDF"
 
 	//
 	// Structures used to represent key blobs.
 	//
-	BcryptPublicKeyBlob  = "PUBLICBLOB"
-	BcryptPrivateKeyBlob = "PRIVATEBLOB"
+	bcryptPublicKeyBlob  = "PUBLICBLOB"
+	bcryptPrivateKeyBlob = "PRIVATEBLOB"
 
 	// The BCRYPT_RSAPUBLIC_BLOB and BCRYPT_RSAPRIVATE_BLOB blob types are used
 	// to transport plaintext RSA keys. These blob types will be supported by
@@ -111,10 +111,10 @@ const (
 	// 		Modulus Size			(4 bytes)
 	// 		Public Exponent			(Public Exponent Size bytes)
 	// 		Modulus					(Modulus Size bytes)
-	BcryptRsapublicBlob   = "RSAPUBLICBLOB"
-	BcryptRsaprivateBlob  = "RSAPRIVATEBLOB"
-	BcryptRsapublicMagic  = 0x31415352 // RSA1
-	BcryptRsaprivateMagic = 0x32415352 // RSA2
+	bcryptRsapublicBlob   = "RSAPUBLICBLOB"
+	bcryptRsaprivateBlob  = "RSAPRIVATEBLOB"
+	bcryptRsapublicMagic  = 0x31415352 // RSA1
+	bcryptRsaprivateMagic = 0x32415352 // RSA2
 
 	// The BCRYPT_ECCPUBLIC_BLOB and BCRYPT_ECCPRIVATE_BLOB blob types are used
 	// to transport plaintext ECC keys. These blob types will be supported by
@@ -130,18 +130,14 @@ const (
 	// 		Key Byte Size			(4 bytes)
 	// 		x						(Key Byte Size bytes)
 	// 		Y						(Key Byte Size bytes)
-	BcryptEccpublicBlob         = "ECCPUBLICBLOB"
-	BcryptEccprivateBlob        = "ECCPRIVATEBLOB"
-	BcryptEcdsaPublicP256Magic  = 0x31534345 // ECS1
-	BcryptEcdsaPrivateP256Magic = 0x32534345 // ECS2
-	BcryptEcdsaPublicP384Magic  = 0x33534345 // ECS3
-	BcryptEcdsaPrivateP384Magic = 0x34534345 // ECS4
-	BcryptEcdsaPublicP521Magic  = 0x35534345 // ECS5
-	BcryptEcdsaPrivateP521Magic = 0x36534345 // ECS6
-
-	bcryptEcdsaPublicP256Magic = uint32(0x31534345)
-	bcryptEcdsaPublicP384Magic = uint32(0x33534345)
-	bcryptEcdsaPublicP521Magic = uint32(0x35534345)
+	bcryptEccpublicBlob         = "ECCPUBLICBLOB"
+	bcryptEccprivateBlob        = "ECCPRIVATEBLOB"
+	bcryptEcdsaPublicP256Magic  = 0x31534345 // ECS1
+	bcryptEcdsaPrivateP256Magic = 0x32534345 // ECS2
+	bcryptEcdsaPublicP384Magic  = 0x33534345 // ECS3
+	bcryptEcdsaPrivateP384Magic = 0x34534345 // ECS4
+	bcryptEcdsaPublicP521Magic  = 0x35534345 // ECS5
+	bcryptEcdsaPrivateP521Magic = 0x36534345 // ECS6
 )
 
 type bcryptOEAPPaddingInfo struct {
@@ -163,139 +159,139 @@ const (
 	//
 	// NCrypt API Flags
 	//
-	NcryptNoPaddingFlag              = 0x00000001 // NCryptEncrypt/Decrypt
-	NcryptPadPkcs1Flag               = 0x00000002 // NCryptEncrypt/Decrypt NCryptSignHash/VerifySignature
-	NcryptPadOaepFlag                = 0x00000004 // BCryptEncrypt/Decrypt
-	NcryptPadPssFlag                 = 0x00000008 // BCryptSignHash/VerifySignature
-	NcryptPadCipherFlag              = 0x00000010 // NCryptEncrypt/Decrypt
-	NcryptSealingFlag                = 0x00000100 // NCryptEncrypt/Decrypt for sealing
-	NcryptRegisterNotifyFlag         = 0x00000001 // NCryptNotifyChangeKey
-	NcryptUnregisterNotifyFlag       = 0x00000002 // NCryptNotifyChangeKey
-	NcryptNoKeyValidation            = BcryptNoKeyValidation
-	NcryptMachineKeyFlag             = 0x00000020 // same as CAPI CRYPT_MACHINE_KEYSET
-	NcryptSilentFlag                 = 0x00000040 // same as CAPI CRYPT_SILENT
-	NcryptOverwriteKeyFlag           = 0x00000080
-	NcryptWriteKeyToLegacyStoreFlag  = 0x00000200
-	NcryptDoNotFinalizeFlag          = 0x00000400
-	NcryptExportLegacyFlag           = 0x00000800
-	NcryptTreatNistAsGenericEccFlag  = 0x00002000
-	NcryptNoCachedPassword           = 0x00004000
-	NcryptProtectToLocalSystem       = 0x00008000
-	NcryptPersistOnlyFlag            = 0x40000000
-	NcryptPersistFlag                = 0x80000000
-	NcryptPreferVirtualIsolationFlag = 0x00010000 // NCryptCreatePersistedKey NCryptImportKey
-	NcryptUseVirtualIsolationFlag    = 0x00020000 // NCryptCreatePersistedKey NCryptImportKey
-	NcryptUsePerBootKeyFlag          = 0x00040000 // NCryptCreatePersistedKey NCryptImportKey
+	ncryptNoPaddingFlag              = 0x00000001 // NCryptEncrypt/Decrypt
+	ncryptPadPkcs1Flag               = 0x00000002 // NCryptEncrypt/Decrypt NCryptSignHash/VerifySignature
+	ncryptPadOaepFlag                = 0x00000004 // BCryptEncrypt/Decrypt
+	ncryptPadPssFlag                 = 0x00000008 // BCryptSignHash/VerifySignature
+	ncryptPadCipherFlag              = 0x00000010 // NCryptEncrypt/Decrypt
+	ncryptSealingFlag                = 0x00000100 // NCryptEncrypt/Decrypt for sealing
+	ncryptRegisterNotifyFlag         = 0x00000001 // NCryptNotifyChangeKey
+	ncryptUnregisterNotifyFlag       = 0x00000002 // NCryptNotifyChangeKey
+	ncryptNoKeyValidation            = bcryptNoKeyValidation
+	ncryptMachineKeyFlag             = 0x00000020 // same as CAPI CRYPT_MACHINE_KEYSET
+	ncryptSilentFlag                 = 0x00000040 // same as CAPI CRYPT_SILENT
+	ncryptOverwriteKeyFlag           = 0x00000080
+	ncryptWriteKeyToLegacyStoreFlag  = 0x00000200
+	ncryptDoNotFinalizeFlag          = 0x00000400
+	ncryptExportLegacyFlag           = 0x00000800
+	ncryptTreatNistAsGenericEccFlag  = 0x00002000
+	ncryptNoCachedPassword           = 0x00004000
+	ncryptProtectToLocalSystem       = 0x00008000
+	ncryptPersistOnlyFlag            = 0x40000000
+	ncryptPersistFlag                = 0x80000000
+	ncryptPreferVirtualIsolationFlag = 0x00010000 // NCryptCreatePersistedKey NCryptImportKey
+	ncryptUseVirtualIsolationFlag    = 0x00020000 // NCryptCreatePersistedKey NCryptImportKey
+	ncryptUsePerBootKeyFlag          = 0x00040000 // NCryptCreatePersistedKey NCryptImportKey
 
 	//
 	// NCryptOpenStorageProvider flags
 	//
-	NcryptIgnoreDeviceStateFlag = 0x00001000 // NCryptOpenStorageProvider
+	ncryptIgnoreDeviceStateFlag = 0x00001000 // NCryptOpenStorageProvider
 
 	//
 	// The following flags are used with NCRYPT_CIPHER_PADDING_INFO
 	//
-	NcryptCipherNoPaddingFlag    = 0x00000000
-	NcryptCipherBlockPaddingFlag = 0x00000001
-	NcryptCipherOtherPaddingFlag = 0x00000002
+	ncryptCipherNoPaddingFlag    = 0x00000000
+	ncryptCipherBlockPaddingFlag = 0x00000001
+	ncryptCipherOtherPaddingFlag = 0x00000002
 
 	//
 	// BCRYPT_PCP_KEY_USAGE_POLICY values
 	//
-	NcryptTpm12Provider          = 0x00010000
-	NcryptPcpSignatureKey        = 0x00000001
-	NcryptPcpEncryptionKey       = 0x00000002
-	NcryptPcpGenericKey          = NcryptPcpSignatureKey | NcryptPcpEncryptionKey
-	NcryptPcpStorageKey          = 0x00000004
-	NcryptPcpIdentityKey         = 0x00000008
-	NcryptPcpHmacverificationKey = 0x00000010
+	ncryptTpm12Provider          = 0x00010000
+	ncryptPcpSignatureKey        = 0x00000001
+	ncryptPcpEncryptionKey       = 0x00000002
+	ncryptPcpGenericKey          = ncryptPcpSignatureKey | ncryptPcpEncryptionKey
+	ncryptPcpStorageKey          = 0x00000004
+	ncryptPcpIdentityKey         = 0x00000008
+	ncryptPcpHmacverificationKey = 0x00000010
 
 	//
 	// Common algorithm identifiers.
 	//
-	NCRYPT_RSA_ALGORITHM               = BCRYPT_RSA_ALGORITHM
-	NCRYPT_RSA_SIGN_ALGORITHM          = BCRYPT_RSA_SIGN_ALGORITHM
-	NCRYPT_DH_ALGORITHM                = BCRYPT_DH_ALGORITHM
-	NCRYPT_DSA_ALGORITHM               = BCRYPT_DSA_ALGORITHM
-	NCRYPT_MD2_ALGORITHM               = BCRYPT_MD2_ALGORITHM
-	NCRYPT_MD4_ALGORITHM               = BCRYPT_MD4_ALGORITHM
-	NCRYPT_MD5_ALGORITHM               = BCRYPT_MD5_ALGORITHM
-	NCRYPT_SHA1_ALGORITHM              = BCRYPT_SHA1_ALGORITHM
-	NCRYPT_SHA256_ALGORITHM            = BCRYPT_SHA256_ALGORITHM
-	NCRYPT_SHA384_ALGORITHM            = BCRYPT_SHA384_ALGORITHM
-	NCRYPT_SHA512_ALGORITHM            = BCRYPT_SHA512_ALGORITHM
-	NCRYPT_ECDSA_P256_ALGORITHM        = BCRYPT_ECDSA_P256_ALGORITHM
-	NCRYPT_ECDSA_P384_ALGORITHM        = BCRYPT_ECDSA_P384_ALGORITHM
-	NCRYPT_ECDSA_P521_ALGORITHM        = BCRYPT_ECDSA_P521_ALGORITHM
-	NCRYPT_ECDH_P256_ALGORITHM         = BCRYPT_ECDH_P256_ALGORITHM
-	NCRYPT_ECDH_P384_ALGORITHM         = BCRYPT_ECDH_P384_ALGORITHM
-	NCRYPT_ECDH_P521_ALGORITHM         = BCRYPT_ECDH_P521_ALGORITHM
-	NCRYPT_AES_ALGORITHM               = BCRYPT_AES_ALGORITHM
-	NCRYPT_RC2_ALGORITHM               = BCRYPT_RC2_ALGORITHM
-	NCRYPT_3DES_ALGORITHM              = BCRYPT_3DES_ALGORITHM
-	NCRYPT_DES_ALGORITHM               = BCRYPT_DES_ALGORITHM
-	NCRYPT_DESX_ALGORITHM              = BCRYPT_DESX_ALGORITHM
-	NCRYPT_3DES_112_ALGORITHM          = BCRYPT_3DES_112_ALGORITHM
-	NCRYPT_SP800108_CTR_HMAC_ALGORITHM = BCRYPT_SP800108_CTR_HMAC_ALGORITHM
-	NCRYPT_SP80056A_CONCAT_ALGORITHM   = BCRYPT_SP80056A_CONCAT_ALGORITHM
-	NCRYPT_PBKDF2_ALGORITHM            = BCRYPT_PBKDF2_ALGORITHM
-	NCRYPT_CAPI_KDF_ALGORITHM          = BCRYPT_CAPI_KDF_ALGORITHM
-	NCRYPT_ECDSA_ALGORITHM             = BCRYPT_ECDSA_ALGORITHM
-	NCRYPT_ECDH_ALGORITHM              = BCRYPT_ECDH_ALGORITHM
-	NCRYPT_KEY_STORAGE_ALGORITHM       = "KEY_STORAGE"
+	ncryptRsaAlgorithm             = bcryptRsaAlgorithm
+	ncryptRsaSignAlgorithm         = bcryptRsaSignAlgorithm
+	ncryptDhAlgorithm              = bcryptDhAlgorithm
+	ncryptDsaAlgorithm             = bcryptDsaAlgorithm
+	ncryptMd2Algorithm             = bcryptMd2Algorithm
+	ncryptMd4Algorithm             = bcryptMd4Algorithm
+	ncryptMd5Algorithm             = bcryptMd5Algorithm
+	ncryptSha1Algorithm            = bcryptSha1Algorithm
+	ncryptSha256Algorithm          = bcryptSha256Algorithm
+	ncryptSha384Algorithm          = bcryptSha384Algorithm
+	ncryptSha512Algorithm          = bcryptSha512Algorithm
+	ncryptEcdsaP256Algorithm       = bcryptEcdsaP256Algorithm
+	ncryptEcdsaP384Algorithm       = bcryptEcdsaP384Algorithm
+	ncryptEcdsaP521Algorithm       = bcryptEcdsaP521Algorithm
+	ncryptEcdhP256Algorithm        = bcryptEcdhP256Algorithm
+	ncryptEcdhP384Algorithm        = bcryptEcdhP384Algorithm
+	ncryptEcdhP521Algorithm        = bcryptEcdhP521Algorithm
+	ncryptAesAlgorithm             = bcryptAesAlgorithm
+	ncryptRc2Algorithm             = bcryptRc2Algorithm
+	ncrypt3DesAlgorithm            = bcrypt3DesAlgorithm
+	ncryptDesAlgorithm             = bcryptDesAlgorithm
+	ncryptDesxAlgorithm            = bcryptDesxAlgorithm
+	ncrypt3Des112Algorithm         = bcrypt3Des112Algorithm
+	ncryptSp800108CtrHmacAlgorithm = bcryptSp800108CtrHmacAlgorithm
+	ncryptSp80056AConcatAlgorithm  = bcryptSp80056AConcatAlgorithm
+	ncryptPbkdf2Algorithm          = bcryptPbkdf2Algorithm
+	ncryptCapiKdfAlgorithm         = bcryptCapiKdfAlgorithm
+	ncryptEcdsaAlgorithm           = bcryptEcdsaAlgorithm
+	ncryptEcdhAlgorithm            = bcryptEcdhAlgorithm
+	ncryptKeyStorageAlgorithm      = "KEY_STORAGE"
 
 	//
 	// This algorithm is not supported by any BCrypt provider. This identifier is for creating
 	// persistent stored HMAC keys in the TPM KSP.
 	//
-	NCRYPT_HMAC_SHA256_ALGORITHM = "HMAC-SHA256"
+	ncryptHmacSha256Algorithm = "HMAC-SHA256"
 
 	//
 	// Algorithm groups (Values of NCRYPT_ALGORITHM_GROUP_PROPERTY).
 	//
-	NCRYPT_RSA_ALGORITHM_GROUP   = NCRYPT_RSA_ALGORITHM
-	NCRYPT_DH_ALGORITHM_GROUP    = NCRYPT_DH_ALGORITHM
-	NCRYPT_DSA_ALGORITHM_GROUP   = NCRYPT_DSA_ALGORITHM
-	NCRYPT_ECDSA_ALGORITHM_GROUP = "ECDSA"
-	NCRYPT_ECDH_ALGORITHM_GROUP  = "ECDH"
-	NCRYPT_AES_ALGORITHM_GROUP   = NCRYPT_AES_ALGORITHM
-	NCRYPT_RC2_ALGORITHM_GROUP   = NCRYPT_RC2_ALGORITHM
-	NCRYPT_DES_ALGORITHM_GROUP   = "DES"
-	NCRYPT_KEY_DERIVATION_GROUP  = "KEY_DERIVATION"
+	ncryptRsaAlgorithmGroup   = ncryptRsaAlgorithm
+	ncryptDhAlgorithmGroup    = ncryptDhAlgorithm
+	ncryptDsaAlgorithmGroup   = ncryptDsaAlgorithm
+	ncryptEcdsaAlgorithmGroup = "ECDSA"
+	ncryptEcdhAlgorithmGroup  = "ECDH"
+	ncryptAesAlgorithmGroup   = ncryptAesAlgorithm
+	ncryptRc2AlgorithmGroup   = ncryptRc2Algorithm
+	ncryptDesAlgorithmGroup   = "DES"
+	ncryptKeyDerivationGroup  = "KEY_DERIVATION"
 
-	NCRYPT_TPM_PAD_PSS_IGNORE_SALT = 0x00000020 // NCryptSignHash
+	ncryptTpmPadPssIgnoreSalt = 0x00000020 // NCryptSignHash
 )
 
 // DLL references.
 var (
-	nCrypt                     = windows.MustLoadDLL("ncrypt.dll")
-	nCryptCreateClaim          = nCrypt.MustFindProc("NCryptCreateClaim")
-	nCryptCreatePersistedKey   = nCrypt.MustFindProc("NCryptCreatePersistedKey")
-	nCryptDecrypt              = nCrypt.MustFindProc("NCryptDecrypt")
-	nCryptDeleteKey            = nCrypt.MustFindProc("NCryptDeleteKey")
-	nCryptDeriveKey            = nCrypt.MustFindProc("NCryptDeriveKey")
-	nCryptEncrypt              = nCrypt.MustFindProc("NCryptEncrypt")
-	nCryptEnumAlgorithms       = nCrypt.MustFindProc("NCryptEnumAlgorithms")
-	nCryptEnumKeys             = nCrypt.MustFindProc("NCryptEnumKeys")
-	nCryptEnumStorageProviders = nCrypt.MustFindProc("NCryptEnumStorageProviders")
-	nCryptExportKey            = nCrypt.MustFindProc("NCryptExportKey")
-	nCryptFinalizeKey          = nCrypt.MustFindProc("NCryptFinalizeKey")
-	nCryptFreeBuffer           = nCrypt.MustFindProc("NCryptFreeBuffer")
-	nCryptFreeObject           = nCrypt.MustFindProc("NCryptFreeObject")
-	nCryptGetProperty          = nCrypt.MustFindProc("NCryptGetProperty")
-	nCryptImportKey            = nCrypt.MustFindProc("NCryptImportKey")
-	nCryptIsAlgSupported       = nCrypt.MustFindProc("NCryptIsAlgSupported")
-	nCryptIsKeyHandle          = nCrypt.MustFindProc("NCryptIsKeyHandle")
-	nCryptKeyDerivation        = nCrypt.MustFindProc("NCryptKeyDerivation")
-	nCryptNotifyChangeKey      = nCrypt.MustFindProc("NCryptNotifyChangeKey")
-	nCryptOpenKey              = nCrypt.MustFindProc("NCryptOpenKey")
-	nCryptOpenStorageProvider  = nCrypt.MustFindProc("NCryptOpenStorageProvider")
-	nCryptSecretAgreement      = nCrypt.MustFindProc("NCryptSecretAgreement")
-	nCryptSetProperty          = nCrypt.MustFindProc("NCryptSetProperty")
-	nCryptSignHash             = nCrypt.MustFindProc("NCryptSignHash")
-	nCryptTranslateHandle      = nCrypt.MustFindProc("NCryptTranslateHandle")
-	nCryptVerifyClaim          = nCrypt.MustFindProc("NCryptVerifyClaim")
-	nCryptVerifySignature      = nCrypt.MustFindProc("NCryptVerifySignature")
+	nCrypt                         = windows.MustLoadDLL("ncrypt.dll")
+	nCryptCreateClaimProc          = nCrypt.MustFindProc("NCryptCreateClaim")
+	nCryptCreatePersistedKeyProc   = nCrypt.MustFindProc("NCryptCreatePersistedKey")
+	nCryptDecryptProc              = nCrypt.MustFindProc("NCryptDecrypt")
+	nCryptDeleteKeyProc            = nCrypt.MustFindProc("NCryptDeleteKey")
+	nCryptDeriveKeyProc            = nCrypt.MustFindProc("NCryptDeriveKey")
+	nCryptEncryptProc              = nCrypt.MustFindProc("NCryptEncrypt")
+	nCryptEnumAlgorithmsProc       = nCrypt.MustFindProc("NCryptEnumAlgorithms")
+	nCryptEnumKeysProc             = nCrypt.MustFindProc("NCryptEnumKeys")
+	nCryptEnumStorageProvidersProc = nCrypt.MustFindProc("NCryptEnumStorageProviders")
+	nCryptExportKeyProc            = nCrypt.MustFindProc("NCryptExportKey")
+	nCryptFinalizeKeyProc          = nCrypt.MustFindProc("NCryptFinalizeKey")
+	nCryptFreeBufferProc           = nCrypt.MustFindProc("NCryptFreeBuffer")
+	nCryptFreeObjectProc           = nCrypt.MustFindProc("NCryptFreeObject")
+	nCryptGetPropertyProc          = nCrypt.MustFindProc("NCryptGetProperty")
+	nCryptImportKeyProc            = nCrypt.MustFindProc("NCryptImportKey")
+	nCryptIsAlgSupportedProc       = nCrypt.MustFindProc("NCryptIsAlgSupported")
+	nCryptIsKeyHandleProc          = nCrypt.MustFindProc("NCryptIsKeyHandle")
+	nCryptKeyDerivationProc        = nCrypt.MustFindProc("NCryptKeyDerivation")
+	nCryptNotifyChangeKeyProc      = nCrypt.MustFindProc("NCryptNotifyChangeKey")
+	nCryptOpenKeyProc              = nCrypt.MustFindProc("NCryptOpenKey")
+	nCryptOpenStorageProviderProc  = nCrypt.MustFindProc("NCryptOpenStorageProvider")
+	nCryptSecretAgreementProc      = nCrypt.MustFindProc("NCryptSecretAgreement")
+	nCryptSetPropertyProc          = nCrypt.MustFindProc("NCryptSetProperty")
+	nCryptSignHashProc             = nCrypt.MustFindProc("NCryptSignHash")
+	nCryptTranslateHandleProc      = nCrypt.MustFindProc("NCryptTranslateHandle")
+	nCryptVerifyClaimProc          = nCrypt.MustFindProc("NCryptVerifyClaim")
+	nCryptVerifySignatureProc      = nCrypt.MustFindProc("NCryptVerifySignature")
 
 	crypt32                            = windows.MustLoadDLL("crypt32.dll")
 	crypt32CertEnumCertificatesInStore = crypt32.MustFindProc("CertEnumCertificatesInStore")
@@ -458,22 +454,19 @@ var (
 	}
 )
 
-// BCryptBuffer ...
-type BCryptBuffer struct {
+type bCryptBuffer struct {
 	cbBuffer   uint32
 	BufferType uint32
 	pvBuffer   *byte
 }
 
-// BCryptBufferDesc ...
-type BCryptBufferDesc struct {
+type bCryptBufferDesc struct {
 	ulVersion uint32
 	cBuffers  uint32
-	pBuffers  *BCryptBuffer
+	pBuffers  *bCryptBuffer
 }
 
-// NCryptAlgorithmName ...
-type NCryptAlgorithmName struct {
+type nCryptAlgorithmName struct {
 	pszName         []uint16
 	dwClass         uint32
 	dwAlgOperations uint32
@@ -517,7 +510,7 @@ func getNCryptBufferProperty(hnd uintptr, field string) ([]byte, error) {
 		return nil, err
 	}
 
-	r, _, msg := nCryptGetProperty.Call(hnd, uintptr(unsafe.Pointer(&wideField[0])), 0, 0, uintptr(unsafe.Pointer(&size)), 0)
+	r, _, msg := nCryptGetPropertyProc.Call(hnd, uintptr(unsafe.Pointer(&wideField[0])), 0, 0, uintptr(unsafe.Pointer(&size)), 0)
 	if r != 0 {
 		if tpmErr := maybeWinErr(r); tpmErr != nil {
 			msg = tpmErr
@@ -529,7 +522,7 @@ func getNCryptBufferProperty(hnd uintptr, field string) ([]byte, error) {
 	}
 
 	buff := make([]byte, size)
-	r, _, msg = nCryptGetProperty.Call(hnd, uintptr(unsafe.Pointer(&wideField[0])), uintptr(unsafe.Pointer(&buff[0])), uintptr(size), uintptr(unsafe.Pointer(&size)), 0)
+	r, _, msg = nCryptGetPropertyProc.Call(hnd, uintptr(unsafe.Pointer(&wideField[0])), uintptr(unsafe.Pointer(&buff[0])), uintptr(size), uintptr(unsafe.Pointer(&size)), 0)
 	if r != 0 {
 		if tpmErr := maybeWinErr(r); tpmErr != nil {
 			msg = tpmErr
@@ -556,13 +549,13 @@ func getNCryptBufferPublicKey(hnd uintptr) ([]byte, bool, error) {
 	if err != nil {
 		return nil, false, err
 	}
-	if algStr == "RSA" {
-		pubkeyName, err = utf16FromString("RSAPUBLICBLOB")
+	if algStr == ncryptRsaAlgorithm {
+		pubkeyName, err = utf16FromString(bcryptRsapublicBlob)
 		if err != nil {
 			return nil, false, err
 		}
-	} else if algStr == "ECDSA" {
-		pubkeyName, err = utf16FromString("ECCPUBLICBLOB")
+	} else if algStr == ncryptEcdsaAlgorithm {
+		pubkeyName, err = utf16FromString(bcryptEccpublicBlob)
 		if err != nil {
 			return nil, false, err
 		}
@@ -570,7 +563,7 @@ func getNCryptBufferPublicKey(hnd uintptr) ([]byte, bool, error) {
 		return nil, false, fmt.Errorf("Unsupported algo: only RSA and ECDSA keys are supported")
 	}
 
-	r, _, msg := nCryptExportKey.Call(hnd, 0, uintptr(unsafe.Pointer(&pubkeyName[0])), 0, 0, 0, uintptr(unsafe.Pointer(&size)), 0)
+	r, _, msg := nCryptExportKeyProc.Call(hnd, 0, uintptr(unsafe.Pointer(&pubkeyName[0])), 0, 0, 0, uintptr(unsafe.Pointer(&size)), 0)
 	if r != 0 {
 		if tpmErr := maybeWinErr(r); tpmErr != nil {
 			msg = tpmErr
@@ -582,21 +575,20 @@ func getNCryptBufferPublicKey(hnd uintptr) ([]byte, bool, error) {
 	}
 
 	buff := make([]byte, size)
-	r, _, msg = nCryptExportKey.Call(hnd, 0, uintptr(unsafe.Pointer(&pubkeyName[0])), 0, uintptr(unsafe.Pointer(&buff[0])), uintptr(size), uintptr(unsafe.Pointer(&size)), 0)
+	r, _, msg = nCryptExportKeyProc.Call(hnd, 0, uintptr(unsafe.Pointer(&pubkeyName[0])), 0, uintptr(unsafe.Pointer(&buff[0])), uintptr(size), uintptr(unsafe.Pointer(&size)), 0)
 	if r != 0 {
 		if tpmErr := maybeWinErr(r); tpmErr != nil {
 			msg = tpmErr
 		}
 		return nil, false, fmt.Errorf("NCryptExportKey() returned %X (%v) on data read", r, msg)
 	}
-	return buff, algStr == "RSA", nil
+	return buff, algStr == ncryptRsaAlgorithm, nil
 }
 
 /* **************************************************************************** */
 
-// NCryptCreatePersistedKey ...
 // pszAlgId = Common algorithm identifiers.
-func NCryptCreatePersistedKey(
+func nCryptCreatePersistedKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	hKey *uintptr, /* NCRYPT_KEY_HANDLE* */
 	pszAlgID string, /* LPCWSTR */
@@ -614,7 +606,7 @@ func NCryptCreatePersistedKey(
 		return err
 	}
 
-	r, _, msg := nCryptCreatePersistedKey.Call(
+	r, _, msg := nCryptCreatePersistedKeyProc.Call(
 		uintptr(hProvider),
 		uintptr(unsafe.Pointer(hKey)),
 		uintptr(unsafe.Pointer(&utf16AlgID[0])),
@@ -632,9 +624,7 @@ func NCryptCreatePersistedKey(
 	return nil
 }
 
-// NCryptDecrypt ...
-// Pass &pbInput[0] as pbInput
-func NCryptDecrypt(
+func nCryptDecrypt(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pbInput *byte, /* PBYTE */
 	cbInput uint32, /* DWORD */
@@ -644,7 +634,7 @@ func NCryptDecrypt(
 	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
 ) error {
-	r, _, msg := nCryptDecrypt.Call(
+	r, _, msg := nCryptDecryptProc.Call(
 		uintptr(hKey),
 		uintptr(unsafe.Pointer(pbInput)),
 		uintptr(cbInput),
@@ -663,12 +653,11 @@ func NCryptDecrypt(
 	return nil
 }
 
-// NCryptDeleteKey ...
-func NCryptDeleteKey(
+func nCryptDeleteKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwFlags uint32, /* DWORD */
 ) error {
-	r, _, msg := nCryptDeleteKey.Call(
+	r, _, msg := nCryptDeleteKeyProc.Call(
 		uintptr(hKey),
 		uintptr(dwFlags),
 	)
@@ -681,11 +670,10 @@ func NCryptDeleteKey(
 	return nil
 }
 
-// NCryptDeriveKey ...
-func NCryptDeriveKey(
+func nCryptDeriveKey(
 	hSharedSecret uintptr, /* NCRYPT_SECRET_HANDLE */
 	pwszKDF string, /* LPCWSTR */
-	pParameterList *BCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
 	pbDerivedKey *byte, /* PBYTE */
 	cbDerivedKey uint32, /* DWORD */
 	pcbResult *uint32, /* DWORD* */
@@ -696,7 +684,7 @@ func NCryptDeriveKey(
 		return err
 	}
 
-	r, _, msg := nCryptDeriveKey.Call(
+	r, _, msg := nCryptDeriveKeyProc.Call(
 		uintptr(hSharedSecret),
 		uintptr(unsafe.Pointer(&utf16KDF[0])),
 		uintptr(unsafe.Pointer(pParameterList)),
@@ -714,8 +702,7 @@ func NCryptDeriveKey(
 	return nil
 }
 
-// NCryptEncrypt ...
-func NCryptEncrypt(
+func nCryptEncrypt(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pbInput *byte, /* PBYTE */
 	cbInput uint32, /* DWORD */
@@ -725,7 +712,7 @@ func NCryptEncrypt(
 	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
 ) error {
-	r, _, msg := nCryptEncrypt.Call(
+	r, _, msg := nCryptEncryptProc.Call(
 		uintptr(hKey),
 		uintptr(unsafe.Pointer(pbInput)),
 		uintptr(cbInput),
@@ -744,12 +731,11 @@ func NCryptEncrypt(
 	return nil
 }
 
-// NCryptExportKey ...
-func NCryptExportKey(
+func nCryptExportKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	hExportKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pszBlobType string, /* LPCWSTR */
-	pParameterList *BCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
 	pbOutput *byte, /* PBYTE */
 	cbOutput uint32, /* DWORD */
 	pcbResult *uint32, /* DWORD */
@@ -760,7 +746,7 @@ func NCryptExportKey(
 		return err
 	}
 
-	r, _, msg := nCryptExportKey.Call(
+	r, _, msg := nCryptExportKeyProc.Call(
 		uintptr(hKey),
 		uintptr(hExportKey),
 		uintptr(unsafe.Pointer(&utf16BlobType[0])),
@@ -779,12 +765,11 @@ func NCryptExportKey(
 	return nil
 }
 
-// NCryptFinalizeKey ...
-func NCryptFinalizeKey(
+func nCryptFinalizeKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwFlags uint32, /* DWORD */
 ) error {
-	r, _, msg := nCryptFinalizeKey.Call(
+	r, _, msg := nCryptFinalizeKeyProc.Call(
 		uintptr(hKey),
 		uintptr(dwFlags),
 	)
@@ -797,11 +782,10 @@ func NCryptFinalizeKey(
 	return nil
 }
 
-// NCryptFreeBuffer ...
-func NCryptFreeBuffer(
+func nCryptFreeBuffer(
 	pvInput unsafe.Pointer, /* PVOID */
 ) error {
-	r, _, msg := nCryptFreeBuffer.Call(
+	r, _, msg := nCryptFreeBufferProc.Call(
 		uintptr(pvInput),
 	)
 	if r != 0 {
@@ -813,11 +797,10 @@ func NCryptFreeBuffer(
 	return nil
 }
 
-// NCryptFreeObject ...
-func NCryptFreeObject(
+func nCryptFreeObject(
 	hObject uintptr, /* NCRYPT_HANDLE */
 ) error {
-	r, _, msg := nCryptFreeObject.Call(
+	r, _, msg := nCryptFreeObjectProc.Call(
 		uintptr(hObject),
 	)
 	if r != 0 {
@@ -829,8 +812,7 @@ func NCryptFreeObject(
 	return nil
 }
 
-// NCryptGetProperty ...
-func NCryptGetProperty(
+func nCryptGetProperty(
 	hObject uintptr, /* NCRYPT_HANDLE */
 	pszProperty string, /* LPCWSTR */
 	pbOutput *byte, /* PBYTE */
@@ -843,7 +825,7 @@ func NCryptGetProperty(
 		return err
 	}
 
-	r, _, msg := nCryptGetProperty.Call(
+	r, _, msg := nCryptGetPropertyProc.Call(
 		uintptr(hObject),
 		uintptr(unsafe.Pointer(&utf16Property[0])),
 		uintptr(unsafe.Pointer(pbOutput)),
@@ -860,12 +842,11 @@ func NCryptGetProperty(
 	return nil
 }
 
-// NCryptImportKey ...
-func NCryptImportKey(
+func nCryptImportKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	hImportKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pszBlobType string, /* LPCWSTR */
-	pParameterList *BCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
 	phKey *uintptr, /* NCRYPT_KEY_HANDLE */
 	pbData *byte, /* PBYTE */
 	cbData uint32, /* DWORD */
@@ -876,7 +857,7 @@ func NCryptImportKey(
 		return err
 	}
 
-	r, _, msg := nCryptImportKey.Call(
+	r, _, msg := nCryptImportKeyProc.Call(
 		uintptr(hProvider),
 		uintptr(hImportKey),
 		uintptr(unsafe.Pointer(&utf16BlobType[0])),
@@ -895,8 +876,7 @@ func NCryptImportKey(
 	return nil
 }
 
-// NCryptIsAlgSupported ...
-func NCryptIsAlgSupported(
+func nCryptIsAlgSupported(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	pszAlgID string, /* LPCWSTR */
 	dwFlags uint32, /* DWORD */
@@ -906,7 +886,7 @@ func NCryptIsAlgSupported(
 		return err
 	}
 
-	r, _, msg := nCryptIsAlgSupported.Call(
+	r, _, msg := nCryptIsAlgSupportedProc.Call(
 		uintptr(hProvider),
 		uintptr(unsafe.Pointer(&utf16AlgID[0])),
 		uintptr(dwFlags),
@@ -920,26 +900,24 @@ func NCryptIsAlgSupported(
 	return nil
 }
 
-// NCryptIsKeyHandle ...
-func NCryptIsKeyHandle(
+func nCryptIsKeyHandle(
 	hKey uintptr, /* NCRYPT_PROV_HANDLE */
 ) bool {
-	r, _, _ := nCryptIsKeyHandle.Call(
+	r, _, _ := nCryptIsKeyHandleProc.Call(
 		uintptr(hKey),
 	)
 	return r != 0
 }
 
-// NCryptKeyDerivation ...
-func NCryptKeyDerivation(
+func nCryptKeyDerivation(
 	hKey uintptr, /* NCRYPT_PROV_HANDLE */
-	pParameterList *BCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
 	pbDerivedKey *byte, /* PUCHAR */
 	cbDerivedKey uint32, /* DWORD */
 	pcbResult *uint32, /* DWORD */
 	dwFlags uint32, /* ULONG */
 ) error {
-	r, _, msg := nCryptKeyDerivation.Call(
+	r, _, msg := nCryptKeyDerivationProc.Call(
 		uintptr(hKey),
 		uintptr(unsafe.Pointer(pParameterList)),
 		uintptr(unsafe.Pointer(pbDerivedKey)),
@@ -956,8 +934,7 @@ func NCryptKeyDerivation(
 	return nil
 }
 
-// NCryptOpenKey ...
-func NCryptOpenKey(
+func nCryptOpenKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	phKey *uintptr, /* NCRYPT_KEY_HANDLE* */
 	pszKeyName string, /* LPCWSTR */
@@ -969,7 +946,7 @@ func NCryptOpenKey(
 		return err
 	}
 
-	r, _, msg := nCryptOpenKey.Call(
+	r, _, msg := nCryptOpenKeyProc.Call(
 		uintptr(hProvider),
 		uintptr(unsafe.Pointer(phKey)),
 		uintptr(unsafe.Pointer(&utf16KeyName[0])),
@@ -985,8 +962,7 @@ func NCryptOpenKey(
 	return nil
 }
 
-// NCryptOpenStorageProvider ...
-func NCryptOpenStorageProvider(
+func nCryptOpenStorageProvider(
 	phProvider *uintptr, /* NCRYPT_PROV_HANDLE* */
 	pszProviderName string, /* LPCWSTR */
 	dwFlags uint32, /* DWORD */
@@ -996,7 +972,7 @@ func NCryptOpenStorageProvider(
 		return err
 	}
 
-	r, _, msg := nCryptOpenStorageProvider.Call(
+	r, _, msg := nCryptOpenStorageProviderProc.Call(
 		uintptr(unsafe.Pointer(phProvider)),
 		uintptr(unsafe.Pointer(&utf16ProviderName[0])),
 		uintptr(dwFlags),
@@ -1010,8 +986,7 @@ func NCryptOpenStorageProvider(
 	return nil
 }
 
-// NCryptSetProperty ...
-func NCryptSetProperty(
+func nCryptSetProperty(
 	hObject uintptr, /* NCRYPT_HANDLE */
 	pszProperty string, /* LPCWSTR */
 	pbInput unsafe.Pointer, /* PBYTE */
@@ -1023,7 +998,7 @@ func NCryptSetProperty(
 		return err
 	}
 
-	r, _, msg := nCryptSetProperty.Call(
+	r, _, msg := nCryptSetPropertyProc.Call(
 		uintptr(hObject),
 		uintptr(unsafe.Pointer(&utf16Property[0])),
 		uintptr(pbInput),
@@ -1039,8 +1014,7 @@ func NCryptSetProperty(
 	return nil
 }
 
-// NCryptSignHash ...
-func NCryptSignHash(
+func nCryptSignHash(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
 	pbHashValue *byte, /* PBYTE */
@@ -1050,7 +1024,7 @@ func NCryptSignHash(
 	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
 ) error {
-	r, _, msg := nCryptSignHash.Call(
+	r, _, msg := nCryptSignHashProc.Call(
 		uintptr(hKey),
 		uintptr(pPaddingInfo),
 		uintptr(unsafe.Pointer(pbHashValue)),
@@ -1070,8 +1044,7 @@ func NCryptSignHash(
 	return nil
 }
 
-// NCryptVerifySignature ...
-func NCryptVerifySignature(
+func nCryptVerifySignature(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
 	pbHashValue *byte, /* PBYTE */
@@ -1080,7 +1053,7 @@ func NCryptVerifySignature(
 	cbSignature uint32, /* DWORD */
 	dwFlags uint32, /* DWORD */
 ) error {
-	status, _, _ := nCryptVerifySignature.Call(
+	status, _, _ := nCryptVerifySignatureProc.Call(
 		uintptr(hKey),
 		uintptr(pPaddingInfo),
 		uintptr(unsafe.Pointer(pbHashValue)),

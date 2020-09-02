@@ -70,22 +70,21 @@ func (k pcpPrivateKey) Delete() error {
 	var hKey uintptr
 
 	// Get a handle to the PCP KSP
-	err := NCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
 	if err != nil {
 		return fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
 	}
-	defer NCryptFreeObject(hProvider)
+	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = NCryptOpenKey(hProvider, &hKey, k.name, 0, NcryptSilentFlag)
+	err = nCryptOpenKey(hProvider, &hKey, k.name, 0, 0)
 	if err != nil {
 		return fmt.Errorf("NCryptOpenKey() failed: %v", err)
 	}
-	defer NCryptFreeObject(hKey)
+	defer nCryptFreeObject(hKey)
 
 	// Try to delete the key
-	// Surprisingly, this does not require the PCP Key password ?
-	err = NCryptDeleteKey(hKey, 0) // Will display a UI if necessary, but why ?
+	err = nCryptDeleteKey(hKey, 0)
 	if err != nil {
 		return fmt.Errorf("NCryptDeleteKey() failed: %v", err)
 	}
@@ -93,7 +92,7 @@ func (k pcpPrivateKey) Delete() error {
 	return nil
 }
 
-// findPcpKey tries to open a handle to an existing PCP key by its name
+// FindKey tries to open a handle to an existing PCP key by its name
 // and read its public part before creating and returning either a pcpRSAPrivateKey or
 // a pcpECDSAPrivateKey. If the PCP key does not exist, it returns nil.
 // If password is set, it will be saved in the private key and used
@@ -108,24 +107,24 @@ func (k pcpPrivateKey) Delete() error {
 // using NCRYPT_PIN_PROPERTY instead of a NCRYPT_UI_POLICY, entering the correct
 // password in the UI prompt will always fail. This is a bug in the PCP KSP,
 // as it cannot handle normal password in the UI prompt.
-func findKey(name string, password string) (Signer, error) {
+func FindKey(name string, password string) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var publicKey crypto.PublicKey
 
 	// Get a handle to the PCP KSP
-	err := NCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
 	}
-	defer NCryptFreeObject(hProvider)
+	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = NCryptOpenKey(hProvider, &hKey, name, 0, NcryptSilentFlag)
+	err = nCryptOpenKey(hProvider, &hKey, name, 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptOpenKey() failed: %v", err)
 	}
-	defer NCryptFreeObject(hKey)
+	defer nCryptFreeObject(hKey)
 
 	// Read key's public part
 	pubkeyBytes, isRSA, err := getNCryptBufferPublicKey(hKey)

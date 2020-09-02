@@ -47,7 +47,6 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 
 	var hProvider uintptr
 	var hKey uintptr
-	//var hash crypto.Hash
 	var flags uint32
 	var size uint32
 	var b cryptobyte.Builder
@@ -59,21 +58,20 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	if (opts == nil) || (opts.HashFunc() == 0) {
 		return nil, fmt.Errorf("Raw signature not supported")
 	}
-	//hash = opts.HashFunc()
 
 	// Get a handle to the PCP KSP
-	err := NCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
 	}
-	defer NCryptFreeObject(hProvider)
+	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = NCryptOpenKey(hProvider, &hKey, k.name, 0, NcryptSilentFlag)
+	err = nCryptOpenKey(hProvider, &hKey, k.name, 0, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptOpenKey() failed: %v", err)
 	}
-	defer NCryptFreeObject(hKey)
+	defer nCryptFreeObject(hKey)
 
 	// Set the key password / pin before signing if any.
 	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
@@ -83,20 +81,20 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	// needs a password, a UI will be shown to ask for it.
 	flags = 0
 	if len(k.password) != 0 {
-		flags = NcryptSilentFlag
+		flags = ncryptSilentFlag
 		passwordBlob, err := windows.UTF16FromString(k.password)
 		if err != nil {
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob) * 2
-		err = NCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), NcryptSilentFlag)
+		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), ncryptSilentFlag)
 		if err != nil {
 			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
 		}
 	}
 
 	// Sign
-	err = NCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), nil, 0, &size, flags)
+	err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), nil, 0, &size, flags)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptSignHash() step 1 failed: %v", err)
 	}
@@ -104,7 +102,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 		return nil, fmt.Errorf("NCryptSignHash() returned 0 on size read")
 	}
 	sig = make([]byte, size)
-	err = NCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
+	err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptSignHash() step 2 failed: %v", err)
 	}
@@ -141,11 +139,11 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	var hKey uintptr
 
 	// Get a handle to the PCP KSP
-	err := NCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
 	}
-	defer NCryptFreeObject(hProvider)
+	defer nCryptFreeObject(hProvider)
 
 	// If name is empty, generate a unique random one
 	if name == "" {
@@ -160,13 +158,13 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	curveName := ""
 	switch curve {
 	case elliptic.P256():
-		curveName = BCRYPT_ECDSA_P256_ALGORITHM
+		curveName = bcryptEcdsaP256Algorithm
 		break
 	case elliptic.P384():
-		curveName = BCRYPT_ECDSA_P384_ALGORITHM
+		curveName = bcryptEcdsaP384Algorithm
 		break
 	case elliptic.P521():
-		curveName = BCRYPT_ECDSA_P521_ALGORITHM
+		curveName = bcryptEcdsaP521Algorithm
 		break
 	default:
 		return nil, fmt.Errorf("Unsupported curve")
@@ -174,9 +172,9 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 
 	// Start the creation of the key
 	if overwrite {
-		err = NCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, NcryptOverwriteKeyFlag)
+		err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, ncryptOverwriteKeyFlag)
 	} else {
-		err = NCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, 0)
+		err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, 0)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("NCryptCreatePersistedKey() failed: %v", err)
@@ -189,18 +187,18 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob) * 2
-		err = NCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), 0)
+		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), 0)
 		if err != nil {
 			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
 		}
 	}
 
 	// Finalize (create) the key
-	err = NCryptFinalizeKey(hKey, 0)
+	err = nCryptFinalizeKey(hKey, 0)
 	if err != nil {
 		return nil, fmt.Errorf("NCryptFinalizeKey() failed: %v", err)
 	}
-	defer NCryptFreeObject(hKey)
+	defer nCryptFreeObject(hKey)
 
 	// Read key's public part
 	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey)
