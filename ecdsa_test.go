@@ -97,11 +97,8 @@ func TestECDSASignWithPass(t *testing.T) {
 	}()
 
 	// Test signatures
-	// N.B : Signing SHA384/SHA512 fails, why ?
 	t.Run("ECDSASIGN-SHA1", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA1) })
 	t.Run("ECDSASIGN-SHA256", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA256) })
-	//t.Run("ECDSASIGN-SHA384", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA384) }) 0x802801D5
-	//t.Run("ECDSASIGN-SHA512", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA512) }) 0x802801D5
 }
 
 func TestECDSASignWithoutPass(t *testing.T) {
@@ -115,9 +112,6 @@ func TestECDSASignWithoutPass(t *testing.T) {
 	}()
 
 	// Test signatures
-	// N.B : Signing SHA384/SHA512 fails, why ?
 	t.Run("ECDSASIGN-SHA1", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA1) })
 	t.Run("ECDSASIGN-SHA256", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA256) })
-	//t.Run("ECDSASIGN-SHA384", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA384) }) 0x802801D5
-	//t.Run("ECDSASIGN-SHA512", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA512) }) 0x802801D5
 }
