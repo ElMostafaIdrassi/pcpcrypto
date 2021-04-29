@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 // Signer implements crypto.Signer and additional functions (i.e. Name()).
@@ -35,8 +38,12 @@ type Signer interface {
 	// Name returns the PCP Key name.
 	Name() string
 
+	// IsLocalMachine returns true if the key resides in the Local Machine
+	// store instead of the Current User.
+	IsLocalMachine() bool
+
 	// Size returns the PCP public key size.
-	Size() int
+	Size() uint32
 
 	// Delete deletes the PCP Key from the PCP KSP.
 	Delete() error
@@ -49,9 +56,10 @@ type Signer interface {
 // pcpRSAPrivateKey and pcpECDSAPrivateKey each implement the remaining
 // Sign() and Size() functions.
 type pcpPrivateKey struct {
-	name     string           // name is the PCP Key name.
-	password string           // password is the PCP Key password / pin.
-	pubKey   crypto.PublicKey // pubKey is the public part of the PCP Key.
+	name         string           // name is the PCP Key name.
+	password     string           // password is the PCP Key password / pin.
+	localMachine bool             // localMachine determines whether the key resides in the Current User or Local Machine store.
+	pubKey       crypto.PublicKey // pubKey is the public part of the PCP Key.
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -64,29 +72,39 @@ func (k pcpPrivateKey) Name() string {
 	return k.name
 }
 
+// IsLocalMachine returns true if the key resides in the Local Machine
+// store instead of the Current User.
+func (k pcpPrivateKey) IsLocalMachine() bool {
+	return k.localMachine
+}
+
 // Delete deletes the PCP Key from the PCP KSP.
 func (k pcpPrivateKey) Delete() error {
 	var hProvider uintptr
 	var hKey uintptr
+	var flags uint32
 
 	// Get a handle to the PCP KSP
-	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return err
 	}
 	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = nCryptOpenKey(hProvider, &hKey, k.name, 0, 0)
+	if k.localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
-		return fmt.Errorf("NCryptOpenKey() failed: %v", err)
+		return err
 	}
 	defer nCryptFreeObject(hKey)
 
 	// Try to delete the key
-	err = nCryptDeleteKey(hKey, 0)
+	_, err = nCryptDeleteKey(hKey, 0)
 	if err != nil {
-		return fmt.Errorf("NCryptDeleteKey() failed: %v", err)
+		return err
 	}
 
 	return nil
@@ -97,8 +115,10 @@ func (k pcpPrivateKey) Delete() error {
 // a pcpECDSAPrivateKey. If the PCP key does not exist, it returns nil.
 // If password is set, it will be saved in the private key and used
 // before each signature, requiring no interaction from the user.
-// Otherwise, if no password is set, a UI prompt will show up during the signature
-// asking for the password only if the key needs one.
+// Otherwise, if no password is set, a UI prompt might show up during the signature
+// asking for the password if the key needs one.
+// If localMachine is set to true, the search will be perfomed in the Local Machine
+// key store. Otherwise, it will be performed in the Current User key store.
 // After all operations are done on the resulting key, its handle should be freed by calling
 // the Close() function on the key.
 // N.B :
@@ -107,31 +127,53 @@ func (k pcpPrivateKey) Delete() error {
 // using NCRYPT_PIN_PROPERTY instead of a NCRYPT_UI_POLICY, entering the correct
 // password in the UI prompt will always fail. This is a bug in the PCP KSP,
 // as it cannot handle normal password in the UI prompt.
-func FindKey(name string, password string) (Signer, error) {
+func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
+	var flags uint32
 	var publicKey crypto.PublicKey
 
 	// Get a handle to the PCP KSP
-	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = nCryptOpenKey(hProvider, &hKey, name, 0, 0)
+	if localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+	_, err = nCryptOpenKey(hProvider, &hKey, name, 0, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenKey() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
-	// Read key's public part
-	pubkeyBytes, isRSA, err := getNCryptBufferPublicKey(hKey)
+	// Get key's algorithm
+	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, 0)
 	if err != nil {
-		return nil, fmt.Errorf("getNCryptBufferPublicKey() failed: %v", err)
+		return nil, err
+	}
+	algStr, err := utf16ToString(alg)
+	if err != nil {
+		return nil, err
 	}
 
+	// Read key's public part
+	var pubkeyBytes []byte
+	var isRSA bool
+	if algStr == ncryptRsaAlgorithm {
+		pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
+		isRSA = true
+	} else if algStr == ncryptEcdsaAlgorithm {
+		pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
+	} else {
+		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
+	}
+	if err != nil {
+		return nil, err
+	}
 	if isRSA {
 
 		// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
@@ -150,9 +192,10 @@ func FindKey(name string, password string) (Signer, error) {
 
 		return &pcpRSAPrivateKey{
 			pcpPrivateKey{
-				name:     name,
-				password: password,
-				pubKey:   publicKey,
+				name:         name,
+				password:     password,
+				localMachine: localMachine,
+				pubKey:       publicKey,
 			},
 		}, nil
 	} else {
@@ -172,7 +215,7 @@ func FindKey(name string, password string) (Signer, error) {
 			keyByteSize = 66
 			keyCurve = elliptic.P521()
 		} else {
-			return nil, fmt.Errorf("Unexpected ECC magic number %.8X", magic)
+			return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
 		}
 
 		xBytes := pubkeyBytes[8 : 8+keyByteSize]
@@ -187,10 +230,158 @@ func FindKey(name string, password string) (Signer, error) {
 
 		return &pcpECDSAPrivateKey{
 			pcpPrivateKey{
-				name:     name,
-				password: password,
-				pubKey:   publicKey,
+				name:         name,
+				password:     password,
+				localMachine: localMachine,
+				pubKey:       publicKey,
 			},
 		}, nil
 	}
+}
+
+// GetKeys tries to retrieve all existing PCP keys.
+// If localMachine is set to true, it will retrieve the keys that
+// are in the Local Machine key store. Otherwise, it will retrieve
+// the keys that are in the Current User key store.
+func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
+	var hProvider uintptr
+	var pState unsafe.Pointer
+	var pKeyName *nCryptKeyName
+	var flags uint32
+	var ret uint32
+	var err error
+
+	keys := make([]pcpPrivateKey, 0)
+
+	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
+	_, err = nCryptOpenStorageProvider(
+		&hProvider,
+		msPlatformCryptoProvider,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer nCryptFreeObject(hProvider)
+
+	// Retrieve 1 key item at a time.
+	if localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+	for {
+		ret, err = nCryptEnumKeys(
+			hProvider,
+			"",
+			&pKeyName,
+			&pState,
+			flags,
+		)
+		if err != nil {
+			if ret == 0x8009002A { // NTE_NO_MORE_ITEMS
+				break
+			} else {
+				return nil, err
+			}
+		} else {
+			keyName := windows.UTF16PtrToString(pKeyName.pszName)
+
+			var hKey uintptr
+			var pubkeyBytes []byte
+			var isRSA bool
+
+			// Open a handle to the key
+			_, err = nCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
+			if err != nil {
+				return nil, err
+			}
+			defer nCryptFreeObject(hKey)
+
+			// Get key's algorithm
+			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, 0)
+			if err != nil {
+				return nil, err
+			}
+			algStr, err := utf16ToString(alg)
+			if err != nil {
+				return nil, err
+			}
+
+			// Read key's public part
+			if algStr == ncryptRsaAlgorithm {
+				pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
+				isRSA = true
+			} else if algStr == ncryptEcdsaAlgorithm {
+				pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
+			} else {
+				continue
+			}
+			if err != nil {
+				return nil, err
+			}
+
+			if isRSA {
+
+				// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
+				eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
+				nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
+
+				eBytes := pubkeyBytes[24 : 24+eSize]
+				nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
+
+				eInt := big.NewInt(0)
+				eInt.SetBytes(eBytes)
+				nInt := big.NewInt(0)
+				nInt.SetBytes(nBytes)
+
+				publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
+
+				keys = append(keys, pcpPrivateKey{
+					name:         keyName,
+					password:     "",
+					localMachine: localMachine,
+					pubKey:       publicKey,
+				})
+			} else {
+
+				// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
+				var keyByteSize int
+				var keyCurve elliptic.Curve
+
+				magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
+				if magic == bcryptEcdsaPublicP256Magic {
+					keyByteSize = 32
+					keyCurve = elliptic.P256()
+				} else if magic == bcryptEcdsaPublicP384Magic {
+					keyByteSize = 48
+					keyCurve = elliptic.P384()
+				} else if magic == bcryptEcdsaPublicP521Magic {
+					keyByteSize = 66
+					keyCurve = elliptic.P521()
+				} else {
+					return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
+				}
+
+				xBytes := pubkeyBytes[8 : 8+keyByteSize]
+				yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
+
+				xInt := big.NewInt(0)
+				xInt.SetBytes(xBytes)
+				yInt := big.NewInt(0)
+				yInt.SetBytes(yBytes)
+
+				publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
+
+				keys = append(keys, pcpPrivateKey{
+					name:         keyName,
+					password:     "",
+					localMachine: localMachine,
+					pubKey:       publicKey,
+				})
+			}
+		}
+	}
+	nCryptFreeBuffer(pState)
+	nCryptFreeBuffer(unsafe.Pointer(pKeyName))
+
+	return keys, nil
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import (
 func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, curve elliptic.Curve, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateECDSAKey(name, password, curve, true)
+	key, err := GenerateECDSAKey(name, password, curve, false, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -37,10 +37,10 @@ func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, cur
 			require.NoError(t, key.Delete())
 		}()
 	}
-	require.Equal(t, key.Size(), (curve.Params().BitSize+7)/8)
+	require.Equal(t, key.Size(), uint32((curve.Params().BitSize+7)/8))
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password)
+	keyBis, err := FindKey(key.Name(), password, false)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -82,14 +82,14 @@ func TestECDSAGenerateKey(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testECDSAGenerateAndFindKey(t, name, "password", elliptic.P256(), true)
+		testECDSAGenerateAndFindKey(t, name, "password123", elliptic.P256(), true)
 	})
 }
 
 func TestECDSASignWithPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "", elliptic.P256(), true)
+	key, err := GenerateECDSAKey("", "password123", elliptic.P256(), false, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {
@@ -104,7 +104,7 @@ func TestECDSASignWithPass(t *testing.T) {
 func TestECDSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "", elliptic.P256(), true)
+	key, err := GenerateECDSAKey("", "", elliptic.P256(), false, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {

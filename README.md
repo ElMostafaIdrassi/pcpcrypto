@@ -24,7 +24,7 @@ In order to achieve this persistence, the PCP KSP creates, for each
 PCP-generated TPM key, a corresponding file which contains all the information 
 about the public and private parts of the key. For a key that applies to the current user `<username>`, this file resides in 
 `C:\Users\<username>\AppData\Local\Microsoft\Crypto\PCPKSP\<SHA1DIGEST\`, has a name 
-that is an `SHA-1 digest` of something (maybe the public key) and the extension `PCPKEY`.
+that is the `SHA-1 digest` of the key's name and the extension `PCPKEY`.
 
 This gives the PCP KSP the ability to actually load the key into the TPM's volatile 
 memory at each `NCryptOpenKey` and unload it at each `NCryptFreeObject`, 
@@ -32,7 +32,7 @@ in the manner of a `TPM2-TSS-ENGINE` encrypted blob file.
 
 Therefore, PCP KSP keys are not persistent in regards to the TPM chip itself.
 They are merely transient keys that are created inside of the TPM using 
-`NCryptCreatePersistedKey` and exported immediately into the aforementionned 
+`NCryptCreatePersistedKey` and exported immediately into the aforementioned 
 PCP file when `NCryptFinalizeKey` is called. These PCP files will then allow 
 the PCP KSP to reload the key into TPM's volatile memory whenever needed.
 

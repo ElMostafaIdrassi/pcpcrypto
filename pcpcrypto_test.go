@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,16 +23,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testFindKey(t *testing.T, name string, password string, length int) {
-	key, err := FindKey(name, password)
+func testFindKey(t *testing.T, name string, password string, localMachine bool, length int) {
+	key, err := FindKey(name, password, localMachine)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.Equal(t, key.Name(), name)
 	require.Equal(t, key.Size(), (length+7)/8)
 }
 
-func testFindAndDeleteKey(t *testing.T, name string) {
-	key, err := FindKey(name, "")
+func testFindAndDeleteKey(t *testing.T, name string, localMachine bool) {
+	key, err := FindKey(name, "", localMachine)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.NoError(t, key.Delete())
@@ -43,16 +43,16 @@ func TestRSADeleteKey(t *testing.T) {
 	// Generate a new RSA-1024 key with a random unique name and an empty password
 	uuidName, err := uuid.NewRandom()
 	require.NoError(t, err)
-	length := 1024
+	length := uint32(1024)
 	name := uuidName.String()
-	key, err := GenerateRSAKey(name, "", length, true)
+	key, err := GenerateRSAKey(name, "", length, false, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.Equal(t, key.Name(), name)
 	require.Equal(t, key.Size(), (length+7)/8)
 
 	// Find the RSA-1024 key
-	keyBis, err := FindKey(name, "")
+	keyBis, err := FindKey(name, "", false)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -63,7 +63,7 @@ func TestRSADeleteKey(t *testing.T) {
 	require.NoError(t, key.Delete())
 
 	// Now, it should not be possible to find the RSA-1024 key
-	keyBis, err = FindKey(name, "")
+	keyBis, err = FindKey(name, "", false)
 	require.Error(t, err)
 	require.Nil(t, keyBis)
 }
@@ -75,14 +75,14 @@ func TestECDSADeleteKey(t *testing.T) {
 	require.NoError(t, err)
 	curve := elliptic.P256()
 	name := uuidName.String()
-	key, err := GenerateECDSAKey(name, "", curve, true)
+	key, err := GenerateECDSAKey(name, "", curve, false, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.Equal(t, key.Name(), name)
-	require.Equal(t, key.Size(), (curve.Params().BitSize+7)/8)
+	require.Equal(t, key.Size(), uint32(((curve.Params().BitSize + 7) / 8)))
 
 	// Find the ECDSA-P256 key
-	keyBis, err := FindKey(name, "")
+	keyBis, err := FindKey(name, "", false)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -93,7 +93,7 @@ func TestECDSADeleteKey(t *testing.T) {
 	require.NoError(t, key.Delete())
 
 	// Now, it should not be possible to find the ECDSA-P256 key
-	keyBis, err = FindKey(name, "")
+	keyBis, err = FindKey(name, "", false)
 	require.Error(t, err)
 	require.Nil(t, keyBis)
 }

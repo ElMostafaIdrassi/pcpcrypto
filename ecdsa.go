@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,12 +22,10 @@ import (
 	"fmt"
 	"io"
 	"math/big"
-	"unsafe"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/cryptobyte"
 	"golang.org/x/crypto/cryptobyte/asn1"
-	"golang.org/x/sys/windows"
 )
 
 // pcpPrivateKey refers to a persistent ECDSA private key in the PCP KSP.
@@ -38,8 +36,8 @@ type pcpECDSAPrivateKey struct {
 }
 
 // Size returns the curve field size in bytes.
-func (k *pcpECDSAPrivateKey) Size() int {
-	return (k.pubKey.(*ecdsa.PublicKey).Curve.Params().BitSize + 7) / 8
+func (k *pcpECDSAPrivateKey) Size() uint32 {
+	return uint32((k.pubKey.(*ecdsa.PublicKey).Curve.Params().BitSize + 7) / 8)
 }
 
 // Sign is a required method of the crypto.Signer interface
@@ -56,20 +54,23 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	// must be signed directly. This is not recommended except for interoperability.
 	// For the moment, we do not support signing arbitrary data (i.e. ECDSA Raw signature).
 	if (opts == nil) || (opts.HashFunc() == 0) {
-		return nil, fmt.Errorf("Raw signature not supported")
+		return nil, fmt.Errorf("raw signature not supported")
 	}
 
 	// Get a handle to the PCP KSP
-	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name
-	err = nCryptOpenKey(hProvider, &hKey, k.name, 0, 0)
+	if k.localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenKey() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
@@ -82,32 +83,32 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	flags = 0
 	if len(k.password) != 0 {
 		flags = ncryptSilentFlag
-		passwordBlob, err := windows.UTF16FromString(k.password)
+		passwordBlob, err := utf16BytesFromString(k.password)
 		if err != nil {
 			return nil, err
 		}
-		passwordBlobLen := len(passwordBlob) * 2
-		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), ncryptSilentFlag)
+		passwordBlobLen := len(passwordBlob)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), ncryptSilentFlag)
 		if err != nil {
-			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
+			return nil, err
 		}
 	}
 
 	// Sign
-	err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), nil, 0, &size, flags)
+	_, err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), nil, 0, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 1 failed: %v", err)
+		return nil, err
 	}
 	if size == 0 {
-		return nil, fmt.Errorf("NCryptSignHash() returned 0 on size read")
+		return nil, fmt.Errorf("nCryptSignHash() returned 0 on size read")
 	}
 	sig = make([]byte, size)
-	err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
+	_, err = nCryptSignHash(hKey, nil, &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 2 failed: %v", err)
+		return nil, err
 	}
 
-	// The EDCSA signature from the PCP is in RAW format (r,s).
+	// The EDCSA signature returned by the PCP is in RAW format (r,s).
 	// Therefore, we need to ASN.1 encode it before returning it.
 	rInt := big.NewInt(0)
 	rInt.SetBytes(sig[:size/2])
@@ -119,7 +120,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	})
 	sig, err = b.Bytes()
 	if err != nil {
-		return nil, fmt.Errorf("cryptobyte.Builder.Bytes() step 2 failed: %v", err)
+		return nil, fmt.Errorf("asn.1 encoding failed: %v", err)
 	}
 	return sig, nil
 }
@@ -130,20 +131,44 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // If password is not empty, it will set it as NCRYPT_PIN_PROPERTY.
 // If overwrite is set, and if a key with the same name already exists, it will
 // be overwritten.
+// If localMachine is set to true, the key will be generated in the Local Machine key store.
+// Otherwise, it will be generated in the Current User key store.
 // Usually, TPM chips support NIST-P256 and may support other curves. GenerateECDSAKey only
 // supports NIST-P256/P384/P521 as PCP only supports these curves.
 // The key usage is left to be the default one for ECDSA, which is SignOnly.
 // TODO: Support UI Policies + manually set key usages.
-func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwrite bool) (Signer, error) {
+func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localMachine bool, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
+	var flags uint32
 
 	// Get a handle to the PCP KSP
-	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hProvider)
+
+	// Set the flags
+	if overwrite {
+		flags |= ncryptOverwriteKeyFlag
+	}
+	if localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+
+	// Check the specified curve
+	curveName := ""
+	switch curve {
+	case elliptic.P256():
+		curveName = bcryptEcdsaP256Algorithm
+	case elliptic.P384():
+		curveName = bcryptEcdsaP384Algorithm
+	case elliptic.P521():
+		curveName = bcryptEcdsaP521Algorithm
+	default:
+		return nil, fmt.Errorf("unsupported curve")
+	}
 
 	// If name is empty, generate a unique random one
 	if name == "" {
@@ -154,56 +179,36 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 		name = uuidName.String()
 	}
 
-	// Check the specified curve
-	curveName := ""
-	switch curve {
-	case elliptic.P256():
-		curveName = bcryptEcdsaP256Algorithm
-		break
-	case elliptic.P384():
-		curveName = bcryptEcdsaP384Algorithm
-		break
-	case elliptic.P521():
-		curveName = bcryptEcdsaP521Algorithm
-		break
-	default:
-		return nil, fmt.Errorf("Unsupported curve")
-	}
-
 	// Start the creation of the key
-	if overwrite {
-		err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, ncryptOverwriteKeyFlag)
-	} else {
-		err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, 0)
-	}
+	_, err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptCreatePersistedKey() failed: %v", err)
+		return nil, err
 	}
 
 	// If password is given, set it as NCRYPT_PIN_PROPERTY
 	if len(password) != 0 {
-		passwordBlob, err := windows.UTF16FromString(password)
+		passwordBlob, err := utf16BytesFromString(password)
 		if err != nil {
 			return nil, err
 		}
-		passwordBlobLen := len(passwordBlob) * 2
-		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), 0)
+		passwordBlobLen := len(passwordBlob)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), 0)
 		if err != nil {
-			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
+			return nil, err
 		}
 	}
 
 	// Finalize (create) the key
-	err = nCryptFinalizeKey(hKey, 0)
+	_, err = nCryptFinalizeKey(hKey, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptFinalizeKey() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	// Read key's public part
-	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey)
+	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
 	if err != nil {
-		return nil, fmt.Errorf("getNCryptBufferPublicKey() failed: %v", err)
+		return nil, err
 	}
 
 	// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
@@ -220,7 +225,7 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 		keyByteSize = 66
 		keyCurve = elliptic.P521()
 	} else {
-		return nil, fmt.Errorf("Unexpected ECC magic number %.8X", magic)
+		return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
 	}
 	xBytes := pubkeyBytes[8 : 8+keyByteSize]
 	yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
@@ -233,9 +238,10 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	// Return *pcpECDSAPrivateKey instance
 	return &pcpECDSAPrivateKey{
 		pcpPrivateKey{
-			name:     name,
-			password: password,
-			pubKey:   publicKey,
+			name:         name,
+			password:     password,
+			localMachine: localMachine,
+			pubKey:       publicKey,
 		},
 	}, nil
 }

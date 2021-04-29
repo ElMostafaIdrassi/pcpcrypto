@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	key, err := pcpcrypto.GenerateRSAKey("", "", 1024, true)
+	key, err := pcpcrypto.GenerateRSAKey("", "", 1024, false, true)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pcpcrypto.GenerateRSAKey() failed: %v\n", err)
 		return

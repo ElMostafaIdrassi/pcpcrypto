@@ -1,4 +1,4 @@
-// Copyright (c) 2020, El Mostafa IDRASSI.
+// Copyright (c) 2020-2021, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ type pcpRSAPrivateKey struct {
 }
 
 // Size returns the modulus size in bytes of the corresponding public key.
-func (k *pcpRSAPrivateKey) Size() int {
-	return (k.pubKey.(*rsa.PublicKey).N.BitLen() + 7) / 8
+func (k *pcpRSAPrivateKey) Size() uint32 {
+	return uint32((k.pubKey.(*rsa.PublicKey).N.BitLen() + 7) / 8)
 }
 
 // Sign is a required method of the crypto.Signer interface.
@@ -45,39 +45,43 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	var hProvider uintptr
 	var hKey uintptr
 	var hash crypto.Hash
+	var flags uint32
 
 	// If opts is null or opts.HashFunc is 0, it means msg is not a digest and
 	// must be signed directly. This is not recommended except for interoperability.
 	// For the moment, we do not support signing arbitrary data (i.e. RSA Raw signature).
 	if (opts == nil) || (opts.HashFunc() == 0) {
-		return nil, fmt.Errorf("Raw signature not supported")
+		return nil, fmt.Errorf("raw signature not supported")
 	}
 	hash = opts.HashFunc()
 
 	// Get a handle to the PCP KSP.
-	err = nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err = nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hProvider)
 
 	// Try to get a handle to the key by its name.
-	err = nCryptOpenKey(hProvider, &hKey, k.name, 0, 0)
+	if k.localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
+	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenKey() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	// Set the key password / pin before signing if any.
 	if len(k.password) != 0 {
-		passwordBlob, err := windows.UTF16FromString(k.password)
+		passwordBlob, err := utf16BytesFromString(k.password)
 		if err != nil {
 			return nil, err
 		}
-		passwordBlobLen := len(passwordBlob) * 2
-		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), ncryptSilentFlag)
+		passwordBlobLen := len(passwordBlob)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), ncryptSilentFlag)
 		if err != nil {
-			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
+			return nil, err
 		}
 	}
 
@@ -97,7 +101,7 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 
 	var saltLength uint32
 	var flags uint32
-	var paddingInfo bcryptPSSPaddingInfo
+	var paddingInfo bcryptPssPaddingInfo
 	var size uint32
 	var sig []byte
 
@@ -116,14 +120,12 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	// Pre-TPM Spec-1.16
 	// See https://github.com/tpm2-software/tpm2-pkcs11/issues/417
 	case rsa.PSSSaltLengthAuto:
-		saltLength = uint32(priv.Size() - hash.Size()) // uint32(priv.Size() - 2 - hash.Size())
-		break
+		saltLength = priv.Size() - uint32(hash.Size()) // uint32(priv.Size() - 2 - hash.Size())
 	// PSSSaltLengthEqualsHash causes the salt length to equal the length
 	// of the hash used in the signature.
 	// Post-TPM Spec-1.16
 	case rsa.PSSSaltLengthEqualsHash:
 		saltLength = uint32(hash.Size())
-		break
 	default:
 		saltLength = uint32(opts.SaltLength)
 	}
@@ -133,31 +135,31 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	// it does not work, and we're using NCRYPT_TPM_PAD_PSS_IGNORE_SALT,
 	// which means the PCP KSP ignores this value and always makes use
 	// of cbSalt = uint32(priv.Size() - hash.Size()).
-	paddingInfo.CbSalt = saltLength
+	paddingInfo.cbSalt = saltLength
 	switch hash {
 	case crypto.SHA1:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha1Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha1Algorithm)
 			break
 		}
 	case crypto.SHA256:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha256Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha256Algorithm)
 			break
 		}
 	case crypto.SHA384:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha384Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha384Algorithm)
 			break
 		}
 	case crypto.SHA512:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha512Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha512Algorithm)
 			break
 		}
 	default:
 		{
-			return nil, fmt.Errorf("Unsupported digest algo")
+			return nil, fmt.Errorf("unsupported digest algo")
 		}
 	}
 
@@ -172,17 +174,17 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	}
 
 	// Sign.
-	err := nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), nil, 0, &size, flags)
+	_, err := nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), nil, 0, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 1 failed: %v", err)
+		return nil, err
 	}
 	if size == 0 {
-		return nil, fmt.Errorf("NCryptSignHash() returned 0 on size read")
+		return nil, fmt.Errorf("nCryptSignHash() returned 0 on size read")
 	}
 	sig = make([]byte, size)
-	err = nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
+	_, err = nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 2 failed: %v", err)
+		return nil, err
 	}
 
 	return sig, nil
@@ -192,34 +194,34 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 
 	var sig []byte
 	var size uint32
-	var paddingInfo bcryptPKCS11PaddingInfo
+	var paddingInfo bcryptPkcs1PaddingInfo
 	var flags uint32
 
 	// Setup the PKCS1v15 padding info.
 	switch hash {
 	case crypto.SHA1:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha1Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha1Algorithm)
 			break
 		}
 	case crypto.SHA256:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha256Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha256Algorithm)
 			break
 		}
 	case crypto.SHA384:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha384Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha384Algorithm)
 			break
 		}
 	case crypto.SHA512:
 		{
-			paddingInfo.PszAlgID, _ = windows.UTF16FromString(bcryptSha512Algorithm)
+			paddingInfo.pszAlgId, _ = windows.UTF16PtrFromString(bcryptSha512Algorithm)
 			break
 		}
 	default:
 		{
-			return nil, fmt.Errorf("Unsupported digest algo")
+			return nil, fmt.Errorf("unsupported digest algo")
 		}
 	}
 
@@ -234,14 +236,17 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 	}
 
 	// Sign.
-	err := nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), nil, 0, &size, flags)
+	_, err := nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), nil, 0, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 1 failed: %v", err)
+		return nil, err
+	}
+	if size == 0 {
+		return nil, fmt.Errorf("nCryptSignHash() returned 0 on size read")
 	}
 	sig = make([]byte, size)
-	err = nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
+	_, err = nCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), &msg[0], uint32(len(msg)), &sig[0], size, &size, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSignHash() step 2 failed: %v", err)
+		return nil, err
 	}
 
 	return sig, nil
@@ -250,6 +255,8 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 // GenerateRSAKey generates a new signing RSA PCP Key with the specified name and bit
 // length, then returns its corresponding pcpRSAPrivateKey instance.
 // If name is empty, it will generate unique random name beforehand.
+// If password is empty, it will generate the key with no PIN / Password, making it
+// usable with no authentication.
 // If overwrite is set, and if a key with the same name already exists, it will
 // be overwritten.
 // Usually, supported bit lengths by the TPM chip are 1024 and 2048, but there is
@@ -257,19 +264,28 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 // The key usage is left to be the default one for RSA, which is Sign + Decrypt.
 // TODO: Support UI Policies + manually set key usages.
 // N.B:
-// 	Trying to set NCRYPT_PCP_PSS_SALT_SIZE_PROPERTY("PSS Salt Size") to either
-// 	NCRYPT_TPM_PSS_SALT_SIZE_UNKNOWN(0), NCRYPT_TPM_PSS_SALT_SIZE_MAXIMUM(1) or
-// 	NCRYPT_TPM_PSS_SALT_SIZE_HASHSIZE(2) always fails with NTE_NOT_SUPPORTED.
-func GenerateRSAKey(name string, password string, bitLength int, overwrite bool) (Signer, error) {
+// Trying to set NCRYPT_PCP_PSS_SALT_SIZE_PROPERTY("PSS Salt Size") to either
+// NCRYPT_TPM_PSS_SALT_SIZE_UNKNOWN(0), NCRYPT_TPM_PSS_SALT_SIZE_MAXIMUM(1) or
+// NCRYPT_TPM_PSS_SALT_SIZE_HASHSIZE(2) always fails with NTE_NOT_SUPPORTED.
+func GenerateRSAKey(name string, password string, bitLength uint32, localMachine bool, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
+	var flags uint32
 
 	// Get a handle to the PCP KSP
-	err := nCryptOpenStorageProvider(&hProvider, pcpProviderName, 0)
+	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptOpenStorageProvider() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hProvider)
+
+	// Set the flags
+	if overwrite {
+		flags |= ncryptOverwriteKeyFlag
+	}
+	if localMachine {
+		flags |= ncryptMachineKeyFlag
+	}
 
 	// If name is empty, generate a unique random one
 	if name == "" {
@@ -281,46 +297,43 @@ func GenerateRSAKey(name string, password string, bitLength int, overwrite bool)
 	}
 
 	// Start the creation of the key
-	if overwrite {
-		err = nCryptCreatePersistedKey(hProvider, &hKey, bcryptRsaAlgorithm, name, 0, ncryptOverwriteKeyFlag)
-	} else {
-		err = nCryptCreatePersistedKey(hProvider, &hKey, bcryptRsaAlgorithm, name, 0, 0)
-	}
+	_, err = nCryptCreatePersistedKey(hProvider, &hKey, bcryptRsaAlgorithm, name, 0, flags)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptCreatePersistedKey() failed: %v", err)
+		return nil, err
 	}
 
 	// Set the length of the key
-	u32BitLength := uint32(bitLength)
-	err = nCryptSetProperty(hKey, "Length", unsafe.Pointer(&u32BitLength), uint32(unsafe.Sizeof(u32BitLength)), 0)
+	lengthBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(lengthBytes, bitLength)
+	_, err = nCryptSetProperty(hKey, ncryptLengthProperty, &lengthBytes[0], uint32(len(lengthBytes)), 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptSetProperty(Length) failed: %v", err)
+		return nil, err
 	}
 
 	// If password is given, set it as NCRYPT_PIN_PROPERTY
 	if len(password) != 0 {
-		passwordBlob, err := windows.UTF16FromString(password)
+		passwordBlob, err := utf16BytesFromString(password)
 		if err != nil {
 			return nil, err
 		}
-		passwordBlobLen := len(passwordBlob) * 2
-		err = nCryptSetProperty(hKey, "SmartCardPin", unsafe.Pointer(&passwordBlob[0]), uint32(passwordBlobLen), 0)
+		passwordBlobLen := len(passwordBlob)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), 0)
 		if err != nil {
-			return nil, fmt.Errorf("NCryptSetProperty(SmartCardPin) failed: %v", err)
+			return nil, err
 		}
 	}
 
 	// Finalize (create) the key
-	err = nCryptFinalizeKey(hKey, 0)
+	_, err = nCryptFinalizeKey(hKey, 0)
 	if err != nil {
-		return nil, fmt.Errorf("NCryptFinalizeKey() failed: %v", err)
+		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	//	Read key's public part
-	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey)
+	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
 	if err != nil {
-		return nil, fmt.Errorf("getNCryptBufferPublicKey() failed: %v", err)
+		return nil, err
 	}
 
 	// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
@@ -337,9 +350,10 @@ func GenerateRSAKey(name string, password string, bitLength int, overwrite bool)
 	// Return *pcpRSAPrivateKey instance
 	return &pcpRSAPrivateKey{
 		pcpPrivateKey{
-			name:     name,
-			password: password,
-			pubKey:   publicKey,
+			name:         name,
+			password:     password,
+			localMachine: localMachine,
+			pubKey:       publicKey,
 		},
 	}, nil
 }
