@@ -126,7 +126,7 @@ func (k pcpPrivateKey) Delete() error {
 // the correct password in the UI prompt will succeed. However, if the key was created
 // using NCRYPT_PIN_PROPERTY instead of a NCRYPT_UI_POLICY, entering the correct
 // password in the UI prompt will always fail. This is a bug in the PCP KSP,
-// as it cannot handle normal password in the UI prompt.
+// as it cannot handle normal passwords in the UI prompt.
 func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr

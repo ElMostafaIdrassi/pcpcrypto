@@ -1573,7 +1573,6 @@ func maybeWinErr(errNo uintptr) error {
 	} else {
 		return fmt.Errorf("errno code: (%X) %s", errNo, syscall.Errno(errNo))
 	}
-	return nil
 }
 
 // Transforms a []byte which contains a wide char string in LE

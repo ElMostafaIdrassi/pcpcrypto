@@ -95,8 +95,13 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 // In order to sign with PSS, the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT must be set
 // when calling NCryptSignHash, otherwise, the signature fails with TPM_E_PCP_UNSUPPORTED_PSS_SALT
 // whatever the cbSalt value is in bcryptPSSPaddingInfo.
-// As a result, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto.
-// This seems like a bug in PCP KSP PSS Signature code.
+// The reason is related to how the TPM chip works :
+//	- Pre-TPM Spec-1.16 TPM chips use a salt length equal to the maximum allowed salt size.
+//	- Post-TPM Spec-1.16 TPM chips use a salt length eual to the hash length.
+// Thus, we set the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT to tell the PCP KSP ignore the passed salt length
+// and default to the TPM's chip supported salt length.
+// As a result, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto,
+// so that the salt is detected using the 0x01 delimiter.
 func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash, opts *rsa.PSSOptions) ([]byte, error) {
 
 	var saltLength uint32
@@ -110,17 +115,14 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 		hash = opts.Hash
 	}
 
-	// For the moment, setting paddingInfo.CbSalt has no effect as
-	// it does not work, and we're using NCRYPT_TPM_PAD_PSS_IGNORE_SALT,
-	// which means the PCP KSP ignores this value and always makes use
-	// of cbSalt = uint32(priv.Size() - hash.Size()).
 	switch opts.SaltLength {
 	// PSSSaltLengthAuto causes the salt in a PSS signature to be as large
 	// as possible when signing. We derive it from the key's length.
 	// Pre-TPM Spec-1.16
 	// See https://github.com/tpm2-software/tpm2-pkcs11/issues/417
+	// See https://developer.mozilla.org/en-US/docs/Web/API/RsaPssParams
 	case rsa.PSSSaltLengthAuto:
-		saltLength = priv.Size() - uint32(hash.Size()) // uint32(priv.Size() - 2 - hash.Size())
+		saltLength = priv.Size() - 2 - uint32(hash.Size())
 	// PSSSaltLengthEqualsHash causes the salt length to equal the length
 	// of the hash used in the signature.
 	// Post-TPM Spec-1.16
@@ -131,10 +133,6 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	}
 
 	// Setup the PSS padding info.
-	// For the moment, setting paddingInfo.CbSalt has no effect as
-	// it does not work, and we're using NCRYPT_TPM_PAD_PSS_IGNORE_SALT,
-	// which means the PCP KSP ignores this value and always makes use
-	// of cbSalt = uint32(priv.Size() - hash.Size()).
 	paddingInfo.cbSalt = saltLength
 	switch hash {
 	case crypto.SHA1:
@@ -263,10 +261,6 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 // no restriction on bitLength.
 // The key usage is left to be the default one for RSA, which is Sign + Decrypt.
 // TODO: Support UI Policies + manually set key usages.
-// N.B:
-// Trying to set NCRYPT_PCP_PSS_SALT_SIZE_PROPERTY("PSS Salt Size") to either
-// NCRYPT_TPM_PSS_SALT_SIZE_UNKNOWN(0), NCRYPT_TPM_PSS_SALT_SIZE_MAXIMUM(1) or
-// NCRYPT_TPM_PSS_SALT_SIZE_HASHSIZE(2) always fails with NTE_NOT_SUPPORTED.
 func GenerateRSAKey(name string, password string, bitLength uint32, localMachine bool, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
