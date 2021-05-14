@@ -45,6 +45,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 
 	var hProvider uintptr
 	var hKey uintptr
+	var openFlags uint32
 	var flags uint32
 	var size uint32
 	var b cryptobyte.Builder
@@ -64,31 +65,39 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Try to get a handle to the key by its name
+	// Set the opening flags
 	if k.localMachine {
-		flags |= ncryptMachineKeyFlag
+		openFlags |= ncryptMachineKeyFlag
 	}
-	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
+	if len(k.password) != 0 {
+		openFlags |= ncryptSilentFlag
+	}
+
+	// Set the other flags
+	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
+	// no UI should be shown to the user. Therefore, if the password is wrong,
+	// the operation will fail silently.
+	// Otherwise, if no password is set, do not set the flag, meaning if the key
+	// needs a password, a UI will be shown to ask for it.
+	if len(k.password) != 0 {
+		flags = ncryptSilentFlag
+	}
+
+	// Try to get a handle to the key by its name
+	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
 	if err != nil {
 		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	// Set the key password / pin before signing if any.
-	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
-	// no UI should be shown to the user. Therefore, if the password is wrong,
-	// the operation will fail silently.
-	// Otherwise, if no password is set, do not set the flag, meaning if the key
-	// needs a password, a UI will be shown to ask for it.
-	flags = 0
 	if len(k.password) != 0 {
-		flags = ncryptSilentFlag
-		passwordBlob, err := utf16BytesFromString(k.password)
+		passwordBlob, err := stringToUtf16Bytes(k.password)
 		if err != nil {
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob)
-		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), ncryptSilentFlag)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), flags)
 		if err != nil {
 			return nil, err
 		}
@@ -140,6 +149,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localMachine bool, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
+	var creationFlags uint32
 	var flags uint32
 
 	// Get a handle to the PCP KSP
@@ -149,12 +159,17 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localM
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Set the flags
+	// Set the creation flags
 	if overwrite {
-		flags |= ncryptOverwriteKeyFlag
+		creationFlags |= ncryptOverwriteKeyFlag
 	}
 	if localMachine {
-		flags |= ncryptMachineKeyFlag
+		creationFlags |= ncryptMachineKeyFlag
+	}
+
+	// Set the other flags
+	if len(password) != 0 {
+		flags |= ncryptSilentFlag
 	}
 
 	// Check the specified curve
@@ -180,33 +195,33 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localM
 	}
 
 	// Start the creation of the key
-	_, err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, flags)
+	_, err = nCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, creationFlags)
 	if err != nil {
 		return nil, err
 	}
 
 	// If password is given, set it as NCRYPT_PIN_PROPERTY
 	if len(password) != 0 {
-		passwordBlob, err := utf16BytesFromString(password)
+		passwordBlob, err := stringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob)
-		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), 0)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), flags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Finalize (create) the key
-	_, err = nCryptFinalizeKey(hKey, 0)
+	_, err = nCryptFinalizeKey(hKey, flags)
 	if err != nil {
 		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	// Read key's public part
-	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
+	pubkeyBytes, _, err := getNCryptKeyBlob(hKey, bcryptEccpublicBlob, flags)
 	if err != nil {
 		return nil, err
 	}

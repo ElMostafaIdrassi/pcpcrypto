@@ -91,10 +91,13 @@ func (k pcpPrivateKey) Delete() error {
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Try to get a handle to the key by its name
+	// Set the flags
+	flags = ncryptSilentFlag
 	if k.localMachine {
 		flags |= ncryptMachineKeyFlag
 	}
+
+	// Try to get a handle to the key by its name
 	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
 		return err
@@ -126,7 +129,7 @@ func (k pcpPrivateKey) Delete() error {
 // the correct password in the UI prompt will succeed. However, if the key was created
 // using NCRYPT_PIN_PROPERTY instead of a NCRYPT_UI_POLICY, entering the correct
 // password in the UI prompt will always fail. This is a bug in the PCP KSP,
-// as it cannot handle normal passwords in the UI prompt.
+// as it cannot handle normal password in the UI prompt.
 func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
@@ -140,10 +143,13 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Try to get a handle to the key by its name
+	// Set the flags
+	flags = ncryptSilentFlag
 	if localMachine {
 		flags |= ncryptMachineKeyFlag
 	}
+
+	// Try to get a handle to the key by its name
 	_, err = nCryptOpenKey(hProvider, &hKey, name, 0, flags)
 	if err != nil {
 		return nil, err
@@ -151,11 +157,11 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	defer nCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, 0)
+	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, ncryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
-	algStr, err := utf16ToString(alg)
+	algStr, err := utf16BytesToString(alg)
 	if err != nil {
 		return nil, err
 	}
@@ -164,10 +170,10 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	var pubkeyBytes []byte
 	var isRSA bool
 	if algStr == ncryptRsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
+		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, ncryptSilentFlag)
 		isRSA = true
 	} else if algStr == ncryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
+		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, ncryptSilentFlag)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -264,10 +270,13 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Retrieve 1 key item at a time.
+	// Set the flags
+	flags = ncryptSilentFlag
 	if localMachine {
 		flags |= ncryptMachineKeyFlag
 	}
+
+	// Retrieve 1 key item at a time.
 	for {
 		ret, err = nCryptEnumKeys(
 			hProvider,
@@ -297,21 +306,21 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 			defer nCryptFreeObject(hKey)
 
 			// Get key's algorithm
-			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, 0)
+			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, ncryptSilentFlag)
 			if err != nil {
 				return nil, err
 			}
-			algStr, err := utf16ToString(alg)
+			algStr, err := utf16BytesToString(alg)
 			if err != nil {
 				return nil, err
 			}
 
 			// Read key's public part
 			if algStr == ncryptRsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
+				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, ncryptSilentFlag)
 				isRSA = true
 			} else if algStr == ncryptEcdsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptBufferPublicKey(hKey, bcryptEccpublicBlob, 0)
+				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, ncryptSilentFlag)
 			} else {
 				continue
 			}

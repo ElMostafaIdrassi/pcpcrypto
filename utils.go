@@ -475,7 +475,7 @@ const (
 	bcryptAlgHandleHmacFlag = 0x00000008
 	bcryptHashReusableFlag  = 0x00000020
 	bcryptCapiAesFlag       = 0x00000010
-	BcryptMultiFlag         = 0x00000040
+	bcryptMultiFlag         = 0x00000040
 
 	//
 	// The TLS_CBC_HMAC_VERIFY flag provides a side-channel safe way of verifying TLS data records
@@ -1575,44 +1575,80 @@ func maybeWinErr(errNo uintptr) error {
 	}
 }
 
-// Transforms a []byte which contains a wide char string in LE
+// utf16BytesToString transforms a []byte which contains a wide char string in LE
 // into its []uint16 corresponding representation,
 // then returns the UTF-8 encoding of the UTF-16 sequence,
-// with a terminating NUL removed.
-func utf16ToString(buf []byte) (string, error) {
+// with a terminating NUL removed. If after converting the []byte into
+// a []uint16, there is a NUL uint16, the conversion to string stops
+// at that NUL uint16.
+func utf16BytesToString(buf []byte) (string, error) {
+
 	if len(buf)%2 != 0 {
 		return "", fmt.Errorf("input is not a valid byte representation of a wide char string in LE")
 	}
 	b := make([]uint16, len(buf)/2)
 
 	// LPCSTR (Windows' representation of utf16) is always little endian.
-	if err := binary.Read(bytes.NewReader(buf), binary.LittleEndian, &b); err != nil {
+	if err := binary.Read(bytes.NewReader(buf), binary.LittleEndian, b); err != nil {
 		return "", err
 	}
 	return windows.UTF16ToString(b), nil
 }
 
-// Returns the UTF-16 encoding of the UTF-8 string
+// utf16ToString transforms a []utf16 which contains a wide char string in LE
+// into its UTF-8 encoding representation, with a terminating NUL removed.
+// The conversion stops at the first encountered NUL uint16.
+func utf16ToString(buf []uint16) (string, error) {
+	return windows.UTF16ToString(buf), nil
+}
+
+// utf16PtrToString transforms a *utf16 which contains a wide char string in LE
+// into its UTF-8 encoding representation, with a terminating NUL removed.
+// The conversion stops at the first encountered NUL uint16.
+func utf16PtrToString(buf *uint16) string {
+	return windows.UTF16PtrToString(buf)
+}
+
+// stringToUtf16 returns the UTF-16 encoding of the UTF-8 string
 // str, with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func utf16FromString(str string) ([]uint16, error) {
+func stringToUtf16(str string) ([]uint16, error) {
+	if str == "" {
+		return nil, nil
+	}
 	return windows.UTF16FromString(str)
 }
 
-// Returns the UTF-16 encoding of the UTF-8 string
+// stringToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
 // str, with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func utf16PtrFromString(str string) (*uint16, error) {
+func stringToUtf16Ptr(str string) (*uint16, error) {
 	if str == "" {
 		return nil, nil
 	}
 	return windows.UTF16PtrFromString(str)
 }
 
-// utf16BytesFromString returns the UTF-16 encoding of the UTF-8 string
+// bytesToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
+// contained in buf as a byte array, with a terminating NUL added.
+// If str contains a NUL byte at any location, it returns (nil, EINVAL).
+func bytesToUtf16Ptr(buf []byte) (*uint16, error) {
+	str := string(buf)
+	return stringToUtf16Ptr(str)
+}
+
+// bytesToUtf16 returns the UTF-16 encoding of the UTF-8 string
+// contained in buf as a byte array, with a terminating NUL added.
+// If str contains a NUL byte at any location, it returns (nil, EINVAL).
+func bytesToUtf16(buf []byte) ([]uint16, error) {
+	str := string(buf)
+	return stringToUtf16(str)
+}
+
+// stringToUtf16Bytes returns the UTF-16 encoding of the UTF-8 string
 // str, as a byte array with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func utf16BytesFromString(str string) ([]byte, error) {
+func stringToUtf16Bytes(str string) ([]byte, error) {
 	if str == "" {
 		return nil, nil
 	}
@@ -1633,9 +1669,27 @@ func utf16BytesFromString(str string) ([]byte, error) {
 	return bytesStr, nil
 }
 
+// stringToUtf16String returns the UTF-16 encoding of the UTF-8 string
+// str, with a terminating NUL added. If str contains a NUL byte at any
+// location, it returns (nil, EINVAL).
+func stringToUtf16String(str string) ([]uint16, error) {
+	if str == "" {
+		return nil, nil
+	}
+	utf16Str, err := windows.UTF16FromString(str)
+	if err != nil {
+		return nil, err
+	}
+	return utf16Str, nil
+}
+
 // getNCryptBufferProperty is a helper to read a byte slice from a NCrypt handle property
 // using NCryptGetProperty.
-func getNCryptBufferProperty(hnd uintptr, propertyName string, flags uint32) ([]byte, uint32, error) {
+func getNCryptBufferProperty(
+	hnd uintptr,
+	propertyName string,
+	flags uint32,
+) ([]byte, uint32, error) {
 	var size uint32
 
 	r, err := nCryptGetProperty(
@@ -1648,6 +1702,9 @@ func getNCryptBufferProperty(hnd uintptr, propertyName string, flags uint32) ([]
 	)
 	if err != nil {
 		return nil, r, err
+	}
+	if size == 0 {
+		return nil, 0, nil
 	}
 
 	buff := make([]byte, size)
@@ -1667,10 +1724,13 @@ func getNCryptBufferProperty(hnd uintptr, propertyName string, flags uint32) ([]
 	return buff, 0, nil
 }
 
-// getNCryptBufferPublicKey is a helper to read the public key as a byte slice from a NCrypt handle
-// using NCryptExportKey. The output is a blob : e.g. BCRYPT_RSAPUBLIC_BLOB for RSA keys, and
-// BCRYPT_ECCPUBLIC_BLOB for ECDSA keys, following the passed blobType.
-func getNCryptBufferPublicKey(hnd uintptr, blobType string, flags uint32) ([]byte, uint32, error) {
+// getNCryptKeyBlob is a helper to get the blob of a NCrypt key handle
+// using NCryptExportKey.
+func getNCryptKeyBlob(
+	hnd uintptr,
+	blobType string,
+	flags uint32,
+) ([]byte, uint32, error) {
 	var size uint32
 
 	r, err := nCryptExportKey(
@@ -1685,6 +1745,9 @@ func getNCryptBufferPublicKey(hnd uintptr, blobType string, flags uint32) ([]byt
 	)
 	if err != nil {
 		return nil, r, err
+	}
+	if size == 0 {
+		return nil, 0, nil
 	}
 
 	buff := make([]byte, size)
@@ -1748,12 +1811,12 @@ func nCryptCreatePersistedKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16AlgID, err := utf16PtrFromString(pszAlgID)
+	utf16AlgID, err := stringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
 	}
 
-	utf16KeyName, err := utf16PtrFromString(pszKeyName)
+	utf16KeyName, err := stringToUtf16Ptr(pszKeyName)
 	if err != nil {
 		return 0, err
 	}
@@ -1924,7 +1987,7 @@ func nCryptEnumKeys(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16Property, err := utf16PtrFromString(pszScope)
+	utf16Property, err := stringToUtf16Ptr(pszScope)
 	if err != nil {
 		return 0, err
 	}
@@ -1978,7 +2041,7 @@ func nCryptExportKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16BlobType, err := utf16PtrFromString(pszBlobType)
+	utf16BlobType, err := stringToUtf16Ptr(pszBlobType)
 	if err != nil {
 		return 0, err
 	}
@@ -2065,7 +2128,7 @@ func nCryptGetProperty(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16Property, err := utf16PtrFromString(pszProperty)
+	utf16Property, err := stringToUtf16Ptr(pszProperty)
 	if err != nil {
 		return 0, err
 	}
@@ -2099,7 +2162,7 @@ func nCryptImportKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16BlobType, err := utf16PtrFromString(pszBlobType)
+	utf16BlobType, err := stringToUtf16Ptr(pszBlobType)
 	if err != nil {
 		return 0, err
 	}
@@ -2130,7 +2193,7 @@ func nCryptIsAlgSupported(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16AlgID, err := utf16PtrFromString(pszAlgID)
+	utf16AlgID, err := stringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
 	}
@@ -2195,7 +2258,7 @@ func nCryptOpenKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16KeyName, err := utf16PtrFromString(pszKeyName)
+	utf16KeyName, err := stringToUtf16Ptr(pszKeyName)
 	if err != nil {
 		return 0, err
 	}
@@ -2223,7 +2286,7 @@ func nCryptOpenStorageProvider(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16ProviderName, err := utf16PtrFromString(pszProviderName)
+	utf16ProviderName, err := stringToUtf16Ptr(pszProviderName)
 	if err != nil {
 		return 0, err
 	}
@@ -2274,7 +2337,7 @@ func nCryptSetProperty(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16Property, err := utf16PtrFromString(pszProperty)
+	utf16Property, err := stringToUtf16Ptr(pszProperty)
 	if err != nil {
 		return 0, err
 	}

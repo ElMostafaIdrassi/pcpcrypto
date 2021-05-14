@@ -45,6 +45,7 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	var hProvider uintptr
 	var hKey uintptr
 	var hash crypto.Hash
+	var openFlags uint32
 	var flags uint32
 
 	// If opts is null or opts.HashFunc is 0, it means msg is not a digest and
@@ -62,11 +63,26 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Try to get a handle to the key by its name.
+	// Set the opening flags
 	if k.localMachine {
-		flags |= ncryptMachineKeyFlag
+		openFlags |= ncryptMachineKeyFlag
 	}
-	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
+	if len(k.password) != 0 {
+		openFlags |= ncryptSilentFlag
+	}
+
+	// Set the other flags
+	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
+	// no UI should be shown to the user. Therefore, if the password is wrong,
+	// the operation will fail silently.
+	// Otherwise, if no password is set, do not set the flag, meaning if the key
+	// needs a password, a UI will be shown to ask for it.
+	if len(k.password) != 0 {
+		flags = ncryptSilentFlag
+	}
+
+	// Try to get a handle to the key by its name.
+	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
 	if err != nil {
 		return nil, err
 	}
@@ -74,12 +90,12 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 
 	// Set the key password / pin before signing if any.
 	if len(k.password) != 0 {
-		passwordBlob, err := utf16BytesFromString(k.password)
+		passwordBlob, err := stringToUtf16Bytes(k.password)
 		if err != nil {
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob)
-		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), ncryptSilentFlag)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), flags)
 		if err != nil {
 			return nil, err
 		}
@@ -161,6 +177,7 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 		}
 	}
 
+	// Set the other flags
 	// If a password is set for the key, set the flag NcryptSilentFlag when signing,
 	// meaning no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
@@ -223,6 +240,7 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 		}
 	}
 
+	// Set the other flags
 	// If a password is set for the key, set the flag NcryptSilentFlag when signing,
 	// meaning no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
@@ -264,6 +282,7 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 func GenerateRSAKey(name string, password string, bitLength uint32, localMachine bool, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
+	var creationFlags uint32
 	var flags uint32
 
 	// Get a handle to the PCP KSP
@@ -273,12 +292,17 @@ func GenerateRSAKey(name string, password string, bitLength uint32, localMachine
 	}
 	defer nCryptFreeObject(hProvider)
 
-	// Set the flags
+	// Set the creation flags
 	if overwrite {
-		flags |= ncryptOverwriteKeyFlag
+		creationFlags |= ncryptOverwriteKeyFlag
 	}
 	if localMachine {
-		flags |= ncryptMachineKeyFlag
+		creationFlags |= ncryptMachineKeyFlag
+	}
+
+	// Set the other flags
+	if len(password) != 0 {
+		flags |= ncryptSilentFlag
 	}
 
 	// If name is empty, generate a unique random one
@@ -291,7 +315,7 @@ func GenerateRSAKey(name string, password string, bitLength uint32, localMachine
 	}
 
 	// Start the creation of the key
-	_, err = nCryptCreatePersistedKey(hProvider, &hKey, bcryptRsaAlgorithm, name, 0, flags)
+	_, err = nCryptCreatePersistedKey(hProvider, &hKey, bcryptRsaAlgorithm, name, 0, creationFlags)
 	if err != nil {
 		return nil, err
 	}
@@ -299,33 +323,33 @@ func GenerateRSAKey(name string, password string, bitLength uint32, localMachine
 	// Set the length of the key
 	lengthBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lengthBytes, bitLength)
-	_, err = nCryptSetProperty(hKey, ncryptLengthProperty, &lengthBytes[0], uint32(len(lengthBytes)), 0)
+	_, err = nCryptSetProperty(hKey, ncryptLengthProperty, &lengthBytes[0], uint32(len(lengthBytes)), flags)
 	if err != nil {
 		return nil, err
 	}
 
 	// If password is given, set it as NCRYPT_PIN_PROPERTY
 	if len(password) != 0 {
-		passwordBlob, err := utf16BytesFromString(password)
+		passwordBlob, err := stringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
 		passwordBlobLen := len(passwordBlob)
-		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), 0)
+		_, err = nCryptSetProperty(hKey, ncryptPinProperty, &passwordBlob[0], uint32(passwordBlobLen), flags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Finalize (create) the key
-	_, err = nCryptFinalizeKey(hKey, 0)
+	_, err = nCryptFinalizeKey(hKey, flags)
 	if err != nil {
 		return nil, err
 	}
 	defer nCryptFreeObject(hKey)
 
 	//	Read key's public part
-	pubkeyBytes, _, err := getNCryptBufferPublicKey(hKey, bcryptRsapublicBlob, 0)
+	pubkeyBytes, _, err := getNCryptKeyBlob(hKey, bcryptRsapublicBlob, flags)
 	if err != nil {
 		return nil, err
 	}
