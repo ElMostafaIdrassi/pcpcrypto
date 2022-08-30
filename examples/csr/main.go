@@ -26,7 +26,7 @@ import (
 )
 
 func main() {
-	key, err := pcpcrypto.GenerateRSAKey("", "", 1024, false, true)
+	key, err := pcpcrypto.GenerateRSAKey("", "", 1024, true)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pcpcrypto.GenerateRSAKey() failed: %v\n", err)
 		return

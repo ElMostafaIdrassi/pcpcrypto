@@ -27,7 +27,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// pcpRSAPrivateKey refers to a persistent RSA private key in the PCP KSP.
+// pcpRSAPrivateKey refers to a persistent RSA PCP private key.
 // It completes the implementation of Signer by implementing its Sign()
 // and Size() functions.
 type pcpRSAPrivateKey struct {
@@ -64,19 +64,16 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	defer nCryptFreeObject(hProvider)
 
 	// Set the opening flags
-	if k.localMachine {
-		openFlags |= ncryptMachineKeyFlag
-	}
 	if len(k.password) != 0 {
 		openFlags |= ncryptSilentFlag
 	}
 
 	// Set the other flags
-	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
+	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG, meaning
 	// no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
-	// Otherwise, if no password is set, do not set the flag, meaning if the key
-	// needs a password, a UI will be shown to ask for it.
+	// Otherwise, if no password is set, do not set the flag, meaning a UI might
+	// be shown to ask for it if the key needs one.
 	if len(k.password) != 0 {
 		flags = ncryptSilentFlag
 	}
@@ -88,7 +85,7 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	}
 	defer nCryptFreeObject(hKey)
 
-	// Set the key password / pin before signing if any.
+	// Set the key password / pin before signing if required.
 	if len(k.password) != 0 {
 		passwordBlob, err := stringToUtf16Bytes(k.password)
 		if err != nil {
@@ -109,14 +106,17 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 }
 
 // In order to sign with PSS, the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT must be set
-// when calling NCryptSignHash, otherwise, the signature fails with TPM_E_PCP_UNSUPPORTED_PSS_SALT
-// whatever the cbSalt value is in bcryptPSSPaddingInfo.
+// when calling NCryptSignHash, because otherwise, the signature fails with
+// TPM_E_PCP_UNSUPPORTED_PSS_SALT, regardless of the cbSalt value set in BCRYPT_PSS_PADDING_INFO.
+//
 // The reason is related to how the TPM chip works :
 //	- Pre-TPM Spec-1.16 TPM chips use a salt length equal to the maximum allowed salt size.
-//	- Post-TPM Spec-1.16 TPM chips use a salt length eual to the hash length.
-// Thus, we set the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT to tell the PCP KSP ignore the passed salt length
-// and default to the TPM's chip supported salt length.
-// As a result, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto,
+//	- Post-TPM Spec-1.16 TPM chips use a salt length equal to the hash length.
+//
+// Thus, we need to set the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT to tell the PCP KSP to ignore the
+// passed salt length and default to the TPM's chip supported salt length.
+//
+// Also, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto,
 // so that the salt is detected using the 0x01 delimiter.
 func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash, opts *rsa.PSSOptions) ([]byte, error) {
 
@@ -131,6 +131,7 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 		hash = opts.Hash
 	}
 
+	// paddingInfo.cbSalt will be ignored by the PCP KSP, but we keep the parsing nevertheless :)
 	switch opts.SaltLength {
 	// PSSSaltLengthAuto causes the salt in a PSS signature to be as large
 	// as possible when signing. We derive it from the key's length.
@@ -178,11 +179,11 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	}
 
 	// Set the other flags
-	// If a password is set for the key, set the flag NcryptSilentFlag when signing,
+	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG when signing,
 	// meaning no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
 	// Otherwise, if no password is set, do not set the flag, meaning if the key
-	// needs a password, a UI will be shown to ask for it.
+	// needs a password, a UI might be shown to ask for it if the key needs one.
 	flags = bcryptPadPss | ncryptTpmPadPssIgnoreSalt
 	if len(priv.password) != 0 {
 		flags |= ncryptSilentFlag
@@ -241,11 +242,11 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 	}
 
 	// Set the other flags
-	// If a password is set for the key, set the flag NcryptSilentFlag when signing,
+	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG when signing,
 	// meaning no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
-	// Otherwise, if no password is set, do not set the flag, meaning if the key
-	// needs a password, a UI will be shown to ask for it.
+	// Otherwise, if no password is set, do not set the flag, meaning a UI might
+	// be shown to ask for it if the key needs one.
 	flags = bcryptPadPkcs1
 	if len(priv.password) != 0 {
 		flags |= ncryptSilentFlag
@@ -270,16 +271,26 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 
 // GenerateRSAKey generates a new signing RSA PCP Key with the specified name and bit
 // length, then returns its corresponding pcpRSAPrivateKey instance.
-// If name is empty, it will generate unique random name beforehand.
-// If password is empty, it will generate the key with no PIN / Password, making it
+//
+// If name is empty, it will generate a unique random name beforehand.
+//
+// If password is empty, it will generate the key with no password / pin, making it
 // usable with no authentication.
+//
 // If overwrite is set, and if a key with the same name already exists, it will
 // be overwritten.
-// Usually, supported bit lengths by the TPM chip are 1024 and 2048, but there is
-// no restriction on bitLength.
+//
+// Supported RSA bit lengths are dictated by the TPM chip (usually 1024 and 2048)
+// and by the PCP KSP. Therefore, there is no restriction on bitLength by GenerateRSAKey.
+//
+// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
+// creation, the PCP KSP creates a key that applies to the Current User.
+// Therefore, GenerateRSAKey will always generate keys that apply for the Current User.
+//
 // The key usage is left to be the default one for RSA, which is Sign + Decrypt.
+//
 // TODO: Support UI Policies + manually set key usages.
-func GenerateRSAKey(name string, password string, bitLength uint32, localMachine bool, overwrite bool) (Signer, error) {
+func GenerateRSAKey(name string, password string, bitLength uint32, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var creationFlags uint32
@@ -295,9 +306,6 @@ func GenerateRSAKey(name string, password string, bitLength uint32, localMachine
 	// Set the creation flags
 	if overwrite {
 		creationFlags |= ncryptOverwriteKeyFlag
-	}
-	if localMachine {
-		creationFlags |= ncryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -368,10 +376,9 @@ func GenerateRSAKey(name string, password string, bitLength uint32, localMachine
 	// Return *pcpRSAPrivateKey instance
 	return &pcpRSAPrivateKey{
 		pcpPrivateKey{
-			name:         name,
-			password:     password,
-			localMachine: localMachine,
-			pubKey:       publicKey,
+			name:     name,
+			password: password,
+			pubKey:   publicKey,
 		},
 	}, nil
 }

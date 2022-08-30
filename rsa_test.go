@@ -27,7 +27,7 @@ import (
 func testRSAGenerateAndFindKey(t *testing.T, name string, password string, length uint32, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateRSAKey(name, password, length, false, true)
+	key, err := GenerateRSAKey(name, password, length, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -38,7 +38,7 @@ func testRSAGenerateAndFindKey(t *testing.T, name string, password string, lengt
 	require.Equal(t, key.Size(), (length+7)/8)
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password, false)
+	keyBis, err := FindKey(key.Name(), password)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -125,22 +125,22 @@ func TestRSAGenerateKey(t *testing.T) {
 func TestRSASignWithPass(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "password123", 1024, false, true)
+	key1024, err := GenerateRSAKey("", "password123", 1024, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
 		require.NoError(t, key1024.Delete())
 	}()
 
-	// For the moment, we only test with salt length set to rsa.PSSSaltLengthAuto because of the following :
+	// At the time of writing, we have the following :
 	// 1 / Setting salt length in padding info always fails, whetever its value is.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
 	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
-	// Also, signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
-	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT
-	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT
-	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // TE_NOT_SUPPORTED
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthAuto) })
 	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthAuto) })
@@ -152,21 +152,21 @@ func TestRSASignWithPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "password123", 2048, false, true)
+	key2048, err := GenerateRSAKey("", "password123", 2048, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {
 		require.NoError(t, key2048.Delete())
 	}()
 
-	// For the moment, we only test with salt length set to rsa.PSSSaltLengthAuto because of the following :
+	// At the time of writing, we have the following :
 	// 1 / Setting salt length in padding info always fails, whetever its value is.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
 	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
-	// Also, signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
-	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT
-	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
 	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	t.Run("RSASIGNPSS-2048-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthAuto) })
@@ -182,21 +182,21 @@ func TestRSASignWithPass(t *testing.T) {
 func TestRSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "", 1024, false, true)
+	key1024, err := GenerateRSAKey("", "", 1024, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
 		require.NoError(t, key1024.Delete())
 	}()
 
-	// For the moment, we only test with salt length set to rsa.PSSSaltLengthAuto because of the following :
+	// At the time of writing, we have the following :
 	// 1 / Setting salt length in padding info always fails, whetever its value is.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
 	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
-	// Also, signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
-	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT
-	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
 	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // TE_NOT_SUPPORTED
 	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthAuto) })
@@ -209,21 +209,21 @@ func TestRSASignWithoutPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "", 2048, false, true)
+	key2048, err := GenerateRSAKey("", "", 2048, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {
 		require.NoError(t, key2048.Delete())
 	}()
 
-	// For the moment, we only test with salt length set to rsa.PSSSaltLengthAuto because of the following :
+	// At the time of writing, we have the following :
 	// 1 / Setting salt length in padding info always fails, whetever its value is.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
 	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
-	// Also, signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
-	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT
-	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
 	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
 	t.Run("RSASIGNPSS-2048-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthAuto) })

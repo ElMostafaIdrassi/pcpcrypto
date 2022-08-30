@@ -28,6 +28,7 @@ import (
 )
 
 // Signer implements crypto.Signer and additional functions (i.e. Name()).
+//
 // This allows a pcpPrivateKey to be usable whenever a crypto.Signer
 // is expected, in addition to allowing the caller to perform additional
 // actions on it that are not typically allowed / implemented by the
@@ -35,31 +36,28 @@ import (
 type Signer interface {
 	crypto.Signer
 
-	// Name returns the PCP Key name.
+	// Name returns the PCP key name.
 	Name() string
-
-	// IsLocalMachine returns true if the key resides in the Local Machine
-	// store instead of the Current User.
-	IsLocalMachine() bool
 
 	// Size returns the PCP public key size.
 	Size() uint32
 
-	// Delete deletes the PCP Key from the PCP KSP.
+	// Delete deletes the PCP key.
 	Delete() error
 }
 
-// pcpPrivateKey refers to a persistent private key present in the PCP KSP.
-// It must have a name and might or might not be protected with a password.
+// pcpPrivateKey refers to a persistent PCP private key.
+// It must have a name and might or might not be protected with a password / pin.
+//
 // pcpPrivateKey partially implements Signer by only implementing
 // its Public(), Name() and Delete() functions.
+//
 // pcpRSAPrivateKey and pcpECDSAPrivateKey each implement the remaining
 // Sign() and Size() functions.
 type pcpPrivateKey struct {
-	name         string           // name is the PCP Key name.
-	password     string           // password is the PCP Key password / pin.
-	localMachine bool             // localMachine determines whether the key resides in the Current User or Local Machine store.
-	pubKey       crypto.PublicKey // pubKey is the public part of the PCP Key.
+	name     string           // name is the PCP key name.
+	password string           // password is the PCP key password / pin.
+	pubKey   crypto.PublicKey // pubKey is the public part of the PCP key.
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -67,18 +65,12 @@ func (k pcpPrivateKey) Public() crypto.PublicKey {
 	return k.pubKey
 }
 
-// Name returns the PCP Key name.
+// Name returns the PCP key name.
 func (k pcpPrivateKey) Name() string {
 	return k.name
 }
 
-// IsLocalMachine returns true if the key resides in the Local Machine
-// store instead of the Current User.
-func (k pcpPrivateKey) IsLocalMachine() bool {
-	return k.localMachine
-}
-
-// Delete deletes the PCP Key from the PCP KSP.
+// Delete deletes the PCP key.
 func (k pcpPrivateKey) Delete() error {
 	var hProvider uintptr
 	var hKey uintptr
@@ -93,9 +85,6 @@ func (k pcpPrivateKey) Delete() error {
 
 	// Set the flags
 	flags = ncryptSilentFlag
-	if k.localMachine {
-		flags |= ncryptMachineKeyFlag
-	}
 
 	// Try to get a handle to the key by its name
 	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
@@ -114,23 +103,36 @@ func (k pcpPrivateKey) Delete() error {
 }
 
 // FindKey tries to open a handle to an existing PCP key by its name
-// and read its public part before creating and returning either a pcpRSAPrivateKey or
-// a pcpECDSAPrivateKey. If the PCP key does not exist, it returns nil.
+// and read its public part before creating and returning either a
+// pcpRSAPrivateKey or a pcpECDSAPrivateKey. If the PCP key does not exist,
+// it returns nil.
+//
 // If password is set, it will be saved in the private key and used
 // before each signature, requiring no interaction from the user.
-// Otherwise, if no password is set, a UI prompt might show up during the signature
-// asking for the password if the key needs one.
-// If localMachine is set to true, the search will be perfomed in the Local Machine
-// key store. Otherwise, it will be performed in the Current User key store.
-// After all operations are done on the resulting key, its handle should be freed by calling
-// the Close() function on the key.
+// Otherwise, if no password is set, a UI prompt might show up during the
+// signature asking for the password / pin if the key needs one.
+//
+// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
+// creation, the PCP KSP creates a key that applies to the Current User.
+// Therefore, the search will always look for keys that apply for the Current User.
+//
+// After all operations are done on the resulting key, its handle should be
+// freed by calling the Close() function on the key.
+//
 // N.B :
-// In the case where the key was created using NCRYPT_UI_POLICY, entering
-// the correct password in the UI prompt will succeed. However, if the key was created
-// using NCRYPT_PIN_PROPERTY instead of a NCRYPT_UI_POLICY, entering the correct
-// password in the UI prompt will always fail. This is a bug in the PCP KSP,
-// as it cannot handle normal password in the UI prompt.
-func FindKey(name string, password string, localMachine bool) (Signer, error) {
+// If the key was created using a password entered in the UI prompt, entering
+// the correct password in the UI prompt will succeed, but setting it
+// programmatically in NCRYPT_PIN_PROPERTY will always fail.
+//
+// If the key was created using a password set in NCRYPT_PIN_PROPERTY,
+// entering the correct password in the UI prompt will always fail, but setting it
+// programmatically in NCRYPT_PIN_PROPERTY will succeed.
+//
+// This is not a bug in the PCP KSP and is a normal behaviour : a password set
+// via the UI prompt is transformed internally into its SHA-1 digest, while a
+// password set programmatically via NCRYPT_PIN_PROPERTY is transformed internally
+// into its SHA256 digest.
+func FindKey(name string, password string) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var flags uint32
@@ -145,9 +147,6 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 
 	// Set the flags
 	flags = ncryptSilentFlag
-	if localMachine {
-		flags |= ncryptMachineKeyFlag
-	}
 
 	// Try to get a handle to the key by its name
 	_, err = nCryptOpenKey(hProvider, &hKey, name, 0, flags)
@@ -157,7 +156,7 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	defer nCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, ncryptSilentFlag)
+	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -170,10 +169,10 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 	var pubkeyBytes []byte
 	var isRSA bool
 	if algStr == ncryptRsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, ncryptSilentFlag)
+		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, flags)
 		isRSA = true
 	} else if algStr == ncryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, ncryptSilentFlag)
+		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, flags)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -198,10 +197,9 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 
 		return &pcpRSAPrivateKey{
 			pcpPrivateKey{
-				name:         name,
-				password:     password,
-				localMachine: localMachine,
-				pubKey:       publicKey,
+				name:     name,
+				password: password,
+				pubKey:   publicKey,
 			},
 		}, nil
 	} else {
@@ -236,20 +234,21 @@ func FindKey(name string, password string, localMachine bool) (Signer, error) {
 
 		return &pcpECDSAPrivateKey{
 			pcpPrivateKey{
-				name:         name,
-				password:     password,
-				localMachine: localMachine,
-				pubKey:       publicKey,
+				name:     name,
+				password: password,
+				pubKey:   publicKey,
 			},
 		}, nil
 	}
 }
 
 // GetKeys tries to retrieve all existing PCP keys.
-// If localMachine is set to true, it will retrieve the keys that
-// are in the Local Machine key store. Otherwise, it will retrieve
-// the keys that are in the Current User key store.
-func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
+//
+// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
+// creation, the PCP KSP creates a key that applies to the Current User.
+// Therefore, GetKeys will always retrieve the keys that apply to the
+// Current User.
+func GetKeys() ([]pcpPrivateKey, error) {
 	var hProvider uintptr
 	var pState unsafe.Pointer
 	var pKeyName *nCryptKeyName
@@ -272,9 +271,6 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 
 	// Set the flags
 	flags = ncryptSilentFlag
-	if localMachine {
-		flags |= ncryptMachineKeyFlag
-	}
 
 	// Retrieve 1 key item at a time.
 	for {
@@ -306,7 +302,7 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 			defer nCryptFreeObject(hKey)
 
 			// Get key's algorithm
-			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, ncryptSilentFlag)
+			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, flags)
 			if err != nil {
 				return nil, err
 			}
@@ -317,10 +313,10 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 
 			// Read key's public part
 			if algStr == ncryptRsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, ncryptSilentFlag)
+				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, flags)
 				isRSA = true
 			} else if algStr == ncryptEcdsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, ncryptSilentFlag)
+				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, flags)
 			} else {
 				continue
 			}
@@ -345,10 +341,9 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 				publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
 
 				keys = append(keys, pcpPrivateKey{
-					name:         keyName,
-					password:     "",
-					localMachine: localMachine,
-					pubKey:       publicKey,
+					name:     keyName,
+					password: "",
+					pubKey:   publicKey,
 				})
 			} else {
 
@@ -381,10 +376,9 @@ func GetKeys(localMachine bool) ([]pcpPrivateKey, error) {
 				publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
 
 				keys = append(keys, pcpPrivateKey{
-					name:         keyName,
-					password:     "",
-					localMachine: localMachine,
-					pubKey:       publicKey,
+					name:     keyName,
+					password: "",
+					pubKey:   publicKey,
 				})
 			}
 		}

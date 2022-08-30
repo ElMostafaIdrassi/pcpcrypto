@@ -29,7 +29,7 @@ import (
 func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, curve elliptic.Curve, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateECDSAKey(name, password, curve, false, true)
+	key, err := GenerateECDSAKey(name, password, curve, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -40,7 +40,7 @@ func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, cur
 	require.Equal(t, key.Size(), uint32((curve.Params().BitSize+7)/8))
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password, false)
+	keyBis, err := FindKey(key.Name(), password)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -89,7 +89,7 @@ func TestECDSAGenerateKey(t *testing.T) {
 func TestECDSASignWithPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "password123", elliptic.P256(), false, true)
+	key, err := GenerateECDSAKey("", "password123", elliptic.P256(), true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {
@@ -104,7 +104,7 @@ func TestECDSASignWithPass(t *testing.T) {
 func TestECDSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "", elliptic.P256(), false, true)
+	key, err := GenerateECDSAKey("", "", elliptic.P256(), true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {

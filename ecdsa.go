@@ -28,7 +28,7 @@ import (
 	"golang.org/x/crypto/cryptobyte/asn1"
 )
 
-// pcpPrivateKey refers to a persistent ECDSA private key in the PCP KSP.
+// pcpPrivateKey refers to a persistent ECDSA PCP private key.
 // It completes the implementation of Signer by implementing its Sign() and
 // Size() functions.
 type pcpECDSAPrivateKey struct {
@@ -66,19 +66,16 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	defer nCryptFreeObject(hProvider)
 
 	// Set the opening flags
-	if k.localMachine {
-		openFlags |= ncryptMachineKeyFlag
-	}
 	if len(k.password) != 0 {
 		openFlags |= ncryptSilentFlag
 	}
 
 	// Set the other flags
-	// If a password is set for the key, set the flag NcryptSilentFlag, meaning
+	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG, meaning
 	// no UI should be shown to the user. Therefore, if the password is wrong,
 	// the operation will fail silently.
-	// Otherwise, if no password is set, do not set the flag, meaning if the key
-	// needs a password, a UI will be shown to ask for it.
+	// Otherwise, if no password is set, do not set the flag, meaning a UI might
+	// be shown to ask for it if the key needs one.
 	if len(k.password) != 0 {
 		flags = ncryptSilentFlag
 	}
@@ -90,7 +87,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	}
 	defer nCryptFreeObject(hKey)
 
-	// Set the key password / pin before signing if any.
+	// Set the key password / pin before signing if required.
 	if len(k.password) != 0 {
 		passwordBlob, err := stringToUtf16Bytes(k.password)
 		if err != nil {
@@ -117,7 +114,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 		return nil, err
 	}
 
-	// The EDCSA signature returned by the PCP is in RAW format (r,s).
+	// The EDCSA signature returned by the PCP KSP is in RAW format (r,s).
 	// Therefore, we need to ASN.1 encode it before returning it.
 	rInt := big.NewInt(0)
 	rInt.SetBytes(sig[:size/2])
@@ -136,17 +133,26 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 
 // GenerateECDSAKey generates a new signing ECDSA PCP Key with the specified name and
 // curve, then returns its corresponding pcpECDSAPrivateKey instance.
-// If name is empty, it will generate unique random name beforehand.
-// If password is not empty, it will set it as NCRYPT_PIN_PROPERTY.
+//
+// If name is empty, it will generate a unique random name beforehand.
+//
+// If password is empty, it will generate the key with no password / pin, making it
+// usable with no authentication.
+//
 // If overwrite is set, and if a key with the same name already exists, it will
 // be overwritten.
-// If localMachine is set to true, the key will be generated in the Local Machine key store.
-// Otherwise, it will be generated in the Current User key store.
-// Usually, TPM chips support NIST-P256 and may support other curves. GenerateECDSAKey only
-// supports NIST-P256/P384/P521 as PCP only supports these curves.
-// The key usage is left to be the default one for ECDSA, which is SignOnly.
+//
+// Supported EC curves are dictated by the (usually at least NIST-P256) and by the PCP KSP.
+// GenerateECDSAKey only supports NIST-P256/P384/P521 which are the only curves supported
+// by the PCP KSP (at the time of writing).
+//
+// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
+// creation, the PCP KSP creates a key that applies to the Current User.
+// Therefore, GenerateECDSAKey will always generate keys that apply for the Current User.
+//
+// The key usage is left to be the default one for ECDSA, which is Sign.
 // TODO: Support UI Policies + manually set key usages.
-func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localMachine bool, overwrite bool) (Signer, error) {
+func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var creationFlags uint32
@@ -162,9 +168,6 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localM
 	// Set the creation flags
 	if overwrite {
 		creationFlags |= ncryptOverwriteKeyFlag
-	}
-	if localMachine {
-		creationFlags |= ncryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -253,10 +256,9 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, localM
 	// Return *pcpECDSAPrivateKey instance
 	return &pcpECDSAPrivateKey{
 		pcpPrivateKey{
-			name:         name,
-			password:     password,
-			localMachine: localMachine,
-			pubKey:       publicKey,
+			name:     name,
+			password: password,
+			pubKey:   publicKey,
 		},
 	}, nil
 }
