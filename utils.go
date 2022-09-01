@@ -40,17 +40,17 @@ const (
 	// allow fast XMM memory accesses.
 	// BCrypt callers do not need to take any alignment precautions.
 	//
-	bcryptObjectAlignment = 16
+	BcryptObjectAlignment = 16
 
 	//
 	// DeriveKey KDF Types
 	//
-	bcryptKdfHash           = "HASH"
-	bcryptKdfHmac           = "HMAC"
-	bcryptKdfTlsPrf         = "TLS_PRF"
-	bcryptKdfSp80056aConcat = "SP800_56A_CONCAT"
-	bcryptKdfRawSecret      = "TRUNCATE"
-	bcryptKdfHkdf           = "HKDF"
+	BcryptKdfHash           = "HASH"
+	BcryptKdfHmac           = "HMAC"
+	BcryptKdfTlsPrf         = "TLS_PRF"
+	BcryptKdfSp80056aConcat = "SP800_56A_CONCAT"
+	BcryptKdfRawSecret      = "TRUNCATE"
+	BcryptKdfHkdf           = "HKDF"
 
 	//
 	// DeriveKey KDF BufferTypes
@@ -60,23 +60,23 @@ const (
 	// parameter list.  The BufferTypes are processed in order of appearence
 	// within the parameter list.
 	//
-	kdfHashAlgorithm  = 0x0
-	kdfSecretPrepend  = 0x1
-	kdfSecretAppend   = 0x2
-	kdfHmacKey        = 0x3
-	kdfTlsPrfLabel    = 0x4
-	kdfTlsPrfSeed     = 0x5
-	kdfSecretHandle   = 0x6
-	kdfTlsPrfProtocol = 0x7
-	kdfAlgorithmid    = 0x8
-	kdfPartyuinfo     = 0x9
-	kdfPartyvinfo     = 0xA
-	kdfSupppubinfo    = 0xB
-	kdfSuppprivinfo   = 0xC
-	kdfLabel          = 0xD
-	kdfContext        = 0xE
-	kdfSalt           = 0xF
-	kdfIterationCount = 0x10
+	KdfHashAlgorithm  = 0x0
+	KdfSecretPrepend  = 0x1
+	KdfSecretAppend   = 0x2
+	KdfHmacKey        = 0x3
+	KdfTlsPrfLabel    = 0x4
+	KdfTlsPrfSeed     = 0x5
+	KdfSecretHandle   = 0x6
+	KdfTlsPrfProtocol = 0x7
+	KdfAlgorithmid    = 0x8
+	KdfPartyuinfo     = 0x9
+	KdfPartyvinfo     = 0xA
+	KdfSupppubinfo    = 0xB
+	KdfSuppprivinfo   = 0xC
+	KdfLabel          = 0xD
+	KdfContext        = 0xE
+	KdfSalt           = 0xF
+	KdfIterationCount = 0x10
 
 	//
 	//
@@ -120,10 +120,10 @@ const (
 	// For BCRYPT/NCRYPT_HKDF_ALGORITHM
 	//      KDF_HKDF_INFO is optional
 	//
-	kdfGenericParameter = 0x11
-	kdfKeybitlength     = 0x12
-	kdfHkdfSalt         = 0x13 // This is used only for testing purposes
-	kdfHkdfInfo         = 0x14
+	KdfGenericParameter = 0x11
+	KdfKeybitlength     = 0x12
+	KdfHkdfSalt         = 0x13 // This is used only for testing purposes
+	KdfHkdfInfo         = 0x14
 
 	//
 	// DeriveKey Flags:
@@ -132,47 +132,47 @@ const (
 	// as the HMAC key.  If this flag is used, the KDF_HMAC_KEY parameter should
 	// NOT be specified.
 	//
-	kdfUseSecretAsHmacKeyFlag                = 0x1
-	bcryptAuthenticatedCipherModeInfoVersion = 1
-	bcryptAuthModeChainCallsFlag             = 0x00000001
-	bcryptAuthModeInProgressFlag             = 0x00000002
+	KdfUseSecretAsHmacKeyFlag                = 0x1
+	BcryptAuthenticatedCipherModeInfoVersion = 1
+	BcryptAuthModeChainCallsFlag             = 0x00000001
+	BcryptAuthModeInProgressFlag             = 0x00000002
 
 	//
 	// BCrypt String Properties
 	//
 	// BCrypt(Import/Export)Key BLOB types
-	bcryptOpaqueKeyBlob  = "OpaqueKeyBlob"
-	bcryptKeyDataBlob    = "KeyDataBlob"
-	bcryptAesWrapKeyBlob = "Rfc3565KeyWrapBlob"
+	BcryptOpaqueKeyBlob  = "OpaqueKeyBlob"
+	BcryptKeyDataBlob    = "KeyDataBlob"
+	BcryptAesWrapKeyBlob = "Rfc3565KeyWrapBlob"
 
 	// BCryptGetProperty strings
-	bcryptObjectLength       = "ObjectLength"
-	bcryptAlgorithmName      = "AlgorithmName"
-	bcryptProviderHandle     = "ProviderHandle"
-	bcryptChainingMode       = "ChainingMode"
-	bcryptBlockLength        = "BlockLength"
-	bcryptKeyLength          = "KeyLength"
-	bcryptKeyObjectLength    = "KeyObjectLength"
-	bcryptKeyStrength        = "KeyStrength"
-	bcryptKeyLengths         = "KeyLengths"
-	bcryptBlockSizeList      = "BlockSizeList"
-	bcryptEffectiveKeyLength = "EffectiveKeyLength"
-	bcryptHashLength         = "HashDigestLength"
-	bcryptHashOidList        = "HashOIDList"
-	bcryptPaddingSchemes     = "PaddingSchemes"
-	bcryptSignatureLength    = "SignatureLength"
-	bcryptHashBlockLength    = "HashBlockLength"
-	bcryptAuthTagLength      = "AuthTagLength"
-	bcryptPrimitiveType      = "PrimitiveType"
-	bcryptIsKeyedHash        = "IsKeyedHash"
-	bcryptIsReusableHash     = "IsReusableHash"
-	bcryptMessageBlockLength = "MessageBlockLength"
-	bcryptPublicKeyLength    = "PublicKeyLength"
+	BcryptObjectLength       = "ObjectLength"
+	BcryptAlgorithmName      = "AlgorithmName"
+	BcryptProviderHandle     = "ProviderHandle"
+	BcryptChainingMode       = "ChainingMode"
+	BcryptBlockLength        = "BlockLength"
+	BcryptKeyLength          = "KeyLength"
+	BcryptKeyObjectLength    = "KeyObjectLength"
+	BcryptKeyStrength        = "KeyStrength"
+	BcryptKeyLengths         = "KeyLengths"
+	BcryptBlockSizeList      = "BlockSizeList"
+	BcryptEffectiveKeyLength = "EffectiveKeyLength"
+	BcryptHashLength         = "HashDigestLength"
+	BcryptHashOidList        = "HashOIDList"
+	BcryptPaddingSchemes     = "PaddingSchemes"
+	BcryptSignatureLength    = "SignatureLength"
+	BcryptHashBlockLength    = "HashBlockLength"
+	BcryptAuthTagLength      = "AuthTagLength"
+	BcryptPrimitiveType      = "PrimitiveType"
+	BcryptIsKeyedHash        = "IsKeyedHash"
+	BcryptIsReusableHash     = "IsReusableHash"
+	BcryptMessageBlockLength = "MessageBlockLength"
+	BcryptPublicKeyLength    = "PublicKeyLength"
 	// Additional BCryptGetProperty strings for the RNG Platform Crypto Provider
-	bcryptPcpPlatformTypeProperty    = "PCP_PLATFORM_TYPE"
-	bcryptPcpProviderVersionProperty = "PCP_PROVIDER_VERSION"
-	bcryptMultiObjectLength          = "MultiObjectLength"
-	bcryptIsIfxTpmWeakKey            = "IsIfxTpmWeakKey"
+	BcryptPcpPlatformTypeProperty    = "PCP_PLATFORM_TYPE"
+	BcryptPcpProviderVersionProperty = "PCP_PROVIDER_VERSION"
+	BcryptMultiObjectLength          = "MultiObjectLength"
+	BcryptIsIfxTpmWeakKey            = "IsIfxTpmWeakKey"
 
 	//
 	// Additional properties for the HKDF on BCRYPT_KEY_HANDLE (and
@@ -204,47 +204,47 @@ const (
 	// (or the secret) is finalized and can be used to derive the
 	// HKDF output.
 	//
-	bcryptHkdfHashAlgorithm   = "HkdfHashAlgorithm"
-	bcryptHkdfSaltAndFinalize = "HkdfSaltAndFinalize"
-	bcryptHkdfPrkAndFinalize  = "HkdfPrkAndFinalize"
+	BcryptHkdfHashAlgorithm   = "HkdfHashAlgorithm"
+	BcryptHkdfSaltAndFinalize = "HkdfSaltAndFinalize"
+	BcryptHkdfPrkAndFinalize  = "HkdfPrkAndFinalize"
 
 	// BCryptSetProperty strings
-	bcryptInitializationVector = "IV"
+	BcryptInitializationVector = "IV"
 
 	// Property Strings
-	bcryptChainModeNa  = "ChainingModeN/A"
-	bcryptChainModeCbc = "ChainingModeCBC"
-	bcryptChainModeEcb = "ChainingModeECB"
-	bcryptChainModeCfb = "ChainingModeCFB"
-	bcryptChainModeCcm = "ChainingModeCCM"
-	bcryptChainModeGcm = "ChainingModeGCM"
+	BcryptChainModeNa  = "ChainingModeN/A"
+	BcryptChainModeCbc = "ChainingModeCBC"
+	BcryptChainModeEcb = "ChainingModeECB"
+	BcryptChainModeCfb = "ChainingModeCFB"
+	BcryptChainModeCcm = "ChainingModeCCM"
+	BcryptChainModeGcm = "ChainingModeGCM"
 
 	// Supported RSA Padding Types
-	bcryptSupportedPadRouter   = 0x00000001
-	bcryptSupportedPadPkcs1Enc = 0x00000002
-	bcryptSupportedPadPkcs1Sig = 0x00000004
-	bcryptSupportedPadOaep     = 0x00000008
-	bcryptSupportedPadPss      = 0x00000010
+	BcryptSupportedPadRouter   = 0x00000001
+	BcryptSupportedPadPkcs1Enc = 0x00000002
+	BcryptSupportedPadPkcs1Sig = 0x00000004
+	BcryptSupportedPadOaep     = 0x00000008
+	BcryptSupportedPadPss      = 0x00000010
 
 	//
 	//      BCrypt Flags
 	//
-	bcryptProvDispatch = 0x00000001 // BCryptOpenAlgorithmProvider
-	bcryptBlockPadding = 0x00000001 // BCryptEncrypt/Decrypt
+	BcryptProvDispatch = 0x00000001 // BCryptOpenAlgorithmProvider
+	BcryptBlockPadding = 0x00000001 // BCryptEncrypt/Decrypt
 
 	// RSA padding schemes
-	bcryptPadNone                 = 0x00000001
-	bcryptPadPkcs1                = 0x00000002 // BCryptEncrypt/Decrypt BCryptSignHash/VerifySignature
-	bcryptPadOaep                 = 0x00000004 // BCryptEncrypt/Decrypt
-	bcryptPadPss                  = 0x00000008 // BCryptSignHash/VerifySignature
-	bcryptPadPkcs1OptionalHashOid = 0x00000010 // BCryptVerifySignature
-	bcryptbufferVersion           = 0
+	BcryptPadNone                 = 0x00000001
+	BcryptPadPkcs1                = 0x00000002 // BCryptEncrypt/Decrypt BCryptSignHash/VerifySignature
+	BcryptPadOaep                 = 0x00000004 // BCryptEncrypt/Decrypt
+	BcryptPadPss                  = 0x00000008 // BCryptSignHash/VerifySignature
+	BcryptPadPkcs1OptionalHashOid = 0x00000010 // BCryptVerifySignature
+	BcryptbufferVersion           = 0
 
 	//
 	// Structures used to represent key blobs.
 	//
-	bcryptPublicKeyBlob  = "PUBLICBLOB"
-	bcryptPrivateKeyBlob = "PRIVATEBLOB"
+	BcryptPublicKeyBlob  = "PUBLICBLOB"
+	BcryptPrivateKeyBlob = "PRIVATEBLOB"
 
 	// The BCRYPT_RSAPUBLIC_BLOB and BCRYPT_RSAPRIVATE_BLOB blob types are used
 	// to transport plaintext RSA keys. These blob types will be supported by
@@ -267,18 +267,18 @@ const (
 	// 		Modulus Size			(4 bytes)
 	// 		Public Exponent			(Public Exponent Size bytes)
 	// 		Modulus					(Modulus Size bytes)
-	bcryptRsapublicBlob       = "RSAPUBLICBLOB"
-	bcryptRsaprivateBlob      = "RSAPRIVATEBLOB"
-	legacyRsapublicBlob       = "CAPIPUBLICBLOB"
-	legacyRsaprivateBlob      = "CAPIPRIVATEBLOB"
-	bcryptRsapublicMagic      = 0x31415352 // RSA1
-	bcryptRsaprivateMagic     = 0x32415352 // RSA2
-	bcryptRsafullprivateBlob  = "RSAFULLPRIVATEBLOB"
-	bcryptRsafullprivateMagic = 0x33415352 // RSA3
+	BcryptRsapublicBlob       = "RSAPUBLICBLOB"
+	BcryptRsaprivateBlob      = "RSAPRIVATEBLOB"
+	LegacyRsapublicBlob       = "CAPIPUBLICBLOB"
+	LegacyRsaprivateBlob      = "CAPIPRIVATEBLOB"
+	BcryptRsapublicMagic      = 0x31415352 // RSA1
+	BcryptRsaprivateMagic     = 0x32415352 // RSA2
+	BcryptRsafullprivateBlob  = "RSAFULLPRIVATEBLOB"
+	BcryptRsafullprivateMagic = 0x33415352 // RSA3
 
 	//Properties of secret agreement algorithms
-	bcryptGlobalParameters = "SecretAgreementParam"
-	bcryptPrivateKey       = "PrivKeyVal"
+	BcryptGlobalParameters = "SecretAgreementParam"
+	BcryptPrivateKey       = "PrivKeyVal"
 
 	// The BCRYPT_ECCPUBLIC_BLOB and BCRYPT_ECCPRIVATE_BLOB blob types are used
 	// to transport plaintext ECC keys. These blob types will be supported by
@@ -294,188 +294,188 @@ const (
 	// 		Key Byte Size			(4 bytes)
 	// 		x						(Key Byte Size bytes)
 	// 		Y						(Key Byte Size bytes)
-	bcryptEccpublicBlob            = "ECCPUBLICBLOB"
-	bcryptEccprivateBlob           = "ECCPRIVATEBLOB"
-	bcryptEccfullpublicBlob        = "ECCFULLPUBLICBLOB"
-	bcryptEccfullprivateBlob       = "ECCFULLPRIVATEBLOB"
-	sslEccpublicBlob               = "SSLECCPUBLICBLOB"
-	bcryptEcdhPublicP256Magic      = 0x314B4345 // ECK1
-	bcryptEcdhPrivateP256Magic     = 0x324B4345 // ECK2
-	bcryptEcdhPublicP384Magic      = 0x334B4345 // ECK3
-	bcryptEcdhPrivateP384Magic     = 0x344B4345 // ECK4
-	bcryptEcdhPublicP521Magic      = 0x354B4345 // ECK5
-	bcryptEcdhPrivateP521Magic     = 0x364B4345 // ECK6
-	bcryptEcdhPublicGenericMagic   = 0x504B4345 // ECKP
-	bcryptEcdhPrivateGenericMagic  = 0x564B4345 // ECKV
-	bcryptEcdsaPublicP256Magic     = 0x31534345 // ECS1
-	bcryptEcdsaPrivateP256Magic    = 0x32534345 // ECS2
-	bcryptEcdsaPublicP384Magic     = 0x33534345 // ECS3
-	bcryptEcdsaPrivateP384Magic    = 0x34534345 // ECS4
-	bcryptEcdsaPublicP521Magic     = 0x35534345 // ECS5
-	bcryptEcdsaPrivateP521Magic    = 0x36534345 // ECS6
-	bcryptEcdsaPublicGenericMagic  = 0x50444345 // ECDP
-	bcryptEcdsaPrivateGenericMagic = 0x56444345 // ECDV
+	BcryptEccpublicBlob            = "ECCPUBLICBLOB"
+	BcryptEccprivateBlob           = "ECCPRIVATEBLOB"
+	BcryptEccfullpublicBlob        = "ECCFULLPUBLICBLOB"
+	BcryptEccfullprivateBlob       = "ECCFULLPRIVATEBLOB"
+	SslEccpublicBlob               = "SSLECCPUBLICBLOB"
+	BcryptEcdhPublicP256Magic      = 0x314B4345 // ECK1
+	BcryptEcdhPrivateP256Magic     = 0x324B4345 // ECK2
+	BcryptEcdhPublicP384Magic      = 0x334B4345 // ECK3
+	BcryptEcdhPrivateP384Magic     = 0x344B4345 // ECK4
+	BcryptEcdhPublicP521Magic      = 0x354B4345 // ECK5
+	BcryptEcdhPrivateP521Magic     = 0x364B4345 // ECK6
+	BcryptEcdhPublicGenericMagic   = 0x504B4345 // ECKP
+	BcryptEcdhPrivateGenericMagic  = 0x564B4345 // ECKV
+	BcryptEcdsaPublicP256Magic     = 0x31534345 // ECS1
+	BcryptEcdsaPrivateP256Magic    = 0x32534345 // ECS2
+	BcryptEcdsaPublicP384Magic     = 0x33534345 // ECS3
+	BcryptEcdsaPrivateP384Magic    = 0x34534345 // ECS4
+	BcryptEcdsaPublicP521Magic     = 0x35534345 // ECS5
+	BcryptEcdsaPrivateP521Magic    = 0x36534345 // ECS6
+	BcryptEcdsaPublicGenericMagic  = 0x50444345 // ECDP
+	BcryptEcdsaPrivateGenericMagic = 0x56444345 // ECDV
 
 	//ECC Full versions
-	bcryptEccFullkeyBlobV1 = 0x1
+	BcryptEccFullkeyBlobV1 = 0x1
 
 	// The BCRYPT_DH_PUBLIC_BLOB and BCRYPT_DH_PRIVATE_BLOB blob types are used
 	// to transport plaintext DH keys. These blob types will be supported by
 	// all DH primitive providers.
-	bcryptDhPublicBlob   = "DHPUBLICBLOB"
-	bcryptDhPrivateBlob  = "DHPRIVATEBLOB"
-	legacyDhPublicBlob   = "CAPIDHPUBLICBLOB"
-	legacyDhPrivateBlob  = "CAPIDHPRIVATEBLOB"
-	bcryptDhPublicMagic  = 0x42504844 // DHPB
-	bcryptDhPrivateMagic = 0x56504844 // DHPV
+	BcryptDhPublicBlob   = "DHPUBLICBLOB"
+	BcryptDhPrivateBlob  = "DHPRIVATEBLOB"
+	LegacyDhPublicBlob   = "CAPIDHPUBLICBLOB"
+	LegacyDhPrivateBlob  = "CAPIDHPRIVATEBLOB"
+	BcryptDhPublicMagic  = 0x42504844 // DHPB
+	BcryptDhPrivateMagic = 0x56504844 // DHPV
 
 	// Property Strings for DH
-	bcryptDhParameters      = "DHParameters"
-	bcryptDhParametersMagic = 0x4d504844 // DHPM
+	BcryptDhParameters      = "DHParameters"
+	BcryptDhParametersMagic = 0x4d504844 // DHPM
 
 	// The BCRYPT_DSA_PUBLIC_BLOB and BCRYPT_DSA_PRIVATE_BLOB blob types are used
 	// to transport plaintext DSA keys. These blob types will be supported by
 	// all DSA primitive providers.
-	bcryptDsaPublicBlob       = "DSAPUBLICBLOB"
-	bcryptDsaPrivateBlob      = "DSAPRIVATEBLOB"
-	legacyDsaPublicBlob       = "CAPIDSAPUBLICBLOB"
-	legacyDsaPrivateBlob      = "CAPIDSAPRIVATEBLOB"
-	legacyDsaV2PublicBlob     = "V2CAPIDSAPUBLICBLOB"
-	legacyDsaV2PrivateBlob    = "V2CAPIDSAPRIVATEBLOB"
-	bcryptDsaPublicMagic      = 0x42505344 // DSPB
-	bcryptDsaPrivateMagic     = 0x56505344 // DSPV
-	bcryptDsaPublicMagicV2    = 0x32425044 // DPB2
-	bcryptDsaPrivateMagicV2   = 0x32565044 // DPV2
-	bcryptKeyDataBlobMagic    = 0x4d42444b // Key Data Blob Magic (KDBM)
-	bcryptKeyDataBlobVersion1 = 0x1
+	BcryptDsaPublicBlob       = "DSAPUBLICBLOB"
+	BcryptDsaPrivateBlob      = "DSAPRIVATEBLOB"
+	LegacyDsaPublicBlob       = "CAPIDSAPUBLICBLOB"
+	LegacyDsaPrivateBlob      = "CAPIDSAPRIVATEBLOB"
+	LegacyDsaV2PublicBlob     = "V2CAPIDSAPUBLICBLOB"
+	LegacyDsaV2PrivateBlob    = "V2CAPIDSAPRIVATEBLOB"
+	BcryptDsaPublicMagic      = 0x42505344 // DSPB
+	BcryptDsaPrivateMagic     = 0x56505344 // DSPV
+	BcryptDsaPublicMagicV2    = 0x32425044 // DPB2
+	BcryptDsaPrivateMagicV2   = 0x32565044 // DPV2
+	BcryptKeyDataBlobMagic    = 0x4d42444b // Key Data Blob Magic (KDBM)
+	BcryptKeyDataBlobVersion1 = 0x1
 
 	// Property Strings for DSA
-	bcryptDsaParameters        = "DSAParameters"
-	bcryptDsaParametersMagic   = 0x4d505344 // DSPM
-	bcryptDsaParametersMagicV2 = 0x324d5044 // DPM2
+	BcryptDsaParameters        = "DSAParameters"
+	BcryptDsaParametersMagic   = 0x4d505344 // DSPM
+	BcryptDsaParametersMagicV2 = 0x324d5044 // DPM2
 
 	// Property Strings for ECC
-	bcryptEccParameters      = "ECCParameters"
-	bcryptEccCurveName       = "ECCCurveName"
-	bcryptEccCurveNameList   = "ECCCurveNameList"
-	bcryptEccParametersMagic = 0x50434345 // ECCP
+	BcryptEccParameters      = "ECCParameters"
+	BcryptEccCurveName       = "ECCCurveName"
+	BcryptEccCurveNameList   = "ECCCurveNameList"
+	BcryptEccParametersMagic = 0x50434345 // ECCP
 
 	//
 	// ECC Curve Names
 	//
-	bcryptEccCurveBrainpoolp160r1 = "brainpoolP160r1"
-	bcryptEccCurveBrainpoolp160t1 = "brainpoolP160t1"
-	bcryptEccCurveBrainpoolp192r1 = "brainpoolP192r1"
-	bcryptEccCurveBrainpoolp192t1 = "brainpoolP192t1"
-	bcryptEccCurveBrainpoolp224r1 = "brainpoolP224r1"
-	bcryptEccCurveBrainpoolp224t1 = "brainpoolP224t1"
-	bcryptEccCurveBrainpoolp256r1 = "brainpoolP256r1"
-	bcryptEccCurveBrainpoolp256t1 = "brainpoolP256t1"
-	bcryptEccCurveBrainpoolp320r1 = "brainpoolP320r1"
-	bcryptEccCurveBrainpoolp320t1 = "brainpoolP320t1"
-	bcryptEccCurveBrainpoolp384r1 = "brainpoolP384r1"
-	bcryptEccCurveBrainpoolp384t1 = "brainpoolP384t1"
-	bcryptEccCurveBrainpoolp512r1 = "brainpoolP512r1"
-	bcryptEccCurveBrainpoolp512t1 = "brainpoolP512t1"
-	bcryptEccCurve25519           = "curve25519"
-	bcryptEccCurveEc192wapi       = "ec192wapi"
-	bcryptEccCurveNistp192        = "nistP192"
-	bcryptEccCurveNistp224        = "nistP224"
-	bcryptEccCurveNistp256        = "nistP256"
-	bcryptEccCurveNistp384        = "nistP384"
-	bcryptEccCurveNistp521        = "nistP521"
-	bcryptEccCurveNumsp256t1      = "numsP256t1"
-	bcryptEccCurveNumsp384t1      = "numsP384t1"
-	bcryptEccCurveNumsp512t1      = "numsP512t1"
-	bcryptEccCurveSecp160k1       = "secP160k1"
-	bcryptEccCurveSecp160r1       = "secP160r1"
-	bcryptEccCurveSecp160r2       = "secP160r2"
-	bcryptEccCurveSecp192k1       = "secP192k1"
-	bcryptEccCurveSecp192r1       = "secP192r1"
-	bcryptEccCurveSecp224k1       = "secP224k1"
-	bcryptEccCurveSecp224r1       = "secP224r1"
-	bcryptEccCurveSecp256k1       = "secP256k1"
-	bcryptEccCurveSecp256r1       = "secP256r1"
-	bcryptEccCurveSecp384r1       = "secP384r1"
-	bcryptEccCurveSecp521r1       = "secP521r1"
-	bcryptEccCurveWtls7           = "wtls7"
-	bcryptEccCurveWtls9           = "wtls9"
-	bcryptEccCurveWtls12          = "wtls12"
-	bcryptEccCurveX962p192v1      = "x962P192v1"
-	bcryptEccCurveX962p192v2      = "x962P192v2"
-	bcryptEccCurveX962p192v3      = "x962P192v3"
-	bcryptEccCurveX962p239v1      = "x962P239v1"
-	bcryptEccCurveX962p239v2      = "x962P239v2"
-	bcryptEccCurveX962p239v3      = "x962P239v3"
-	bcryptEccCurveX962p256v1      = "x962P256v1"
+	BcryptEccCurveBrainpoolp160r1 = "brainpoolP160r1"
+	BcryptEccCurveBrainpoolp160t1 = "brainpoolP160t1"
+	BcryptEccCurveBrainpoolp192r1 = "brainpoolP192r1"
+	BcryptEccCurveBrainpoolp192t1 = "brainpoolP192t1"
+	BcryptEccCurveBrainpoolp224r1 = "brainpoolP224r1"
+	BcryptEccCurveBrainpoolp224t1 = "brainpoolP224t1"
+	BcryptEccCurveBrainpoolp256r1 = "brainpoolP256r1"
+	BcryptEccCurveBrainpoolp256t1 = "brainpoolP256t1"
+	BcryptEccCurveBrainpoolp320r1 = "brainpoolP320r1"
+	BcryptEccCurveBrainpoolp320t1 = "brainpoolP320t1"
+	BcryptEccCurveBrainpoolp384r1 = "brainpoolP384r1"
+	BcryptEccCurveBrainpoolp384t1 = "brainpoolP384t1"
+	BcryptEccCurveBrainpoolp512r1 = "brainpoolP512r1"
+	BcryptEccCurveBrainpoolp512t1 = "brainpoolP512t1"
+	BcryptEccCurve25519           = "curve25519"
+	BcryptEccCurveEc192wapi       = "ec192wapi"
+	BcryptEccCurveNistp192        = "nistP192"
+	BcryptEccCurveNistp224        = "nistP224"
+	BcryptEccCurveNistp256        = "nistP256"
+	BcryptEccCurveNistp384        = "nistP384"
+	BcryptEccCurveNistp521        = "nistP521"
+	BcryptEccCurveNumsp256t1      = "numsP256t1"
+	BcryptEccCurveNumsp384t1      = "numsP384t1"
+	BcryptEccCurveNumsp512t1      = "numsP512t1"
+	BcryptEccCurveSecp160k1       = "secP160k1"
+	BcryptEccCurveSecp160r1       = "secP160r1"
+	BcryptEccCurveSecp160r2       = "secP160r2"
+	BcryptEccCurveSecp192k1       = "secP192k1"
+	BcryptEccCurveSecp192r1       = "secP192r1"
+	BcryptEccCurveSecp224k1       = "secP224k1"
+	BcryptEccCurveSecp224r1       = "secP224r1"
+	BcryptEccCurveSecp256k1       = "secP256k1"
+	BcryptEccCurveSecp256r1       = "secP256r1"
+	BcryptEccCurveSecp384r1       = "secP384r1"
+	BcryptEccCurveSecp521r1       = "secP521r1"
+	BcryptEccCurveWtls7           = "wtls7"
+	BcryptEccCurveWtls9           = "wtls9"
+	BcryptEccCurveWtls12          = "wtls12"
+	BcryptEccCurveX962p192v1      = "x962P192v1"
+	BcryptEccCurveX962p192v2      = "x962P192v2"
+	BcryptEccCurveX962p192v3      = "x962P192v3"
+	BcryptEccCurveX962p239v1      = "x962P239v1"
+	BcryptEccCurveX962p239v2      = "x962P239v2"
+	BcryptEccCurveX962p239v3      = "x962P239v3"
+	BcryptEccCurveX962p256v1      = "x962P256v1"
 
 	//
 	// Microsoft built-in providers.
 	//
-	msPrimitiveProvider      = "Microsoft Primitive Provider"
-	msPlatformCryptoProvider = "Microsoft Platform Crypto Provider"
+	MsPrimitiveProvider      = "Microsoft Primitive Provider"
+	MsPlatformCryptoProvider = "Microsoft Platform Crypto Provider"
 
 	//
 	// Common algorithm identifiers.
 	//
-	bcryptRsaAlgorithm             = "RSA"
-	bcryptRsaSignAlgorithm         = "RSA_SIGN"
-	bcryptDhAlgorithm              = "DH"
-	bcryptDsaAlgorithm             = "DSA"
-	bcryptRc2Algorithm             = "RC2"
-	bcryptRc4Algorithm             = "RC4"
-	bcryptAesAlgorithm             = "AES"
-	bcryptDesAlgorithm             = "DES"
-	bcryptDesxAlgorithm            = "DESX"
-	bcrypt3desAlgorithm            = "3DES"
-	bcrypt3des112Algorithm         = "3DES_112"
-	bcryptMd2Algorithm             = "MD2"
-	bcryptMd4Algorithm             = "MD4"
-	bcryptMd5Algorithm             = "MD5"
-	bcryptSha1Algorithm            = "SHA1"
-	bcryptSha256Algorithm          = "SHA256"
-	bcryptSha384Algorithm          = "SHA384"
-	bcryptSha512Algorithm          = "SHA512"
-	bcryptAesGmacAlgorithm         = "AES-GMAC"
-	bcryptAesCmacAlgorithm         = "AES-CMAC"
-	bcryptEcdsaP256Algorithm       = "ECDSA_P256"
-	bcryptEcdsaP384Algorithm       = "ECDSA_P384"
-	bcryptEcdsaP521Algorithm       = "ECDSA_P521"
-	bcryptEcdhP256Algorithm        = "ECDH_P256"
-	bcryptEcdhP384Algorithm        = "ECDH_P384"
-	bcryptEcdhP521Algorithm        = "ECDH_P521"
-	bcryptRngAlgorithm             = "RNG"
-	bcryptRngFips186DsaAlgorithm   = "FIPS186DSARNG"
-	bcryptRngDualEcAlgorithm       = "DUALECRNG"
-	bcryptSp800108CtrHmacAlgorithm = "SP800_108_CTR_HMAC"
-	bcryptSp80056aConcatAlgorithm  = "SP800_56A_CONCAT"
-	bcryptPbkdf2Algorithm          = "PBKDF2"
-	bcryptCapiKdfAlgorithm         = "CAPI_KDF"
-	bcryptTls11KdfAlgorithm        = "TLS1_1_KDF"
-	bcryptTls12KdfAlgorithm        = "TLS1_2_KDF"
-	bcryptEcdsaAlgorithm           = "ECDSA"
-	bcryptEcdhAlgorithm            = "ECDH"
-	bcryptXtsAesAlgorithm          = "XTS-AES"
-	bcryptHkdfAlgorithm            = "HKDF"
+	BcryptRsaAlgorithm             = "RSA"
+	BcryptRsaSignAlgorithm         = "RSA_SIGN"
+	BcryptDhAlgorithm              = "DH"
+	BcryptDsaAlgorithm             = "DSA"
+	BcryptRc2Algorithm             = "RC2"
+	BcryptRc4Algorithm             = "RC4"
+	BcryptAesAlgorithm             = "AES"
+	BcryptDesAlgorithm             = "DES"
+	BcryptDesxAlgorithm            = "DESX"
+	Bcrypt3desAlgorithm            = "3DES"
+	Bcrypt3des112Algorithm         = "3DES_112"
+	BcryptMd2Algorithm             = "MD2"
+	BcryptMd4Algorithm             = "MD4"
+	BcryptMd5Algorithm             = "MD5"
+	BcryptSha1Algorithm            = "SHA1"
+	BcryptSha256Algorithm          = "SHA256"
+	BcryptSha384Algorithm          = "SHA384"
+	BcryptSha512Algorithm          = "SHA512"
+	BcryptAesGmacAlgorithm         = "AES-GMAC"
+	BcryptAesCmacAlgorithm         = "AES-CMAC"
+	BcryptEcdsaP256Algorithm       = "ECDSA_P256"
+	BcryptEcdsaP384Algorithm       = "ECDSA_P384"
+	BcryptEcdsaP521Algorithm       = "ECDSA_P521"
+	BcryptEcdhP256Algorithm        = "ECDH_P256"
+	BcryptEcdhP384Algorithm        = "ECDH_P384"
+	BcryptEcdhP521Algorithm        = "ECDH_P521"
+	BcryptRngAlgorithm             = "RNG"
+	BcryptRngFips186DsaAlgorithm   = "FIPS186DSARNG"
+	BcryptRngDualEcAlgorithm       = "DUALECRNG"
+	BcryptSp800108CtrHmacAlgorithm = "SP800_108_CTR_HMAC"
+	BcryptSp80056aConcatAlgorithm  = "SP800_56A_CONCAT"
+	BcryptPbkdf2Algorithm          = "PBKDF2"
+	BcryptCapiKdfAlgorithm         = "CAPI_KDF"
+	BcryptTls11KdfAlgorithm        = "TLS1_1_KDF"
+	BcryptTls12KdfAlgorithm        = "TLS1_2_KDF"
+	BcryptEcdsaAlgorithm           = "ECDSA"
+	BcryptEcdhAlgorithm            = "ECDH"
+	BcryptXtsAesAlgorithm          = "XTS-AES"
+	BcryptHkdfAlgorithm            = "HKDF"
 
 	//
 	// Interfaces
 	//
-	bcryptCipherInterface               = 0x00000001
-	bcryptHashInterface                 = 0x00000002
-	bcryptAsymmetricEncryptionInterface = 0x00000003
-	bcryptSecretAgreementInterface      = 0x00000004
-	bcryptSignatureInterface            = 0x00000005
-	bcryptRngInterface                  = 0x00000006
-	bcryptKeyDerivationInterface        = 0x00000007
+	BcryptCipherInterface               = 0x00000001
+	BcryptHashInterface                 = 0x00000002
+	BcryptAsymmetricEncryptionInterface = 0x00000003
+	BcryptSecretAgreementInterface      = 0x00000004
+	BcryptSignatureInterface            = 0x00000005
+	BcryptRngInterface                  = 0x00000006
+	BcryptKeyDerivationInterface        = 0x00000007
 
 	//
 	// Primitive algorithm provider functions.
 	//
-	bcryptAlgHandleHmacFlag = 0x00000008
-	bcryptHashReusableFlag  = 0x00000020
-	bcryptCapiAesFlag       = 0x00000010
-	bcryptMultiFlag         = 0x00000040
+	BcryptAlgHandleHmacFlag = 0x00000008
+	BcryptHashReusableFlag  = 0x00000020
+	BcryptCapiAesFlag       = 0x00000010
+	BcryptMultiFlag         = 0x00000040
 
 	//
 	// The TLS_CBC_HMAC_VERIFY flag provides a side-channel safe way of verifying TLS data records
@@ -499,7 +499,7 @@ const (
 	// NTDDI values to allow applications to dynamically test wethere the OS supports the
 	// feature, and adjust accordingly.
 	//
-	bcryptTlsCbcHmacVerifyFlag = 0x00000004
+	BcryptTlsCbcHmacVerifyFlag = 0x00000004
 
 	//
 	// The BUFFERS_LOCKED flag used in BCryptEncrypt/BCryptDecrypt signals that
@@ -507,7 +507,7 @@ const (
 	// and CNG may not lock the buffers again.
 	// This flag applies only to kernel mode, it is ignored in user mode.
 	//
-	bcryptBuffersLockedFlag = 0x00000040
+	BcryptBuffersLockedFlag = 0x00000040
 
 	//
 	// The EXTENDED_KEYSIZE flag extends the supported set of key sizes.
@@ -523,7 +523,7 @@ const (
 	// - BCryptGenerateSymmetricKey will support the longer key sizes.
 	// - BCryptGenerateSymmetricKey will no longer truncate keys that are too long, but return an error instead.
 	//
-	bcryptExtendedKeysize = 0x00000080
+	BcryptExtendedKeysize = 0x00000080
 
 	//
 	// ENABLE_INCOMPATIBLE_FIPS_CHECKS flag enables some FIPS 140-2-mandated checks that are incompatible
@@ -541,573 +541,856 @@ const (
 	//      Use of this flag  for any algorithm other than XTS-AES generates an error.
 	// Note that this flag is not supported for BCryptImportKey.
 	//
-	bcryptEnableIncompatibleFipsChecks = 0x00000100
+	BcryptEnableIncompatibleFipsChecks = 0x00000100
 
 	// AlgOperations flags for use with BCryptEnumAlgorithms()
-	bcryptCipherOperation               = 0x00000001
-	bcryptHashOperation                 = 0x00000002
-	bcryptAsymmetricEncryptionOperation = 0x00000004
-	bcryptSecretAgreementOperation      = 0x00000008
-	bcryptSignatureOperation            = 0x00000010
-	bcryptRngOperation                  = 0x00000020
-	bcryptKeyDerivationOperation        = 0x00000040
+	BcryptCipherOperation               = 0x00000001
+	BcryptHashOperation                 = 0x00000002
+	BcryptAsymmetricEncryptionOperation = 0x00000004
+	BcryptSecretAgreementOperation      = 0x00000008
+	BcryptSignatureOperation            = 0x00000010
+	BcryptRngOperation                  = 0x00000020
+	BcryptKeyDerivationOperation        = 0x00000040
 
 	// Unused flags. Kept for backward compatibility.
 	//   "Flags for use with BCryptGetProperty and BCryptSetProperty"
-	bcryptPublicKeyFlag   = 0x00000001
-	bcryptPrivateKeyFlag  = 0x00000002
-	bcryptNoKeyValidation = 0x00000008
+	BcryptPublicKeyFlag   = 0x00000001
+	BcryptPrivateKeyFlag  = 0x00000002
+	BcryptNoKeyValidation = 0x00000008
 
 	//
 	// Primitive random number generation.
 	//
 	// Flags to BCryptGenRandom
 	// BCRYPT_RNG_USE_ENTROPY_IN_BUFFER is ignored in Win7 & later
-	bcryptRngUseEntropyInBuffer = 0x00000001
-	bcryptUseSystemPreferredRng = 0x00000002
+	BcryptRngUseEntropyInBuffer = 0x00000001
+	BcryptUseSystemPreferredRng = 0x00000002
 
 	//
 	// Operation types used in BCRYPT_MULTI_HASH_OPERATION structures
 	//
-	bcryptHashOperationHashData   = 1
-	bcryptHashOperationFinishHash = 2
+	BcryptHashOperationHashData   = 1
+	BcryptHashOperationFinishHash = 2
 
 	//
 	// Enum to specify type of multi-operation is passed to BCryptProcesMultiOperations
 	//
-	bcryptOperationTypeHash = 1 // structure type is BCRYPT_MULTI_HASH_OPERATION
+	BcryptOperationTypeHash = 1 // structure type is BCRYPT_MULTI_HASH_OPERATION
 
 	//
 	// Others
 	//
-	bcryptHashInterfaceMajorversion2    = 2
-	bcryptEccPrimeShortWeierstrassCurve = 0x1
-	bcryptEccPrimeTwistedEdwardsCurve   = 0x2
-	bcryptEccPrimeMontgomeryCurve       = 0x3
-	bcryptNoCurveGenerationAlgId        = 0x0
-	dsaHashAlgorithmSha1                = 0
-	dsaHashAlgorithmSha256              = 1
-	dsaHashAlgorithmSha512              = 2
-	dsaFips1862                         = 0
-	dsaFips1863                         = 1
+	BcryptHashInterfaceMajorversion2    = 2
+	BcryptEccPrimeShortWeierstrassCurve = 0x1
+	BcryptEccPrimeTwistedEdwardsCurve   = 0x2
+	BcryptEccPrimeMontgomeryCurve       = 0x3
+	BcryptNoCurveGenerationAlgId        = 0x0
+	DsaHashAlgorithmSha1                = 0
+	DsaHashAlgorithmSha256              = 1
+	DsaHashAlgorithmSha512              = 2
+	DsaFips1862                         = 0
+	DsaFips1863                         = 1
 
 	//////////////////////////////////////////////////////////////////////////////
 	// CryptoConfig Definitions //////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////
 	// Interface registration flags
-	cryptMinDependencies = (0x00000001)
-	cryptProcessIsolate  = (0x00010000) // User-mode only
+	CryptMinDependencies = (0x00000001)
+	CryptProcessIsolate  = (0x00010000) // User-mode only
 
 	// Processor modes supported by a provider
 	//
 	// (Valid for BCryptQueryProviderRegistration and BCryptResolveProviders):
 	//
-	cryptUm = (0x00000001) // User mode only
-	cryptKm = (0x00000002) // Kernel mode only
-	cryptMm = (0x00000003) // Multi-mode: Must support BOTH UM and KM
+	CryptUm = (0x00000001) // User mode only
+	CryptKm = (0x00000002) // Kernel mode only
+	CryptMm = (0x00000003) // Multi-mode: Must support BOTH UM and KM
 
 	//
 	// (Valid only for BCryptQueryProviderRegistration):
 	//
-	cryptAny = (0x00000004) // Wildcard: Either UM, or KM, or both
+	CryptAny = (0x00000004) // Wildcard: Either UM, or KM, or both
 
 	// Write behavior flags
-	cryptOverwrite = (0x00000001)
+	CryptOverwrite = (0x00000001)
 
 	// Configuration tables
-	cryptLocal  = (0x00000001)
-	cryptDomain = (0x00000002)
+	CryptLocal  = (0x00000001)
+	CryptDomain = (0x00000002)
 
 	// Context configuration flags
-	cryptExclusive = (0x00000001)
-	cryptOverride  = (0x00010000) // Enterprise table only
+	CryptExclusive = (0x00000001)
+	CryptOverride  = (0x00010000) // Enterprise table only
 
 	// Resolution and enumeration flags
-	cryptAllFunctions = (0x00000001)
-	cryptAllProviders = (0x00000002)
+	CryptAllFunctions = (0x00000001)
+	CryptAllProviders = (0x00000002)
 
 	// Priority list positions
-	cryptPriorityTop    = (0x00000000)
-	cryptPriorityBottom = (0xFFFFFFFF)
+	CryptPriorityTop    = (0x00000000)
+	CryptPriorityBottom = (0xFFFFFFFF)
 )
 
-type bcryptPkcs1PaddingInfo struct {
-	pszAlgId *uint16
+//
+// BCrypt structures.
+//
+type BcryptBuffer struct {
+	CbBuffer   uint32 // Length of buffer, in bytes
+	BufferType uint32 // Buffer type
+	PvBuffer   []byte // Pointer to buffer
 }
-type bcryptPssPaddingInfo struct {
-	pszAlgId *uint16
-	cbSalt   uint32
+type BcryptBufferDesc struct {
+	UlVersion uint32            // Version number
+	CBuffers  uint32            // Number of buffers
+	PBuffers  *BcryptBufferDesc // Pointer to array of buffers
 }
-type bcryptOaepPaddingInfo struct {
-	pszAlgId *uint16
-	pbLabel  *byte
-	cbLabel  uint32
+type BcryptKeyLengthsStruct struct {
+	DwMinLength uint32
+	DwMaxLength uint32
+	DwIncrement uint32
 }
-
-type bCryptBuffer struct {
-	cbBuffer   uint32
-	BufferType uint32
-	pvBuffer   *byte
+type BcryptOid struct {
+	CbOID uint32
+	PbOID []byte
 }
-
-type bCryptBufferDesc struct {
-	ulVersion uint32
-	cBuffers  uint32
-	pBuffers  *bCryptBuffer
+type BcryptOidList struct {
+	DwOIDCount uint32
+	POIDs      *BcryptOid
+}
+type BcryptPkcs1PaddingInfo struct {
+	PszAlgId []uint16
+}
+type BcryptPssPaddingInfo struct {
+	PszAlgId []uint16
+	CbSalt   uint32
+}
+type BcryptOaepPaddingInfo struct {
+	PszAlgId []uint16
+	PbLabel  []byte
+	CbLabel  uint32
+}
+type BcryptAuthenticatedCipherModeInfo struct {
+	CbSize        uint32
+	DwInfoVersion uint32
+	PbNonce       []byte
+	CbNonce       uint32
+	PbAuthData    []byte
+	CbAuthData    uint32
+	PbTag         []byte
+	CbTag         uint32
+	PbMacContext  []byte
+	CbMacContext  uint32
+	CbAAD         uint32
+	CbData        uint64
+	DwFlags       uint32
+}
+type BcryptKeyBlob struct {
+	Magic uint32
+}
+type BcryptRsakeyBlob struct {
+	Magic       uint32
+	BitLength   uint32
+	CbPublicExp uint32
+	CbModulus   uint32
+	CbPrime1    uint32
+	CbPrime2    uint32
+}
+type BcryptEcckeyBlob struct {
+	DwMagic uint32
+	CbKey   uint32
+}
+type sslEcckeyBlob struct { //SSL ECC Public Blob Version
+	DwCurveType uint32
+	CbKey       uint32
+}
+type BcryptEccfullkeyBlob struct { //The full version contains the curve parameters as well as the public and potentially private exponent.
+	DwMagic                uint32
+	DwVersion              uint32 //Version of the structure
+	DwCurveType            int    //Supported curve types.
+	DwCurveGenerationAlgId int    //For X.592 verification purposes, if we include Seed we will need to include the algorithm ID.
+	CbFieldLength          uint32 //Byte length of the fields P, A, B, X, Y.
+	CbSubgroupOrder        uint32 //Byte length of the subgroup.
+	CbCofactor             uint32 //Byte length of cofactor of G in E.
+	CbSeed                 uint32 //Byte length of the seed used to generate the curve.
+	//P[cbFieldLength]              Prime specifying the base field.
+	//A[cbFieldLength]              Coefficient A of the equation y^2 = x^3 + A*x + B mod p
+	//B[cbFieldLength]              Coefficient B of the equation y^2 = x^3 + A*x + B mod p
+	//Gx[cbFieldLength]             X-coordinate of the base point.
+	//Gy[cbFieldLength]             Y-coordinate of the base point.
+	//n[cbSubgroupOrder]            Order of the group generated by G = (x,y)
+	//h[cbCofactor]                 Cofactor of G in E.
+	//S[cbSeed]                     Seed of the curve.
+	//Qx[cbFieldLength]             X-coordinate of the public point.
+	//Qy[cbFieldLength]             Y-coordinate of the public point.
+	//d[cbSubgroupOrder]            Private key.  Not always present.
+}
+type BcryptDhKeyBlob struct {
+	DwMagic uint32
+	CbKey   uint32
+}
+type BcryptDhParameterHeader struct {
+	CbLength    uint32
+	DwMagic     uint32
+	CbKeyLength uint32
+}
+type BcryptDsaKeyBlob struct {
+	DwMagic uint32
+	CbKey   uint32
+	Count   [4]byte
+	Seed    [20]byte
+	Q       [20]byte
+}
+type BcryptDsaKeyBlobV2 struct {
+	DwMagic         uint32
+	CbKey           uint32
+	HashAlgorithm   int
+	StandardVersion int
+	CbSeedLength    uint32
+	CbGroupSize     uint32
+	Count           [4]byte
+}
+type BcryptKeyDataBlobHeader struct {
+	DwMagic   uint32
+	DwVersion uint32
+	CbKeyData uint32
+}
+type BcryptDsaParameterHeader struct {
+	CbLength    uint32
+	DwMagic     uint32
+	CbKeyLength uint32
+	Count       [4]byte
+	Seed        [20]byte
+	Q           [20]byte
+}
+type BcryptDsaParameterHeaderV2 struct {
+	CbLength        uint32
+	DwMagic         uint32
+	CbKeyLength     uint32
+	HashAlgorithm   int
+	StandardVersion int
+	CbSeedLength    uint32
+	CbGroupSize     uint32
+	Count           [4]byte
+}
+type BcryptEccCurveNames struct {
+	DwEccCurveNames uint32
+	PEccCurveNames  **uint16
+}
+type BcryptMultiHashOperation struct {
+	IHash         uint32 // index of hash object
+	HashOperation int    // operation to be performed
+	PbBuffer      *byte  // data to be hashed, or result buffer (_Field_size_(cbBuffer))
+	CbBuffer      uint32
+}
+type BcryptMultiObjectLengthStruct struct {
+	CbPerObject  uint32
+	CbPerElement uint32 // required size for N elements is (cbPerObject + N * cbPerElement)
+}
+type BcryptAlgorithmIdentifier struct {
+	PszName *uint16
+	DwClass uint32
+	DwFlags uint32
+}
+type BcryptProviderName struct {
+	PszProviderName *uint16
+}
+type BcryptInterfaceVersion struct {
+	MajorVersion uint16
+	MinorVersion uint16
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 // NCrypt header content.
 // From C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\ncrypt.h
 //////////////////////////////////////////////////////////////////////////////////////
+
 const (
 
 	//
 	// Maximum length of Key name, in characters
 	//
-	ncryptMaxKeyNameLength = 512
+	NcryptMaxKeyNameLength = 512
 
 	//
 	// Maximum length of Algorithm name, in characters
 	//
-	ncryptMaxAlgIdLength = 512
+	NcryptMaxAlgIdLength = 512
 
 	//
 	// Microsoft built-in providers.
 	//
-	msKeyStorageProvider          = "Microsoft Software Key Storage Provider"
-	msSmartCardKeyStorageProvider = "Microsoft Smart Card Key Storage Provider"
-	msPlatformKeyStorageProvider  = "Microsoft Platform Crypto Provider"
-	msNgcKeyStorageProvider       = "Microsoft Passport Key Storage Provider"
+	MsKeyStorageProvider          = "Microsoft Software Key Storage Provider"
+	MsSmartCardKeyStorageProvider = "Microsoft Smart Card Key Storage Provider"
+	MsPlatformKeyStorageProvider  = "Microsoft Platform Crypto Provider"
+	MsNgcKeyStorageProvider       = "Microsoft Passport Key Storage Provider"
 
 	//
 	// Key name for sealing
 	//
-	tpmRsaSrkSealKey = "MICROSOFT_PCP_KSP_RSA_SEAL_KEY_3BD1C4BF-004E-4E2F-8A4D-0BF633DCB074"
+	TpmRsaSrkSealKey = "MICROSOFT_PCP_KSP_RSA_SEAL_KEY_3BD1C4BF-004E-4E2F-8A4D-0BF633DCB074"
 
 	//
 	// Common algorithm identifiers.
 	//
-	ncryptRsaAlgorithm             = bcryptRsaAlgorithm
-	ncryptRsaSignAlgorithm         = bcryptRsaSignAlgorithm
-	ncryptDhAlgorithm              = bcryptDhAlgorithm
-	ncryptDsaAlgorithm             = bcryptDsaAlgorithm
-	ncryptMd2Algorithm             = bcryptMd2Algorithm
-	ncryptMd4Algorithm             = bcryptMd4Algorithm
-	ncryptMd5Algorithm             = bcryptMd5Algorithm
-	ncryptSha1Algorithm            = bcryptSha1Algorithm
-	ncryptSha256Algorithm          = bcryptSha256Algorithm
-	ncryptSha384Algorithm          = bcryptSha384Algorithm
-	ncryptSha512Algorithm          = bcryptSha512Algorithm
-	ncryptEcdsaP256Algorithm       = bcryptEcdsaP256Algorithm
-	ncryptEcdsaP384Algorithm       = bcryptEcdsaP384Algorithm
-	ncryptEcdsaP521Algorithm       = bcryptEcdsaP521Algorithm
-	ncryptEcdhP256Algorithm        = bcryptEcdhP256Algorithm
-	ncryptEcdhP384Algorithm        = bcryptEcdhP384Algorithm
-	ncryptEcdhP521Algorithm        = bcryptEcdhP521Algorithm
-	ncryptAesAlgorithm             = bcryptAesAlgorithm
-	ncryptRc2Algorithm             = bcryptRc2Algorithm
-	ncrypt3desAlgorithm            = bcrypt3desAlgorithm
-	ncryptDesAlgorithm             = bcryptDesAlgorithm
-	ncryptDesxAlgorithm            = bcryptDesxAlgorithm
-	ncrypt3des112Algorithm         = bcrypt3des112Algorithm
-	ncryptSp800108CtrHmacAlgorithm = bcryptSp800108CtrHmacAlgorithm
-	ncryptSp80056aConcatAlgorithm  = bcryptSp80056aConcatAlgorithm
-	ncryptPbkdf2Algorithm          = bcryptPbkdf2Algorithm
-	ncryptCapiKdfAlgorithm         = bcryptCapiKdfAlgorithm
-	ncryptEcdsaAlgorithm           = bcryptEcdsaAlgorithm
-	ncryptKeyStorageAlgorithm      = "KEY_STORAGE"
+	NcryptRsaAlgorithm             = BcryptRsaAlgorithm
+	NcryptRsaSignAlgorithm         = BcryptRsaSignAlgorithm
+	NcryptDhAlgorithm              = BcryptDhAlgorithm
+	NcryptDsaAlgorithm             = BcryptDsaAlgorithm
+	NcryptMd2Algorithm             = BcryptMd2Algorithm
+	NcryptMd4Algorithm             = BcryptMd4Algorithm
+	NcryptMd5Algorithm             = BcryptMd5Algorithm
+	NcryptSha1Algorithm            = BcryptSha1Algorithm
+	NcryptSha256Algorithm          = BcryptSha256Algorithm
+	NcryptSha384Algorithm          = BcryptSha384Algorithm
+	NcryptSha512Algorithm          = BcryptSha512Algorithm
+	NcryptEcdsaP256Algorithm       = BcryptEcdsaP256Algorithm
+	NcryptEcdsaP384Algorithm       = BcryptEcdsaP384Algorithm
+	NcryptEcdsaP521Algorithm       = BcryptEcdsaP521Algorithm
+	NcryptEcdhP256Algorithm        = BcryptEcdhP256Algorithm
+	NcryptEcdhP384Algorithm        = BcryptEcdhP384Algorithm
+	NcryptEcdhP521Algorithm        = BcryptEcdhP521Algorithm
+	NcryptAesAlgorithm             = BcryptAesAlgorithm
+	NcryptRc2Algorithm             = BcryptRc2Algorithm
+	Ncrypt3desAlgorithm            = Bcrypt3desAlgorithm
+	NcryptDesAlgorithm             = BcryptDesAlgorithm
+	NcryptDesxAlgorithm            = BcryptDesxAlgorithm
+	Ncrypt3des112Algorithm         = Bcrypt3des112Algorithm
+	NcryptSp800108CtrHmacAlgorithm = BcryptSp800108CtrHmacAlgorithm
+	NcryptSp80056aConcatAlgorithm  = BcryptSp80056aConcatAlgorithm
+	NcryptPbkdf2Algorithm          = BcryptPbkdf2Algorithm
+	NcryptCapiKdfAlgorithm         = BcryptCapiKdfAlgorithm
+	NcryptEcdsaAlgorithm           = BcryptEcdsaAlgorithm
+	NcryptKeyStorageAlgorithm      = "KEY_STORAGE"
 
 	//
 	// This algorithm is not supported by any BCrypt provider. This identifier is for creating
 	// persistent stored HMAC keys in the TPM KSP.
 	//
-	ncryptHmacSha256Algorithm = "HMAC-SHA256"
+	NcryptHmacSha256Algorithm = "HMAC-SHA256"
 
 	//
 	// Interfaces
 	//
-	ncryptCipherInterface               = bcryptCipherInterface
-	ncryptHashInterface                 = bcryptHashInterface
-	ncryptAsymmetricEncryptionInterface = bcryptAsymmetricEncryptionInterface
-	ncryptSecretAgreementInterface      = bcryptSecretAgreementInterface
-	ncryptSignatureInterface            = bcryptSignatureInterface
-	ncryptKeyDerivationInterface        = bcryptKeyDerivationInterface
-	ncryptKeyStorageInterface           = 0x00010001
-	ncryptSchannelInterface             = 0x00010002
-	ncryptSchannelSignatureInterface    = 0x00010003
-	ncryptKeyProtectionInterface        = 0x00010004
+	NcryptCipherInterface               = BcryptCipherInterface
+	NcryptHashInterface                 = BcryptHashInterface
+	NcryptAsymmetricEncryptionInterface = BcryptAsymmetricEncryptionInterface
+	NcryptSecretAgreementInterface      = BcryptSecretAgreementInterface
+	NcryptSignatureInterface            = BcryptSignatureInterface
+	NcryptKeyDerivationInterface        = BcryptKeyDerivationInterface
+	NcryptKeyStorageInterface           = 0x00010001
+	NcryptSchannelInterface             = 0x00010002
+	NcryptSchannelSignatureInterface    = 0x00010003
+	NcryptKeyProtectionInterface        = 0x00010004
 
 	//
 	// algorithm groups.
 	//
-	ncryptRsaAlgorithmGroup   = ncryptRsaAlgorithm
-	ncryptDhAlgorithmGroup    = ncryptDhAlgorithm
-	ncryptDsaAlgorithmGroup   = ncryptDsaAlgorithm
-	ncryptEcdsaAlgorithmGroup = "ECDSA"
-	ncryptEcdhAlgorithmGroup  = "ECDH"
-	ncryptAesAlgorithmGroup   = ncryptAesAlgorithm
-	ncryptRc2AlgorithmGroup   = ncryptRc2Algorithm
-	ncryptDesAlgorithmGroup   = "DES"
-	ncryptKeyDerivationGroup  = "KEY_DERIVATION"
+	NcryptRsaAlgorithmGroup   = NcryptRsaAlgorithm
+	NcryptDhAlgorithmGroup    = NcryptDhAlgorithm
+	NcryptDsaAlgorithmGroup   = NcryptDsaAlgorithm
+	NcryptEcdsaAlgorithmGroup = "ECDSA"
+	NcryptEcdhAlgorithmGroup  = "ECDH"
+	NcryptAesAlgorithmGroup   = NcryptAesAlgorithm
+	NcryptRc2AlgorithmGroup   = NcryptRc2Algorithm
+	NcryptDesAlgorithmGroup   = "DES"
+	NcryptKeyDerivationGroup  = "KEY_DERIVATION"
 
 	//
 	// NCrypt generic memory descriptors
 	//
-	ncryptbufferVersion                    = 0
-	ncryptbufferEmpty                      = 0
-	ncryptbufferData                       = 1
-	ncryptbufferProtectionDescriptorString = 3 // The buffer contains a null-terminated Unicode string that contains the Protection Descriptor.
-	ncryptbufferProtectionFlags            = 4 // DWORD flags to be passed to NCryptCreateProtectionDescriptor function.
-	ncryptbufferSslClientRandom            = 20
-	ncryptbufferSslServerRandom            = 21
-	ncryptbufferSslHighestVersion          = 22
-	ncryptbufferSslClearKey                = 23
-	ncryptbufferSslKeyArgData              = 24
-	ncryptbufferSslSessionHash             = 25
-	ncryptbufferPkcsOid                    = 40
-	ncryptbufferPkcsAlgOid                 = 41
-	ncryptbufferPkcsAlgParam               = 42
-	ncryptbufferPkcsAlgId                  = 43
-	ncryptbufferPkcsAttrs                  = 44
-	ncryptbufferPkcsKeyName                = 45
-	ncryptbufferPkcsSecret                 = 46
-	ncryptbufferCertBlob                   = 47
+	NcryptbufferVersion                    = 0
+	NcryptbufferEmpty                      = 0
+	NcryptbufferData                       = 1
+	NcryptbufferProtectionDescriptorString = 3 // The buffer contains a null-terminated Unicode string that contains the Protection Descriptor.
+	NcryptbufferProtectionFlags            = 4 // DWORD flags to be passed to NCryptCreateProtectionDescriptor function.
+	NcryptbufferSslClientRandom            = 20
+	NcryptbufferSslServerRandom            = 21
+	NcryptbufferSslHighestVersion          = 22
+	NcryptbufferSslClearKey                = 23
+	NcryptbufferSslKeyArgData              = 24
+	NcryptbufferSslSessionHash             = 25
+	NcryptbufferPkcsOid                    = 40
+	NcryptbufferPkcsAlgOid                 = 41
+	NcryptbufferPkcsAlgParam               = 42
+	NcryptbufferPkcsAlgId                  = 43
+	NcryptbufferPkcsAttrs                  = 44
+	NcryptbufferPkcsKeyName                = 45
+	NcryptbufferPkcsSecret                 = 46
+	NcryptbufferCertBlob                   = 47
 	//for threshold key attestation
-	ncryptbufferClaimIdbindingNonce                = 48
-	ncryptbufferClaimKeyattestationNonce           = 49
-	ncryptbufferKeyPropertyFlags                   = 50
-	ncryptbufferAttestationstatementBlob           = 51
-	ncryptbufferAttestationClaimType               = 52
-	ncryptbufferAttestationClaimChallengeRequired  = 53
-	ncryptbufferVsmKeyAttestationClaimRestrictions = 54
+	NcryptbufferClaimIdbindingNonce                = 48
+	NcryptbufferClaimKeyattestationNonce           = 49
+	NcryptbufferKeyPropertyFlags                   = 50
+	NcryptbufferAttestationstatementBlob           = 51
+	NcryptbufferAttestationClaimType               = 52
+	NcryptbufferAttestationClaimChallengeRequired  = 53
+	NcryptbufferVsmKeyAttestationClaimRestrictions = 54
 	//for generic ecc
-	ncryptbufferEccCurveName  = 60
-	ncryptbufferEccParameters = 61
+	NcryptbufferEccCurveName  = 60
+	NcryptbufferEccParameters = 61
 	//for TPM seal
-	ncryptbufferTpmSealPassword       = 70
-	ncryptbufferTpmSealPolicyinfo     = 71
-	ncryptbufferTpmSealTicket         = 72
-	ncryptbufferTpmSealNoDaProtection = 73
+	NcryptbufferTpmSealPassword       = 70
+	NcryptbufferTpmSealPolicyinfo     = 71
+	NcryptbufferTpmSealTicket         = 72
+	NcryptbufferTpmSealNoDaProtection = 73
 	// for TPM platform attestation statements
-	ncryptbufferTpmPlatformClaimPcrMask      = 80
-	ncryptbufferTpmPlatformClaimNonce        = 81
-	ncryptbufferTpmPlatformClaimStaticCreate = 82
+	NcryptbufferTpmPlatformClaimPcrMask      = 80
+	NcryptbufferTpmPlatformClaimNonce        = 81
+	NcryptbufferTpmPlatformClaimStaticCreate = 82
 
 	//
 	// The following flags are used with NCRYPT_CIPHER_PADDING_INFO
 	//
-	ncryptCipherNoPaddingFlag    = 0x00000000
-	ncryptCipherBlockPaddingFlag = 0x00000001
-	ncryptCipherOtherPaddingFlag = 0x00000002
-	ncryptPlatformAttestMagic    = 0x44504150 // 'PAPD'
-	ncryptKeyAttestMagic         = 0x4450414b // 'KAPD'
+	NcryptCipherNoPaddingFlag    = 0x00000000
+	NcryptCipherBlockPaddingFlag = 0x00000001
+	NcryptCipherOtherPaddingFlag = 0x00000002
+	NcryptPlatformAttestMagic    = 0x44504150 // 'PAPD'
+	NcryptKeyAttestMagic         = 0x4450414b // 'KAPD'
 
 	//
 	// key attestation claim type
 	//
-	ncryptClaimAuthorityOnly              = 0x00000001
-	ncryptClaimSubjectOnly                = 0x00000002
-	ncryptClaimWebAuthSubjectOnly         = 0x00000102
-	ncryptClaimAuthorityAndSubject        = 0x00000003
-	ncryptClaimVsmKeyAttestationStatement = 0x00000004
-	ncryptClaimUnknown                    = 0x00001000
-	ncryptClaimPlatform                   = 0x00010000
+	NcryptClaimAuthorityOnly              = 0x00000001
+	NcryptClaimSubjectOnly                = 0x00000002
+	NcryptClaimWebAuthSubjectOnly         = 0x00000102
+	NcryptClaimAuthorityAndSubject        = 0x00000003
+	NcryptClaimVsmKeyAttestationStatement = 0x00000004
+	NcryptClaimUnknown                    = 0x00001000
+	NcryptClaimPlatform                   = 0x00010000
 	// NCryptCreateClaim claim types, flags and buffer types
-	ncryptIsolatedKeyFlagCreatedInIsolation           = 0x00000001 // if set, this key was generated in isolation, not imported
-	ncryptIsolatedKeyFlagImportOnly                   = 0x00000002 // if set, this key can only be used for importing other keys
-	ncryptIsolatedKeyAttestedAttributesV0             = 0
-	ncryptIsolatedKeyAttestedAttributesCurrentVersion = ncryptIsolatedKeyAttestedAttributesV0
-	ncryptVsmKeyAttestationStatementV0                = 0
-	ncryptVsmKeyAttestationStatementCurrentVersion    = ncryptVsmKeyAttestationStatementV0
+	NcryptIsolatedKeyFlagCreatedInIsolation           = 0x00000001 // if set, this key was generated in isolation, not imported
+	NcryptIsolatedKeyFlagImportOnly                   = 0x00000002 // if set, this key can only be used for importing other keys
+	NcryptIsolatedKeyAttestedAttributesV0             = 0
+	NcryptIsolatedKeyAttestedAttributesCurrentVersion = NcryptIsolatedKeyAttestedAttributesV0
+	NcryptVsmKeyAttestationStatementV0                = 0
+	NcryptVsmKeyAttestationStatementCurrentVersion    = NcryptVsmKeyAttestationStatementV0
 	// Buffer contents for NCryptVerifyClaim (for buffer type NCRYPTBUFFER_ISOLATED_KEY_ATTESTATION_CLAIM_RESTRICTIONS)
-	ncryptVsmKeyAttestationClaimRestrictionsV0             = 0
-	ncryptVsmKeyAttestationClaimRestrictionsCurrentVersion = ncryptVsmKeyAttestationClaimRestrictionsV0
+	NcryptVsmKeyAttestationClaimRestrictionsV0             = 0
+	NcryptVsmKeyAttestationClaimRestrictionsCurrentVersion = NcryptVsmKeyAttestationClaimRestrictionsV0
 	// Structures to assist with importation of isolated keys
-	ncryptExportedIsolatedKeyHeaderV0                   = 0
-	ncryptExportedIsolatedKeyHeaderCurrentVersion       = ncryptExportedIsolatedKeyHeaderV0
-	ncryptTpmPlatformAttestationStatementV0             = 0
-	ncryptTpmPlatformAttestationStatementCurrentVersion = ncryptTpmPlatformAttestationStatementV0
+	NcryptExportedIsolatedKeyHeaderV0                   = 0
+	NcryptExportedIsolatedKeyHeaderCurrentVersion       = NcryptExportedIsolatedKeyHeaderV0
+	NcryptTpmPlatformAttestationStatementV0             = 0
+	NcryptTpmPlatformAttestationStatementCurrentVersion = NcryptTpmPlatformAttestationStatementV0
 
 	//
 	// NCrypt API Flags
 	//
-	ncryptNoPaddingFlag              = 0x00000001 // NCryptEncrypt/Decrypt
-	ncryptPadPkcs1Flag               = 0x00000002 // NCryptEncrypt/Decrypt NCryptSignHash/VerifySignature
-	ncryptPadOaepFlag                = 0x00000004 // BCryptEncrypt/Decrypt
-	ncryptPadPssFlag                 = 0x00000008 // BCryptSignHash/VerifySignature
-	ncryptPadCipherFlag              = 0x00000010 // NCryptEncrypt/Decrypt
-	ncryptAttestationFlag            = 0x00000020 // NCryptDecrypt for key attestation
-	ncryptSealingFlag                = 0x00000100 // NCryptEncrypt/Decrypt for sealing
-	ncryptRegisterNotifyFlag         = 0x00000001 // NCryptNotifyChangeKey
-	ncryptUnregisterNotifyFlag       = 0x00000002 // NCryptNotifyChangeKey
-	ncryptNoKeyValidation            = bcryptNoKeyValidation
-	ncryptMachineKeyFlag             = 0x00000020 // same as CAPI CRYPT_MACHINE_KEYSET
-	ncryptSilentFlag                 = 0x00000040 // same as CAPI CRYPT_SILENT
-	ncryptOverwriteKeyFlag           = 0x00000080
-	ncryptWriteKeyToLegacyStoreFlag  = 0x00000200
-	ncryptDoNotFinalizeFlag          = 0x00000400
-	ncryptExportLegacyFlag           = 0x00000800
-	ncryptIgnoreDeviceStateFlag      = 0x00001000 // NCryptOpenStorageProvider
-	ncryptTreatNistAsGenericEccFlag  = 0x00002000
-	ncryptNoCachedPassword           = 0x00004000
-	ncryptProtectToLocalSystem       = 0x00008000
-	ncryptPersistOnlyFlag            = 0x40000000
-	ncryptPersistFlag                = 0x80000000
-	ncryptPreferVirtualIsolationFlag = 0x00010000 // NCryptCreatePersistedKey NCryptImportKey
-	ncryptUseVirtualIsolationFlag    = 0x00020000 // NCryptCreatePersistedKey NCryptImportKey
-	ncryptUsePerBootKeyFlag          = 0x00040000 // NCryptCreatePersistedKey NCryptImportKey
-
+	NcryptNoPaddingFlag              = 0x00000001 // NCryptEncrypt/Decrypt
+	NcryptPadPkcs1Flag               = 0x00000002 // NCryptEncrypt/Decrypt NCryptSignHash/VerifySignature
+	NcryptPadOaepFlag                = 0x00000004 // BCryptEncrypt/Decrypt
+	NcryptPadPssFlag                 = 0x00000008 // BCryptSignHash/VerifySignature
+	NcryptPadCipherFlag              = 0x00000010 // NCryptEncrypt/Decrypt
+	NcryptAttestationFlag            = 0x00000020 // NCryptDecrypt for key attestation
+	NcryptSealingFlag                = 0x00000100 // NCryptEncrypt/Decrypt for sealing
+	NcryptRegisterNotifyFlag         = 0x00000001 // NCryptNotifyChangeKey
+	NcryptUnregisterNotifyFlag       = 0x00000002 // NCryptNotifyChangeKey
+	NcryptNoKeyValidation            = BcryptNoKeyValidation
+	NcryptMachineKeyFlag             = 0x00000020 // same as CAPI CRYPT_MACHINE_KEYSET
+	NcryptSilentFlag                 = 0x00000040 // same as CAPI CRYPT_SILENT
+	NcryptOverwriteKeyFlag           = 0x00000080
+	NcryptWriteKeyToLegacyStoreFlag  = 0x00000200
+	NcryptDoNotFinalizeFlag          = 0x00000400
+	NcryptExportLegacyFlag           = 0x00000800
+	NcryptIgnoreDeviceStateFlag      = 0x00001000 // NCryptOpenStorageProvider
+	NcryptTreatNistAsGenericEccFlag  = 0x00002000
+	NcryptNoCachedPassword           = 0x00004000
+	NcryptProtectToLocalSystem       = 0x00008000
+	NcryptPersistOnlyFlag            = 0x40000000
+	NcryptPersistFlag                = 0x80000000
+	NcryptPreferVirtualIsolationFlag = 0x00010000 // NCryptCreatePersistedKey NCryptImportKey
+	NcryptUseVirtualIsolationFlag    = 0x00020000 // NCryptCreatePersistedKey NCryptImportKey
+	NcryptUsePerBootKeyFlag          = 0x00040000 // NCryptCreatePersistedKey NCryptImportKey
+	// NCryptOpenStorageProvider flags
+	/*
+		NcryptSilentFlag            = 0x00000040 // same as CAPI CRYPT_SILENT
+		NcryptIgnoreDeviceStateFlag = 0x00001000 // NCryptOpenStorageProvider
+	*/
 	// AlgOperations flags for use with NCryptEnumAlgorithms()
-	ncryptCipherOperation               = bcryptCipherOperation
-	ncryptHashOperation                 = bcryptHashOperation
-	ncryptAsymmetricEncryptionOperation = bcryptAsymmetricEncryptionOperation
-	ncryptSecretAgreementOperation      = bcryptSecretAgreementOperation
-	ncryptSignatureOperation            = bcryptSignatureOperation
-	ncryptRngOperation                  = bcryptRngOperation
-	ncryptKeyDerivationOperation        = bcryptKeyDerivationOperation
-
+	NcryptCipherOperation               = BcryptCipherOperation
+	NcryptHashOperation                 = BcryptHashOperation
+	NcryptAsymmetricEncryptionOperation = BcryptAsymmetricEncryptionOperation
+	NcryptSecretAgreementOperation      = BcryptSecretAgreementOperation
+	NcryptSignatureOperation            = BcryptSignatureOperation
+	NcryptRngOperation                  = BcryptRngOperation
+	NcryptKeyDerivationOperation        = BcryptKeyDerivationOperation
+	/*
+		// NCryptEnumKeys flags
+		NcryptMachineKeyFlag = 0x00000020
+		// NCryptOpenKey flags
+		NcryptMachineKeyFlag   = 0x00000020
+		NcryptSilentFlag       = 0x00000040
+		NcryptAuthorityKeyFlag = 0x00000100
+		// NCryptCreatePersistedKey flags
+		NcryptMachineKeyFlag   = 0x00000020
+		NcryptOverwriteKeyFlag = 0x00000080
+	*/
 	// Standard property names.
-	ncryptNameProperty                 = "Name"
-	ncryptUniqueNameProperty           = "Unique Name"
-	ncryptAlgorithmProperty            = "Algorithm Name"
-	ncryptLengthProperty               = "Length"
-	ncryptLengthsProperty              = "Lengths"
-	ncryptBlockLengthProperty          = "Block Length"
-	ncryptPublicLengthProperty         = bcryptPublicKeyLength
-	ncryptSignatureLengthProperty      = bcryptSignatureLength
-	ncryptChainingModeProperty         = "Chaining Mode"
-	ncryptAuthTagLength                = "AuthTagLength"
-	ncryptUiPolicyProperty             = "UI Policy"
-	ncryptExportPolicyProperty         = "Export Policy"
-	ncryptWindowHandleProperty         = "HWND Handle"
-	ncryptUseContextProperty           = "Use Context"
-	ncryptImplTypeProperty             = "Impl Type"
-	ncryptKeyUsageProperty             = "Key Usage"
-	ncryptKeyTypeProperty              = "Key Type"
-	ncryptVersionProperty              = "Version"
-	ncryptSecurityDescrSupportProperty = "Security Descr Support"
-	ncryptSecurityDescrProperty        = "Security Descr"
-	ncryptUseCountEnabledProperty      = "Enabled Use Count"
-	ncryptUseCountProperty             = "Use Count"
-	ncryptLastModifiedProperty         = "Modified"
-	ncryptMaxNameLengthProperty        = "Max Name Length"
-	ncryptAlgorithmGroupProperty       = "Algorithm Group"
-	ncryptDhParametersProperty         = bcryptDhParameters
-	ncryptEccParametersProperty        = bcryptEccParameters
-	ncryptEccCurveNameProperty         = bcryptEccCurveName
-	ncryptEccCurveNameListProperty     = bcryptEccCurveNameList
-	ncryptUseVirtualIsolationProperty  = "Virtual Iso"
-	ncryptUsePerBootKeyProperty        = "Per Boot Key"
-	ncryptProviderHandleProperty       = "Provider Handle"
-	ncryptPinProperty                  = "SmartCardPin"
-	ncryptReaderProperty               = "SmartCardReader"
-	ncryptSmartcardGuidProperty        = "SmartCardGuid"
-	ncryptCertificateProperty          = "SmartCardKeyCertificate"
-	ncryptPinPromptProperty            = "SmartCardPinPrompt"
-	ncryptUserCertstoreProperty        = "SmartCardUserCertStore"
-	ncryptRootCertstoreProperty        = "SmartcardRootCertStore"
-	ncryptSecurePinProperty            = "SmartCardSecurePin"
-	ncryptAssociatedEcdhKey            = "SmartCardAssociatedECDHKey"
-	ncryptScardPinId                   = "SmartCardPinId"
-	ncryptScardPinInfo                 = "SmartCardPinInfo"
-	ncryptReaderIconProperty           = "SmartCardReaderIcon"
-	ncryptKdfSecretValue               = "KDFKeySecret"
-	ncryptDismissUiTimeoutSecProperty  = "SmartCardDismissUITimeoutSeconds"
+	NcryptNameProperty                 = "Name"
+	NcryptUniqueNameProperty           = "Unique Name"
+	NcryptAlgorithmProperty            = "Algorithm Name"
+	NcryptLengthProperty               = "Length"
+	NcryptLengthsProperty              = "Lengths"
+	NcryptBlockLengthProperty          = "Block Length"
+	NcryptPublicLengthProperty         = BcryptPublicKeyLength
+	NcryptSignatureLengthProperty      = BcryptSignatureLength
+	NcryptChainingModeProperty         = "Chaining Mode"
+	NcryptAuthTagLength                = "AuthTagLength"
+	NcryptUiPolicyProperty             = "UI Policy"
+	NcryptExportPolicyProperty         = "Export Policy"
+	NcryptWindowHandleProperty         = "HWND Handle"
+	NcryptUseContextProperty           = "Use Context"
+	NcryptImplTypeProperty             = "Impl Type"
+	NcryptKeyUsageProperty             = "Key Usage"
+	NcryptKeyTypeProperty              = "Key Type"
+	NcryptVersionProperty              = "Version"
+	NcryptSecurityDescrSupportProperty = "Security Descr Support"
+	NcryptSecurityDescrProperty        = "Security Descr"
+	NcryptUseCountEnabledProperty      = "Enabled Use Count"
+	NcryptUseCountProperty             = "Use Count"
+	NcryptLastModifiedProperty         = "Modified"
+	NcryptMaxNameLengthProperty        = "Max Name Length"
+	NcryptAlgorithmGroupProperty       = "Algorithm Group"
+	NcryptDhParametersProperty         = BcryptDhParameters
+	NcryptEccParametersProperty        = BcryptEccParameters
+	NcryptEccCurveNameProperty         = BcryptEccCurveName
+	NcryptEccCurveNameListProperty     = BcryptEccCurveNameList
+	NcryptUseVirtualIsolationProperty  = "Virtual Iso"
+	NcryptUsePerBootKeyProperty        = "Per Boot Key"
+	NcryptProviderHandleProperty       = "Provider Handle"
+	NcryptPinProperty                  = "SmartCardPin"
+	NcryptReaderProperty               = "SmartCardReader"
+	NcryptSmartcardGuidProperty        = "SmartCardGuid"
+	NcryptCertificateProperty          = "SmartCardKeyCertificate"
+	NcryptPinPromptProperty            = "SmartCardPinPrompt"
+	NcryptUserCertstoreProperty        = "SmartCardUserCertStore"
+	NcryptRootCertstoreProperty        = "SmartcardRootCertStore"
+	NcryptSecurePinProperty            = "SmartCardSecurePin"
+	NcryptAssociatedEcdhKey            = "SmartCardAssociatedECDHKey"
+	NcryptScardPinId                   = "SmartCardPinId"
+	NcryptScardPinInfo                 = "SmartCardPinInfo"
+	NcryptReaderIconProperty           = "SmartCardReaderIcon"
+	NcryptKdfSecretValue               = "KDFKeySecret"
+	NcryptDismissUiTimeoutSecProperty  = "SmartCardDismissUITimeoutSeconds"
 	//
 	// Additional property strings specific for the Platform Crypto Provider
 	//
-	ncryptPcpPlatformTypeProperty                 = "PCP_PLATFORM_TYPE"
-	ncryptPcpProviderVersionProperty              = "PCP_PROVIDER_VERSION"
-	ncryptPcpEkpubProperty                        = "PCP_EKPUB"
-	ncryptPcpEkcertProperty                       = "PCP_EKCERT"
-	ncryptPcpEknvcertProperty                     = "PCP_EKNVCERT"
-	ncryptPcpRsaEkpubProperty                     = "PCP_RSA_EKPUB"
-	ncryptPcpRsaEkcertProperty                    = "PCP_RSA_EKCERT"
-	ncryptPcpRsaEknvcertProperty                  = "PCP_RSA_EKNVCERT"
-	ncryptPcpEccEkpubProperty                     = "PCP_ECC_EKPUB"
-	ncryptPcpEccEkcertProperty                    = "PCP_ECC_EKCERT"
-	ncryptPcpEccEknvcertProperty                  = "PCP_ECC_EKNVCERT"
-	ncryptPcpSrkpubProperty                       = "PCP_SRKPUB"
-	ncryptPcpPcrtableProperty                     = "PCP_PCRTABLE"
-	ncryptPcpChangepasswordProperty               = "PCP_CHANGEPASSWORD"
-	ncryptPcpPasswordRequiredProperty             = "PCP_PASSWORD_REQUIRED"
-	ncryptPcpUsageauthProperty                    = "PCP_USAGEAUTH"
-	ncryptPcpMigrationpasswordProperty            = "PCP_MIGRATIONPASSWORD"
-	ncryptPcpExportAllowedProperty                = "PCP_EXPORT_ALLOWED"
-	ncryptPcpStorageparentProperty                = "PCP_STORAGEPARENT"
-	ncryptPcpProviderhandleProperty               = "PCP_PROVIDERMHANDLE"
-	ncryptPcpPlatformhandleProperty               = "PCP_PLATFORMHANDLE"
-	ncryptPcpPlatformBindingPcrmaskProperty       = "PCP_PLATFORM_BINDING_PCRMASK"
-	ncryptPcpPlatformBindingPcrdigestlistProperty = "PCP_PLATFORM_BINDING_PCRDIGESTLIST"
-	ncryptPcpPlatformBindingPcrdigestProperty     = "PCP_PLATFORM_BINDING_PCRDIGEST"
-	ncryptPcpKeyUsagePolicyProperty               = "PCP_KEY_USAGE_POLICY"
-	ncryptPcpRsaSchemeProperty                    = "PCP_RSA_SCHEME"
-	ncryptPcpRsaSchemeHashAlgProperty             = "PCP_RSA_SCHEME_HASH_ALG"
-	ncryptPcpTpm12IdbindingProperty               = "PCP_TPM12_IDBINDING"
-	ncryptPcpTpm12IdbindingDynamicProperty        = "PCP_TPM12_IDBINDING_DYNAMIC"
-	ncryptPcpTpm12IdactivationProperty            = "PCP_TPM12_IDACTIVATION"
-	ncryptPcpKeyattestationProperty               = "PCP_TPM12_KEYATTESTATION"
-	ncryptPcpAlternateKeyStorageLocationProperty  = "PCP_ALTERNATE_KEY_STORAGE_LOCATION"
-	ncryptPcpTpmIfxRsaKeygenProhibitedProperty    = "PCP_TPM_IFX_RSA_KEYGEN_PROHIBITED"
-	ncryptPcpTpmIfxRsaKeygenVulnerabilityProperty = "PCP_TPM_IFX_RSA_KEYGEN_VULNERABILITY"
-	ncryptPcpHmacAuthPolicyref                    = "PCP_HMAC_AUTH_POLICYREF"
-	ncryptPcpHmacAuthPolicyinfo                   = "PCP_HMAC_AUTH_POLICYINFO"
-	ncryptPcpHmacAuthNonce                        = "PCP_HMAC_AUTH_NONCE"
-	ncryptPcpHmacAuthSignature                    = "PCP_HMAC_AUTH_SIGNATURE"
-	ncryptPcpHmacAuthTicket                       = "PCP_HMAC_AUTH_TICKET"
-	ncryptPcpNoDaProtectionProperty               = "PCP_NO_DA_PROTECTION"
-	ncryptPcpTpmManufacturerIdProperty            = "PCP_TPM_MANUFACTURER_ID"
-	ncryptPcpTpmFwVersionProperty                 = "PCP_TPM_FW_VERSION"
-	ncryptPcpTpm2bnameProperty                    = "PCP_TPM2BNAME"
-	ncryptPcpTpmVersionProperty                   = "PCP_TPM_VERSION"
-	ncryptPcpRawPolicydigestProperty              = "PCP_RAW_POLICYDIGEST"
-	ncryptPcpKeyCreationhashProperty              = "PCP_KEY_CREATIONHASH"
-	ncryptPcpKeyCreationticketProperty            = "PCP_KEY_CREATIONTICKET"
-	ncryptPcpSessionidProperty                    = "PCP_SESSIONID"
-	ncryptPcpPssSaltSizeProperty                  = "PSS Salt Size"
+	NcryptPcpPlatformTypeProperty                 = "PCP_PLATFORM_TYPE"
+	NcryptPcpProviderVersionProperty              = "PCP_PROVIDER_VERSION"
+	NcryptPcpEkpubProperty                        = "PCP_EKPUB"
+	NcryptPcpEkcertProperty                       = "PCP_EKCERT"
+	NcryptPcpEknvcertProperty                     = "PCP_EKNVCERT"
+	NcryptPcpRsaEkpubProperty                     = "PCP_RSA_EKPUB"
+	NcryptPcpRsaEkcertProperty                    = "PCP_RSA_EKCERT"
+	NcryptPcpRsaEknvcertProperty                  = "PCP_RSA_EKNVCERT"
+	NcryptPcpEccEkpubProperty                     = "PCP_ECC_EKPUB"
+	NcryptPcpEccEkcertProperty                    = "PCP_ECC_EKCERT"
+	NcryptPcpEccEknvcertProperty                  = "PCP_ECC_EKNVCERT"
+	NcryptPcpSrkpubProperty                       = "PCP_SRKPUB"
+	NcryptPcpPcrtableProperty                     = "PCP_PCRTABLE"
+	NcryptPcpChangepasswordProperty               = "PCP_CHANGEPASSWORD"
+	NcryptPcpPasswordRequiredProperty             = "PCP_PASSWORD_REQUIRED"
+	NcryptPcpUsageauthProperty                    = "PCP_USAGEAUTH"
+	NcryptPcpMigrationpasswordProperty            = "PCP_MIGRATIONPASSWORD"
+	NcryptPcpExportAllowedProperty                = "PCP_EXPORT_ALLOWED"
+	NcryptPcpStorageparentProperty                = "PCP_STORAGEPARENT"
+	NcryptPcpProviderhandleProperty               = "PCP_PROVIDERMHANDLE"
+	NcryptPcpPlatformhandleProperty               = "PCP_PLATFORMHANDLE"
+	NcryptPcpPlatformBindingPcrmaskProperty       = "PCP_PLATFORM_BINDING_PCRMASK"
+	NcryptPcpPlatformBindingPcrdigestlistProperty = "PCP_PLATFORM_BINDING_PCRDIGESTLIST"
+	NcryptPcpPlatformBindingPcrdigestProperty     = "PCP_PLATFORM_BINDING_PCRDIGEST"
+	NcryptPcpKeyUsagePolicyProperty               = "PCP_KEY_USAGE_POLICY"
+	NcryptPcpRsaSchemeProperty                    = "PCP_RSA_SCHEME"
+	NcryptPcpRsaSchemeHashAlgProperty             = "PCP_RSA_SCHEME_HASH_ALG"
+	NcryptPcpTpm12IdbindingProperty               = "PCP_TPM12_IDBINDING"
+	NcryptPcpTpm12IdbindingDynamicProperty        = "PCP_TPM12_IDBINDING_DYNAMIC"
+	NcryptPcpTpm12IdactivationProperty            = "PCP_TPM12_IDACTIVATION"
+	NcryptPcpKeyattestationProperty               = "PCP_TPM12_KEYATTESTATION"
+	NcryptPcpAlternateKeyStorageLocationProperty  = "PCP_ALTERNATE_KEY_STORAGE_LOCATION"
+	NcryptPcpTpmIfxRsaKeygenProhibitedProperty    = "PCP_TPM_IFX_RSA_KEYGEN_PROHIBITED"
+	NcryptPcpTpmIfxRsaKeygenVulnerabilityProperty = "PCP_TPM_IFX_RSA_KEYGEN_VULNERABILITY"
+	NcryptPcpHmacAuthPolicyref                    = "PCP_HMAC_AUTH_POLICYREF"
+	NcryptPcpHmacAuthPolicyinfo                   = "PCP_HMAC_AUTH_POLICYINFO"
+	NcryptPcpHmacAuthNonce                        = "PCP_HMAC_AUTH_NONCE"
+	NcryptPcpHmacAuthSignature                    = "PCP_HMAC_AUTH_SIGNATURE"
+	NcryptPcpHmacAuthTicket                       = "PCP_HMAC_AUTH_TICKET"
+	NcryptPcpNoDaProtectionProperty               = "PCP_NO_DA_PROTECTION"
+	NcryptPcpTpmManufacturerIdProperty            = "PCP_TPM_MANUFACTURER_ID"
+	NcryptPcpTpmFwVersionProperty                 = "PCP_TPM_FW_VERSION"
+	NcryptPcpTpm2bnameProperty                    = "PCP_TPM2BNAME"
+	NcryptPcpTpmVersionProperty                   = "PCP_TPM_VERSION"
+	NcryptPcpRawPolicydigestProperty              = "PCP_RAW_POLICYDIGEST"
+	NcryptPcpKeyCreationhashProperty              = "PCP_KEY_CREATIONHASH"
+	NcryptPcpKeyCreationticketProperty            = "PCP_KEY_CREATIONTICKET"
+	NcryptPcpSessionidProperty                    = "PCP_SESSIONID"
+	NcryptPcpPssSaltSizeProperty                  = "PSS Salt Size"
 	// TPM RSAPSS Salt size types
-	ncryptTpmPssSaltSizeUnknown  = 0x00000000
-	ncryptTpmPssSaltSizeMaximum  = 0x00000001 // Pre-TPM Spec-1.16: Max allowed salt size
-	ncryptTpmPssSaltSizeHashsize = 0x00000002 // Post-1.16: PSS salt = hashLen
+	NcryptTpmPssSaltSizeUnknown  = 0x00000000
+	NcryptTpmPssSaltSizeMaximum  = 0x00000001 // Pre-TPM Spec-1.16: Max allowed salt size
+	NcryptTpmPssSaltSizeHashsize = 0x00000002 // Post-1.16: PSS salt = hashLen
 	// TPM NCryptSignHash Flag
-	ncryptTpmPadPssIgnoreSalt = 0x00000020 // NCryptSignHash
+	NcryptTpmPadPssIgnoreSalt = 0x00000020 // NCryptSignHash
 
 	//
 	// NCRYPT_PCP_TPM_IFX_RSA_KEYGEN_VULNERABILITY_PROPERTY values
 	//
-	ifxRsaKeygenVulNotAffected    = 0
-	ifxRsaKeygenVulAffectedLevel1 = 1
-	ifxRsaKeygenVulAffectedLevel2 = 2
+	IfxRsaKeygenVulNotAffected    = 0
+	IfxRsaKeygenVulAffectedLevel1 = 1
+	IfxRsaKeygenVulAffectedLevel2 = 2
 
 	//
 	// BCRYPT_PCP_KEY_USAGE_POLICY values
 	//
-	ncryptTpm12Provider          = (0x00010000)
-	ncryptPcpSignatureKey        = (0x00000001)
-	ncryptPcpEncryptionKey       = (0x00000002)
-	ncryptPcpGenericKey          = (ncryptPcpSignatureKey | ncryptPcpEncryptionKey)
-	ncryptPcpStorageKey          = (0x00000004)
-	ncryptPcpIdentityKey         = (0x00000008)
-	ncryptPcpHmacverificationKey = (0x00000010)
+	NcryptTpm12Provider          = (0x00010000)
+	NcryptPcpSignatureKey        = (0x00000001)
+	NcryptPcpEncryptionKey       = (0x00000002)
+	NcryptPcpGenericKey          = (NcryptPcpSignatureKey | NcryptPcpEncryptionKey)
+	NcryptPcpStorageKey          = (0x00000004)
+	NcryptPcpIdentityKey         = (0x00000008)
+	NcryptPcpHmacverificationKey = (0x00000010)
 
 	//
 	// Additional property strings specific for the Smart Card Key Storage Provider
 	//
-	ncryptScardNgcKeyName                    = "SmartCardNgcKeyName"
-	ncryptPcpPlatformBindingPcralgidProperty = "PCP_PLATFORM_BINDING_PCRALGID"
+	NcryptScardNgcKeyName                    = "SmartCardNgcKeyName"
+	NcryptPcpPlatformBindingPcralgidProperty = "PCP_PLATFORM_BINDING_PCRALGID"
 
 	//
 	// Used to set IV for block ciphers, before calling NCryptEncrypt/NCryptDecrypt
 	//
-	ncryptInitializationVector = bcryptInitializationVector
+	NcryptInitializationVector = BcryptInitializationVector
 
-	ncryptChangepasswordProperty              = ncryptPcpChangepasswordProperty
-	ncryptAlternateKeyStorageLocationProperty = ncryptPcpAlternateKeyStorageLocationProperty
-	ncryptKeyAccessPolicyProperty             = "Key Access Policy"
+	NcryptChangepasswordProperty              = NcryptPcpChangepasswordProperty
+	NcryptAlternateKeyStorageLocationProperty = NcryptPcpAlternateKeyStorageLocationProperty
+	NcryptKeyAccessPolicyProperty             = "Key Access Policy"
 
 	// Maximum length of property name (in characters)
-	ncryptMaxPropertyName = 64
+	NcryptMaxPropertyName = 64
 
 	// Maximum length of property data (in bytes)
-	ncryptMaxPropertyData = 0x100000
+	NcryptMaxPropertyData = 0x100000
 
 	// NCRYPT_EXPORT_POLICY_PROPERTY property flags.
-	ncryptAllowExportFlag             = 0x00000001
-	ncryptAllowPlaintextExportFlag    = 0x00000002
-	ncryptAllowArchivingFlag          = 0x00000004
-	ncryptAllowPlaintextArchivingFlag = 0x00000008
+	NcryptAllowExportFlag             = 0x00000001
+	NcryptAllowPlaintextExportFlag    = 0x00000002
+	NcryptAllowArchivingFlag          = 0x00000004
+	NcryptAllowPlaintextArchivingFlag = 0x00000008
 
 	// NCRYPT_IMPL_TYPE_PROPERTY property flags.
-	ncryptImplHardwareFlag         = 0x00000001
-	ncryptImplSoftwareFlag         = 0x00000002
-	ncryptImplRemovableFlag        = 0x00000008
-	ncryptImplHardwareRngFlag      = 0x00000010
-	ncryptImplVirtualIsolationFlag = 0x00000020
+	NcryptImplHardwareFlag         = 0x00000001
+	NcryptImplSoftwareFlag         = 0x00000002
+	NcryptImplRemovableFlag        = 0x00000008
+	NcryptImplHardwareRngFlag      = 0x00000010
+	NcryptImplVirtualIsolationFlag = 0x00000020
 
 	// NCRYPT_KEY_USAGE_PROPERTY property flags.
-	ncryptAllowDecryptFlag      = 0x00000001
-	ncryptAllowSigningFlag      = 0x00000002
-	ncryptAllowKeyAgreementFlag = 0x00000004
-	ncryptAllowKeyImportFlag    = 0x00000008
-	ncryptAllowAllUsages        = 0x00ffffff
+	NcryptAllowDecryptFlag      = 0x00000001
+	NcryptAllowSigningFlag      = 0x00000002
+	NcryptAllowKeyAgreementFlag = 0x00000004
+	NcryptAllowKeyImportFlag    = 0x00000008
+	NcryptAllowAllUsages        = 0x00ffffff
 
 	// NCRYPT_UI_POLICY_PROPERTY property flags and structure
-	ncryptUiProtectKeyFlag               = 0x00000001
-	ncryptUiForceHighProtectionFlag      = 0x00000002
-	ncryptUiFingerprintProtectionFlag    = 0x00000004
-	ncryptUiAppcontainerAccessMediumFlag = 0x00000008
+	NcryptUiProtectKeyFlag               = 0x00000001
+	NcryptUiForceHighProtectionFlag      = 0x00000002
+	NcryptUiFingerprintProtectionFlag    = 0x00000004
+	NcryptUiAppcontainerAccessMediumFlag = 0x00000008
 
 	//
 	// Pin Cache Provider Properties
 	//
-	ncryptPinCacheFreeApplicationTicketProperty = "PinCacheFreeApplicationTicket"
-	ncryptPinCacheFlagsProperty                 = "PinCacheFlags"
+	NcryptPinCacheFreeApplicationTicketProperty = "PinCacheFreeApplicationTicket"
+	NcryptPinCacheFlagsProperty                 = "PinCacheFlags"
 	// The NCRYPT_PIN_CACHE_FLAGS_PROPERTY property is a DWORD value that can be set from a trusted process. The
 	// following flags can be set.
-	ncryptPinCacheDisableDplFlag = 0x00000001
+	NcryptPinCacheDisableDplFlag = 0x00000001
 
 	//
 	// Pin Cache Key Properties
 	//
-	ncryptPinCacheApplicationTicketProperty = "PinCacheApplicationTicket"
-	ncryptPinCacheApplicationImageProperty  = "PinCacheApplicationImage"
-	ncryptPinCacheApplicationStatusProperty = "PinCacheApplicationStatus"
-	ncryptPinCachePinProperty               = "PinCachePin"
-	ncryptPinCacheIsGestureRequiredProperty = "PinCacheIsGestureRequired"
-	ncryptPinCacheRequireGestureFlag        = 0x00000001
+	NcryptPinCacheApplicationTicketProperty = "PinCacheApplicationTicket"
+	NcryptPinCacheApplicationImageProperty  = "PinCacheApplicationImage"
+	NcryptPinCacheApplicationStatusProperty = "PinCacheApplicationStatus"
+	NcryptPinCachePinProperty               = "PinCachePin"
+	NcryptPinCacheIsGestureRequiredProperty = "PinCacheIsGestureRequired"
+	NcryptPinCacheRequireGestureFlag        = 0x00000001
 	// The NCRYPT_PIN_CACHE_PIN_PROPERTY and NCRYPT_PIN_CACHE_APPLICATION_TICKET_PROPERTY properties
 	// return a 32 byte random unique ID encoded as a null terminated base64 Unicode string. The string length
 	// is 32 * 4/3 + 1 characters = 45 characters, 90 bytes
-	ncryptPinCachePinByteLength               = 90
-	ncryptPinCacheApplicationTicketByteLength = 90
-	ncryptPinCacheClearProperty               = "PinCacheClear"
+	NcryptPinCachePinByteLength               = 90
+	NcryptPinCacheApplicationTicketByteLength = 90
+	NcryptPinCacheClearProperty               = "PinCacheClear"
 	// The NCRYPT_PIN_CACHE_CLEAR_PROPERTY property is a DWORD value. The following option can be set:
-	ncryptPinCacheClearForCallingProcessOption = 0x00000001
+	NcryptPinCacheClearForCallingProcessOption = 0x00000001
 
-	ncryptKeyAccessPolicyVersion  = 1
-	ncryptAllowSilentKeyAccess    = 0x00000001
-	ncryptCipherKeyBlobMagic      = 0x52485043 // CPHR
-	ncryptKdfKeyBlobMagic         = 0x3146444B // KDF1
-	ncryptProtectedKeyBlobMagic   = 0x4B545250 // PRTK
-	ncryptCipherKeyBlob           = "CipherKeyBlob"
-	ncryptKdfKeyBlob              = "KDFKeyBlob"
-	ncryptProtectedKeyBlob        = "ProtectedKeyBlob"
-	ncryptTpmLoadableKeyBlob      = "PcpTpmProtectedKeyBlob"
-	ncryptTpmLoadableKeyBlobMagic = 0x4D54504B //'MTPK'
-	ncryptPkcs7EnvelopeBlob       = "PKCS7_ENVELOPE"
-	ncryptPkcs8PrivateKeyBlob     = "PKCS8_PRIVATEKEY"
-	ncryptOpaquetransportBlob     = "OpaqueTransport"
-	ncryptIsolatedKeyEnvelopeBlob = "ISOLATED_KEY_ENVELOPE"
+	NcryptKeyAccessPolicyVersion  = 1
+	NcryptAllowSilentKeyAccess    = 0x00000001
+	NcryptCipherKeyBlobMagic      = 0x52485043 // CPHR
+	NcryptKdfKeyBlobMagic         = 0x3146444B // KDF1
+	NcryptProtectedKeyBlobMagic   = 0x4B545250 // PRTK
+	NcryptCipherKeyBlob           = "CipherKeyBlob"
+	NcryptKdfKeyBlob              = "KDFKeyBlob"
+	NcryptProtectedKeyBlob        = "ProtectedKeyBlob"
+	NcryptTpmLoadableKeyBlob      = "PcpTpmProtectedKeyBlob"
+	NcryptTpmLoadableKeyBlobMagic = 0x4D54504B //'MTPK'
+	NcryptPkcs7EnvelopeBlob       = "PKCS7_ENVELOPE"
+	NcryptPkcs8PrivateKeyBlob     = "PKCS8_PRIVATEKEY"
+	NcryptOpaquetransportBlob     = "OpaqueTransport"
+	NcryptIsolatedKeyEnvelopeBlob = "ISOLATED_KEY_ENVELOPE"
 )
 
-type nCryptAlgorithmName struct {
-	pszName         *uint16
-	dwClass         uint32 // the CNG interface that supports this algorithm
-	dwAlgOperations uint32 // the types of operations supported by this algorithm
-	dwFlags         uint32
+//
+// NCrypt structures.
+//
+
+type NcryptCipherPaddingInfo struct {
+	// size of this struct
+	CbSize uint32
+
+	// See NCRYPT_CIPHER_ flag values
+	DwFlags uint32
+
+	// [in, out, optional]
+	// The address of a buffer that contains the initialization vector (IV) to use during encryption.
+	// The cbIV parameter contains the size of this buffer. This function will modify the contents of this buffer.
+	// If you need to reuse the IV later, make sure you make a copy of this buffer before calling this function.
+	PbIV *byte // _Field_size_bytes_(cbIV)
+	CbIV uint32
+
+	// [in, out, optional]
+	// The address of a buffer that contains the algorithm specific info to use during encryption.
+	// The cbOtherInfo parameter contains the size of this buffer. This function will modify the contents of this buffer.
+	// If you need to reuse the buffer later, make sure you make a copy of this buffer before calling this function.
+	//
+	// For Microsoft providers, when an authenticated encryption mode is used,
+	// this parameter must point to a serialized BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO structure.
+	//
+	// NOTE: All pointers inside a structure must be to a data allocated within pbOtherInfo buffer.
+	//
+	PbOtherInfo *byte // _Field_size_bytes_(cbOtherInfo)
+	CbOtherInfo uint32
 }
-type nCryptKeyName struct {
-	pszName         *uint16
-	pszAlgid        *uint16
-	dwLegacyKeySpec uint32
-	dwFlags         uint32
+type NcryptPlatformAttestPaddingInfo struct {
+	Magic   uint32 // 'PAPD'
+	PcrMask uint32
 }
-type nCryptProviderName struct {
-	pszName    *uint16
-	pszComment *uint16
+type NcryptKeyAttestPaddingInfo struct {
+	Magic     uint32 // 'KAPD'
+	PbKeyBlob *byte
+	CbKeyBlob uint32
+	PbKeyAuth *byte
+	CbKeyAuth uint32
 }
-type ncryptUiPolicy struct {
-	dwVersion        uint32
-	dwFlags          uint32
-	pszCreationTitle *uint16
-	pszFriendlyName  *uint16
-	pszDescription   *uint16
+type NcryptIsolatedKeyAttestedAttributes struct {
+	Version         uint32 // set to NCRYPT_ISOLATED_KEY_ATTESTED_ATTRIBUTES_V0
+	Flags           uint32 // NCRYPT_ISOLATED_KEY_FLAG_ flags
+	CbPublicKeyBlob uint32
+	// pbPublicKeyBlob[cbPublicKeyBlob] - exported public key
+}
+type NcryptVsmKeyAttestationStatement struct {
+	Magic        uint32 // {'I', 'M', 'S', 'V'} - 'VSMI' for VSM Isolated
+	Version      uint32 // Set to NCRYPT_VSM_KEY_ATTESTATION_STATEMENT_CURRENT_VERSION
+	CbSignature  uint32 // Secure kernel signature over the isolation report
+	CbReport     uint32 // Key isolation report from the secure kernel
+	CbAttributes uint32 // Attributes of the isolated key including public key blob
+	// UCHAR Signature[cbSignature]    -- Secure kernel signature of the report
+	// UCHAR Report[cbReport]          -- Secure kernel report including hash of Attributes
+	// UCHAR Attributes[cbAttributes]  -- Trustlet-reported attributes of the key
+}
+type NcryptPcpTpmWebAuthnAttestationStatement struct {
+	Magic         uint32 // { 'A', 'W', 'A', 'K' } - 'KAWA'
+	Version       uint32 // 1 for the statement defined in this specification
+	HeaderSize    uint32 // 24
+	CbCertifyInfo uint32
+	CbSignature   uint32
+	CbTpmPublic   uint32
+	// CertifyInfo[cbCertifyInfo];
+	// Signature[cbSignature];
+	// TpmPublic[cbTpmPublic];
+}
+type NcryptTpmPlatformAttestationStatement struct {
+	Magic       uint32 // {'A', 'L', 'P', 'T'} - 'TPLA' for TPM Platform
+	Version     uint32 // Set to NCRYPT_TPM_PLATFORM_ATTESTATION_STATEMENT_CURRENT_VERSION
+	PcrAlg      uint32 // The TPM hash algorithm ID
+	CbSignature uint32 // TPMT_SIGNATURE structure signature over the quote
+	CbQuote     uint32 // TPMS_ATTEST structure that was generated and signed
+	CbPcrs      uint32 // Raw concatenation of all 24 PCRs
+	// UCHAR Signature[cbSignature]
+	// UCHAR Quote[cbQuote]
+	// UCHAR Pcrs[cbPcrs]
+}
+type NcryptAlgorithmName struct {
+	PszName         *uint16
+	DwClass         uint32 // the CNG interface that supports this algorithm
+	DwAlgOperations uint32 // the types of operations supported by this algorithm
+	DwFlags         uint32
+}
+type NcryptKeyName struct {
+	PszName         *uint16
+	PszAlgid        *uint16
+	DwLegacyKeySpec uint32
+	DwFlags         uint32
+}
+type NcryptProviderName struct {
+	PszName    *uint16
+	PszComment *uint16
+}
+type NcryptUiPolicy struct {
+	DwVersion        uint32
+	DwFlags          uint32
+	PszCreationTitle *uint16
+	PszFriendlyName  *uint16
+	PszDescription   *uint16
+}
+type NcryptKeyAccessPolicyBlob struct {
+	DwVersion        uint32
+	DwPolicyFlags    uint32
+	CbUserSid        uint32
+	CbApplicationSid uint32
+	//  User Sid
+	//  Application Sid
+}
+type NcryptSupportedLengths struct { // NCRYPT_LENGTHS_PROPERTY property structure.
+	DwMinLength     uint32
+	DwMaxLength     uint32
+	DwIncrement     uint32
+	DwDefaultLength uint32
+}
+type NcryptPcpHmacAuthSignatureInfo struct { // NCRYPT_PCP_HMAC_AUTH_SIGNATURE property structure.
+	DwVersion    uint32
+	IExpiration  int32
+	PabNonce     [32]byte
+	PabPolicyRef [32]byte
+	PabHMAC      [32]byte
+}
+type NcryptPcpTpmFwVersionInfo struct { // NCRYPT_PCP_TPM_FW_VERSION property structure.
+	Major1 uint16
+	Major2 uint16
+	Minor1 uint16
+	Minor2 uint16
+}
+type NcryptPcpRawPolicydigest struct { // NCRYPT_PCP_RAW_POLICYDIGEST_PROPERTY structure
+	DwVersion uint32
+	CbDigest  uint32
+}
+type NcryptKeyBlobHeader struct {
+	CbSize    uint32 // size of this structure
+	DwMagic   uint32
+	CbAlgName uint32 // size of the algorithm, in bytes, including terminating 0
+	CbKeyData uint32
+}
+type NcryptTpmLoadableKeyBlobHeader struct {
+	Magic     uint32
+	CbHeader  uint32
+	CbPublic  uint32
+	CbPrivate uint32
+	CbName    uint32
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
 // DLL references.
 //////////////////////////////////////////////////////////////////////////////////////
+
 var (
 	nCrypt                         = windows.MustLoadDLL("ncrypt.dll")
 	nCryptCreateClaimProc          = nCrypt.MustFindProc("NCryptCreateClaim")
@@ -1143,6 +1426,7 @@ var (
 // Windows error codes.
 // From C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared\winerror.h.
 //////////////////////////////////////////////////////////////////////////////////////
+
 var (
 	isReadyErrors = map[uint32]string{
 		0x00000002: "Platform restart is required (shutdown).",
@@ -1575,13 +1859,13 @@ func maybeWinErr(errNo uintptr) error {
 	}
 }
 
-// utf16BytesToString transforms a []byte which contains a wide char string in LE
+// Utf16BytesToString transforms a []byte which contains a wide char string in LE
 // into its []uint16 corresponding representation,
 // then returns the UTF-8 encoding of the UTF-16 sequence,
 // with a terminating NUL removed. If after converting the []byte into
 // a []uint16, there is a NUL uint16, the conversion to string stops
 // at that NUL uint16.
-func utf16BytesToString(buf []byte) (string, error) {
+func Utf16BytesToString(buf []byte) (string, error) {
 
 	if len(buf)%2 != 0 {
 		return "", fmt.Errorf("input is not a valid byte representation of a wide char string in LE")
@@ -1595,60 +1879,60 @@ func utf16BytesToString(buf []byte) (string, error) {
 	return windows.UTF16ToString(b), nil
 }
 
-// utf16ToString transforms a []utf16 which contains a wide char string in LE
+// Utf16ToString transforms a []utf16 which contains a wide char string in LE
 // into its UTF-8 encoding representation, with a terminating NUL removed.
 // The conversion stops at the first encountered NUL uint16.
-func utf16ToString(buf []uint16) (string, error) {
+func Utf16ToString(buf []uint16) (string, error) {
 	return windows.UTF16ToString(buf), nil
 }
 
-// utf16PtrToString transforms a *utf16 which contains a wide char string in LE
+// Utf16PtrToString transforms a *utf16 which contains a wide char string in LE
 // into its UTF-8 encoding representation, with a terminating NUL removed.
 // The conversion stops at the first encountered NUL uint16.
-func utf16PtrToString(buf *uint16) string {
+func Utf16PtrToString(buf *uint16) string {
 	return windows.UTF16PtrToString(buf)
 }
 
-// stringToUtf16 returns the UTF-16 encoding of the UTF-8 string
+// StringToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
 // str, with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func stringToUtf16(str string) ([]uint16, error) {
+func StringToUtf16(str string) ([]uint16, error) {
 	if str == "" {
 		return nil, nil
 	}
 	return windows.UTF16FromString(str)
 }
 
-// stringToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
+// StringToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
 // str, with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func stringToUtf16Ptr(str string) (*uint16, error) {
+func StringToUtf16Ptr(str string) (*uint16, error) {
 	if str == "" {
 		return nil, nil
 	}
 	return windows.UTF16PtrFromString(str)
 }
 
-// bytesToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
+// BytesToUtf16Ptr returns the UTF-16 encoding of the UTF-8 string
 // contained in buf as a byte array, with a terminating NUL added.
 // If str contains a NUL byte at any location, it returns (nil, EINVAL).
-func bytesToUtf16Ptr(buf []byte) (*uint16, error) {
+func BytesToUtf16Ptr(buf []byte) (*uint16, error) {
 	str := string(buf)
-	return stringToUtf16Ptr(str)
+	return StringToUtf16Ptr(str)
 }
 
-// bytesToUtf16 returns the UTF-16 encoding of the UTF-8 string
+// BytesToUtf16 returns the UTF-16 encoding of the UTF-8 string
 // contained in buf as a byte array, with a terminating NUL added.
 // If str contains a NUL byte at any location, it returns (nil, EINVAL).
-func bytesToUtf16(buf []byte) ([]uint16, error) {
+func BytesToUtf16(buf []byte) ([]uint16, error) {
 	str := string(buf)
-	return stringToUtf16(str)
+	return StringToUtf16(str)
 }
 
-// stringToUtf16Bytes returns the UTF-16 encoding of the UTF-8 string
+// StringToUtf16Bytes returns the UTF-16 encoding of the UTF-8 string
 // str, as a byte array with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func stringToUtf16Bytes(str string) ([]byte, error) {
+func StringToUtf16Bytes(str string) ([]byte, error) {
 	if str == "" {
 		return nil, nil
 	}
@@ -1669,10 +1953,10 @@ func stringToUtf16Bytes(str string) ([]byte, error) {
 	return bytesStr, nil
 }
 
-// stringToUtf16String returns the UTF-16 encoding of the UTF-8 string
+// StringToUtf16String returns the UTF-16 encoding of the UTF-8 string
 // str, with a terminating NUL added. If str contains a NUL byte at any
 // location, it returns (nil, EINVAL).
-func stringToUtf16String(str string) ([]uint16, error) {
+func StringToUtf16String(str string) ([]uint16, error) {
 	if str == "" {
 		return nil, nil
 	}
@@ -1683,126 +1967,62 @@ func stringToUtf16String(str string) ([]uint16, error) {
 	return utf16Str, nil
 }
 
-// getNCryptBufferProperty is a helper to read a byte slice from a NCrypt handle property
-// using NCryptGetProperty.
-func getNCryptBufferProperty(
-	hnd uintptr,
-	propertyName string,
-	flags uint32,
-) ([]byte, uint32, error) {
-	var size uint32
-
-	r, err := nCryptGetProperty(
-		hnd,
-		propertyName,
-		nil,
-		0,
-		&size,
-		flags,
-	)
-	if err != nil {
-		return nil, r, err
-	}
-	if size == 0 {
-		return nil, 0, nil
-	}
-
-	buff := make([]byte, size)
-
-	r, err = nCryptGetProperty(
-		hnd,
-		propertyName,
-		&buff[0],
-		size,
-		&size,
-		flags,
-	)
-	if err != nil {
-		return nil, r, err
-	}
-
-	return buff, 0, nil
-}
-
-// getNCryptKeyBlob is a helper to get the blob of a NCrypt key handle
-// using NCryptExportKey.
-func getNCryptKeyBlob(
-	hnd uintptr,
-	blobType string,
-	flags uint32,
-) ([]byte, uint32, error) {
-	var size uint32
-
-	r, err := nCryptExportKey(
-		hnd,
-		0,
-		blobType,
-		nil,
-		nil,
-		0,
-		&size,
-		flags,
-	)
-	if err != nil {
-		return nil, r, err
-	}
-	if size == 0 {
-		return nil, 0, nil
-	}
-
-	buff := make([]byte, size)
-
-	r, err = nCryptExportKey(
-		hnd,
-		0,
-		blobType,
-		nil,
-		&buff[0],
-		size,
-		&size,
-		flags,
-	)
-	if err != nil {
-		return nil, r, err
-	}
-
-	return buff, 0, nil
-}
-
 //////////////////////////////////////////////////////////////////////////////////////
 
-func nCryptCreateClaim(
+func NCryptCreateClaim(
 	hSubjectKey uintptr, /* NCRYPT_KEY_HANDLE */
 	hAuthorityKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwClaimType uint32, /* DWORD */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
-	pbClaimBlob *byte, /* PBYTE */
-	cbClaimBlob uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
+	var size uint32
 	r, _, msg := nCryptCreateClaimProc.Call(
 		uintptr(hSubjectKey),
 		uintptr(hAuthorityKey),
 		uintptr(dwClaimType),
 		uintptr(unsafe.Pointer(pParameterList)),
-		uintptr(unsafe.Pointer(pbClaimBlob)),
-		uintptr(cbClaimBlob),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptCreateClaim() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptCreateClaim() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptCreateClaim() returned an empty output")
 	}
 
-	return 0, nil
+	pbClaimData := make([]byte, size)
+	r, _, msg = nCryptCreateClaimProc.Call(
+		uintptr(hSubjectKey),
+		uintptr(hAuthorityKey),
+		uintptr(dwClaimType),
+		uintptr(unsafe.Pointer(pParameterList)),
+		uintptr(unsafe.Pointer(&pbClaimData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptCreateClaim() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptCreateClaim() returned an empty output")
+	}
+
+	return pbClaimData, 0, nil
 }
 
-func nCryptCreatePersistedKey(
+func NCryptCreatePersistedKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	hKey *uintptr, /* NCRYPT_KEY_HANDLE* */
 	pszAlgID string, /* LPCWSTR : Common algorithm identifier */
@@ -1811,12 +2031,12 @@ func nCryptCreatePersistedKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16AlgID, err := stringToUtf16Ptr(pszAlgID)
+	utf16AlgID, err := StringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
 	}
 
-	utf16KeyName, err := stringToUtf16Ptr(pszKeyName)
+	utf16KeyName, err := StringToUtf16Ptr(pszKeyName)
 	if err != nil {
 		return 0, err
 	}
@@ -1833,44 +2053,65 @@ func nCryptCreatePersistedKey(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptCreatePersistedKey() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptCreatePersistedKey() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptDecrypt(
+func NCryptDecrypt(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
-	pbInput *byte, /* PBYTE */
-	cbInput uint32, /* DWORD */
+	pbInput []byte, /* PBYTE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
-	pbOutput *byte, /* PBYTE */
-	cbOutput uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
+	var size uint32
 	r, _, msg := nCryptDecryptProc.Call(
 		uintptr(hKey),
-		uintptr(unsafe.Pointer(pbInput)),
-		uintptr(cbInput),
+		uintptr(unsafe.Pointer(&pbInput[0])),
+		uintptr(len(pbInput)),
 		uintptr(pPaddingInfo),
-		uintptr(unsafe.Pointer(pbOutput)),
-		uintptr(cbOutput),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptDecrypt() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptDecrypt() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptDecrypt() returned an empty output")
 	}
 
-	return 0, nil
+	decryptedData := make([]byte, size)
+	r, _, msg = nCryptDecryptProc.Call(
+		uintptr(hKey),
+		uintptr(unsafe.Pointer(&pbInput[0])),
+		uintptr(len(pbInput)),
+		uintptr(pPaddingInfo),
+		uintptr(unsafe.Pointer(&decryptedData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptDecrypt() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptDecrypt() returned an empty output")
+	}
+
+	return decryptedData, 0, nil
 }
 
-func nCryptDeleteKey(
+func NCryptDeleteKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
@@ -1883,82 +2124,124 @@ func nCryptDeleteKey(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptDeleteKey() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptDeleteKey() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptDeriveKey(
+func NCryptDeriveKey(
 	hSharedSecret uintptr, /* NCRYPT_SECRET_HANDLE */
 	pwszKDF string, /* LPCWSTR */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
-	pbDerivedKey *byte, /* PBYTE */
-	cbDerivedKey uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
 	utf16KDF, err := windows.UTF16FromString(pwszKDF)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
+	var size uint32
 	r, _, msg := nCryptDeriveKeyProc.Call(
 		uintptr(hSharedSecret),
 		uintptr(unsafe.Pointer(&utf16KDF[0])),
 		uintptr(unsafe.Pointer(pParameterList)),
-		uintptr(unsafe.Pointer(pbDerivedKey)),
-		uintptr(cbDerivedKey),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptDeriveKey() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptDeriveKey() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptDeriveKey() returned an empty output")
 	}
 
-	return 0, nil
+	derivedData := make([]byte, size)
+	r, _, msg = nCryptDeriveKeyProc.Call(
+		uintptr(hSharedSecret),
+		uintptr(unsafe.Pointer(&utf16KDF[0])),
+		uintptr(unsafe.Pointer(pParameterList)),
+		uintptr(unsafe.Pointer(&derivedData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptDeriveKey() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptDeriveKey() returned an empty output")
+	}
+
+	return derivedData, 0, nil
 }
 
-func nCryptEncrypt(
+func NCryptEncrypt(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
-	pbInput *byte, /* PBYTE */
-	cbInput uint32, /* DWORD */
+	pbInput []byte, /* PBYTE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
-	pbOutput *byte, /* PBYTE */
-	cbOutput uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
+	var size uint32
 	r, _, msg := nCryptEncryptProc.Call(
 		uintptr(hKey),
-		uintptr(unsafe.Pointer(pbInput)),
-		uintptr(cbInput),
+		uintptr(unsafe.Pointer(&pbInput[0])),
+		uintptr(len(pbInput)),
 		uintptr(pPaddingInfo),
-		uintptr(unsafe.Pointer(pbOutput)),
-		uintptr(cbOutput),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptEncrypt() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptEncrypt() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptEncrypt() returned an empty output")
 	}
 
-	return 0, nil
+	encryptedData := make([]byte, size)
+	r, _, msg = nCryptEncryptProc.Call(
+		uintptr(hKey),
+		uintptr(unsafe.Pointer(&pbInput[0])),
+		uintptr(len(pbInput)),
+		uintptr(pPaddingInfo),
+		uintptr(unsafe.Pointer(&encryptedData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptEncrypt() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptEncrypt() returned an empty output")
+	}
+
+	return encryptedData, 0, nil
 }
 
-func nCryptEnumAlgorithms(
+func NCryptEnumAlgorithms(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	dwAlgOperations uint32, /* DWORD */
 	pdwAlgCount *uint32, /* DWORD* */
-	ppAlgList **nCryptAlgorithmName, /* NCryptAlgorithmName** */
+	ppAlgList *unsafe.Pointer, /* NCryptAlgorithmName** */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
@@ -1973,21 +2256,21 @@ func nCryptEnumAlgorithms(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptEnumAlgorithms() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptEnumAlgorithms() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptEnumKeys(
+func NCryptEnumKeys(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	pszScope string, /* LPCWSTR */
-	ppKeyName **nCryptKeyName, /* NCryptKeyName** */
+	ppKeyName *unsafe.Pointer, /* NCryptKeyName** */
 	ppEnumState *unsafe.Pointer, /* PVOID* */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16Property, err := stringToUtf16Ptr(pszScope)
+	utf16Property, err := StringToUtf16Ptr(pszScope)
 	if err != nil {
 		return 0, err
 	}
@@ -2003,15 +2286,15 @@ func nCryptEnumKeys(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptEnumKeys() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptEnumKeys() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptEnumStorageProviders(
+func NCryptEnumStorageProviders(
 	pdwProviderCount *uint32, /* DWORD* */
-	ppProviderList **nCryptProviderName, /* NCryptProviderName** */
+	ppProviderList *unsafe.Pointer, /* NCryptProviderName** */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
@@ -2024,26 +2307,25 @@ func nCryptEnumStorageProviders(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptEnumStorageProviders() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptEnumStorageProvidersProc() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptExportKey(
+func NCryptExportKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	hExportKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pszBlobType string, /* LPCWSTR */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
-	pbOutput *byte, /* PBYTE */
-	cbOutput uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
-	utf16BlobType, err := stringToUtf16Ptr(pszBlobType)
+	var size uint32
+
+	utf16BlobType, err := StringToUtf16Ptr(pszBlobType)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	r, _, msg := nCryptExportKeyProc.Call(
@@ -2051,22 +2333,46 @@ func nCryptExportKey(
 		uintptr(hExportKey),
 		uintptr(unsafe.Pointer(utf16BlobType)),
 		uintptr(unsafe.Pointer(pParameterList)),
-		uintptr(unsafe.Pointer(pbOutput)),
-		uintptr(cbOutput),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptExportKey() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptExportKey() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptExportKey() returned an empty output")
 	}
 
-	return 0, nil
+	exportedKey := make([]byte, size)
+	r, _, msg = nCryptExportKeyProc.Call(
+		uintptr(hKey),
+		uintptr(hExportKey),
+		uintptr(unsafe.Pointer(utf16BlobType)),
+		uintptr(unsafe.Pointer(pParameterList)),
+		uintptr(unsafe.Pointer(&exportedKey[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptExportKey() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptExportKey() returned an empty output")
+	}
+
+	return exportedKey, 0, nil
 }
 
-func nCryptFinalizeKey(
+func NCryptFinalizeKey(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
@@ -2079,13 +2385,13 @@ func nCryptFinalizeKey(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptFinalizeKey() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptFinalizeKey() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptFreeBuffer(
+func NCryptFreeBuffer(
 	pvInput unsafe.Pointer, /* PVOID */
 ) (uint32, error) {
 
@@ -2096,13 +2402,13 @@ func nCryptFreeBuffer(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptFreeBuffer() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptFreeBuffer() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptFreeObject(
+func NCryptFreeObject(
 	hObject uintptr, /* NCRYPT_HANDLE */
 ) (uint32, error) {
 
@@ -2113,56 +2419,76 @@ func nCryptFreeObject(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptFreeObject() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptFreeObject() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptGetProperty(
+func NCryptGetProperty(
 	hObject uintptr, /* NCRYPT_HANDLE */
 	pszProperty string, /* LPCWSTR */
-	pbOutput *byte, /* PBYTE */
-	cbOutput uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
-	utf16Property, err := stringToUtf16Ptr(pszProperty)
+	var size uint32
+
+	utf16Property, err := StringToUtf16Ptr(pszProperty)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	r, _, msg := nCryptGetPropertyProc.Call(
 		uintptr(hObject),
 		uintptr(unsafe.Pointer(utf16Property)),
-		uintptr(unsafe.Pointer(pbOutput)),
-		uintptr(cbOutput),
-		uintptr(unsafe.Pointer(pcbResult)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptGetProperty() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptGetProperty() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptGetProperty() returned an empty output")
 	}
 
-	return 0, nil
+	propertyData := make([]byte, size)
+	r, _, msg = nCryptGetPropertyProc.Call(
+		uintptr(hObject),
+		uintptr(unsafe.Pointer(utf16Property)),
+		uintptr(unsafe.Pointer(&propertyData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptGetProperty() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptGetProperty() returned an empty output")
+	}
+
+	return propertyData, 0, nil
 }
 
-func nCryptImportKey(
+func NCryptImportKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	hImportKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pszBlobType string, /* LPCWSTR */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	phKey *uintptr, /* NCRYPT_KEY_HANDLE* */
-	pbData *byte, /* PBYTE */
-	cbData uint32, /* DWORD */
+	pbData []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16BlobType, err := stringToUtf16Ptr(pszBlobType)
+	utf16BlobType, err := StringToUtf16Ptr(pszBlobType)
 	if err != nil {
 		return 0, err
 	}
@@ -2173,27 +2499,27 @@ func nCryptImportKey(
 		uintptr(unsafe.Pointer(utf16BlobType)),
 		uintptr(unsafe.Pointer(pParameterList)),
 		uintptr(unsafe.Pointer(phKey)),
-		uintptr(unsafe.Pointer(pbData)),
-		uintptr(cbData),
+		uintptr(unsafe.Pointer(&pbData[0])),
+		uintptr(len(pbData)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptImportKey() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptImportKey() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptIsAlgSupported(
+func NCryptIsAlgSupported(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	pszAlgID string, /* LPCWSTR */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16AlgID, err := stringToUtf16Ptr(pszAlgID)
+	utf16AlgID, err := StringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
 	}
@@ -2207,13 +2533,13 @@ func nCryptIsAlgSupported(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return 0, fmt.Errorf("nCryptIsAlgSupported() returned %X: %v", r, msg)
+		return 0, fmt.Errorf("nCryptIsAlgSupported() returned %X (%v)", r, msg)
 	}
 
 	return uint32(r), nil
 }
 
-func nCryptIsKeyHandle(
+func NCryptIsKeyHandle(
 	hKey uintptr, /* NCRYPT_PROV_HANDLE */
 ) bool {
 
@@ -2223,9 +2549,9 @@ func nCryptIsKeyHandle(
 	return r != 0
 }
 
-func nCryptKeyDerivation(
+func NCryptKeyDerivation(
 	hKey uintptr, /* NCRYPT_PROV_HANDLE */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	pbDerivedKey *byte, /* PUCHAR */
 	cbDerivedKey uint32, /* DWORD */
 	pcbResult *uint32, /* DWORD* */
@@ -2244,13 +2570,13 @@ func nCryptKeyDerivation(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptKeyDerivation() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptKeyDerivation() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptOpenKey(
+func NCryptOpenKey(
 	hProvider uintptr, /* NCRYPT_PROV_HANDLE */
 	phKey *uintptr, /* NCRYPT_KEY_HANDLE* */
 	pszKeyName string, /* LPCWSTR */
@@ -2258,7 +2584,7 @@ func nCryptOpenKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16KeyName, err := stringToUtf16Ptr(pszKeyName)
+	utf16KeyName, err := StringToUtf16Ptr(pszKeyName)
 	if err != nil {
 		return 0, err
 	}
@@ -2274,19 +2600,19 @@ func nCryptOpenKey(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptOpenKey() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptOpenKey() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptOpenStorageProvider(
+func NCryptOpenStorageProvider(
 	phProvider *uintptr, /* NCRYPT_PROV_HANDLE* */
 	pszProviderName string, /* LPCWSTR */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16ProviderName, err := stringToUtf16Ptr(pszProviderName)
+	utf16ProviderName, err := StringToUtf16Ptr(pszProviderName)
 	if err != nil {
 		return 0, err
 	}
@@ -2300,13 +2626,13 @@ func nCryptOpenStorageProvider(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptOpenStorageProvider() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptOpenStorageProvider() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptSecretAgreement(
+func NCryptSecretAgreement(
 	hPrivKey uintptr, /* NCRYPT_KEY_HANDLE */
 	hPubKey uintptr, /* NCRYPT_KEY_HANDLE */
 	phAgreedSecret *uintptr, /* NCRYPT_SECRET_HANDLE* */
@@ -2323,21 +2649,20 @@ func nCryptSecretAgreement(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptSecretAgreement() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptSecretAgreement() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptSetProperty(
+func NCryptSetProperty(
 	hObject uintptr, /* NCRYPT_HANDLE */
 	pszProperty string, /* LPCWSTR */
-	pbInput *byte, /* PBYTE */
-	cbInput uint32, /* DWORD */
+	pbInput []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
-	utf16Property, err := stringToUtf16Ptr(pszProperty)
+	utf16Property, err := StringToUtf16Ptr(pszProperty)
 	if err != nil {
 		return 0, err
 	}
@@ -2345,52 +2670,73 @@ func nCryptSetProperty(
 	r, _, msg := nCryptSetPropertyProc.Call(
 		uintptr(hObject),
 		uintptr(unsafe.Pointer(utf16Property)),
-		uintptr(unsafe.Pointer(pbInput)),
-		uintptr(cbInput),
+		uintptr(unsafe.Pointer(&pbInput[0])),
+		uintptr(len(pbInput)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptSetProperty() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptSetProperty() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptSignHash(
+func NCryptSignHash(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
-	pbHashValue *byte, /* PBYTE */
-	cbHashValue uint32, /* DWORD */
-	pbSignature *byte, /* PBYTE */
-	cbSignature uint32, /* DWORD */
-	pcbResult *uint32, /* DWORD* */
+	pbHashValue []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
-) (uint32, error) {
+) ([]byte, uint32, error) {
 
+	var size uint32
 	r, _, msg := nCryptSignHashProc.Call(
 		uintptr(hKey),
 		uintptr(pPaddingInfo),
-		uintptr(unsafe.Pointer(pbHashValue)),
-		uintptr(cbHashValue),
-		uintptr(unsafe.Pointer(pbSignature)),
-		uintptr(cbSignature),
-		uintptr(unsafe.Pointer(pcbResult)),
+		uintptr(unsafe.Pointer(&pbHashValue[0])),
+		uintptr(len(pbHashValue)),
+		0,
+		0,
+		uintptr(unsafe.Pointer(&size)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptSignHash() returned %X: %v", r, msg)
+		return nil, uint32(r), fmt.Errorf("nCryptSignHash() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptSignHash() returned an empty output")
 	}
 
-	return 0, nil
+	signedData := make([]byte, size)
+	r, _, msg = nCryptSignHashProc.Call(
+		uintptr(hKey),
+		uintptr(pPaddingInfo),
+		uintptr(unsafe.Pointer(&pbHashValue[0])),
+		uintptr(len(pbHashValue)),
+		uintptr(unsafe.Pointer(&signedData[0])),
+		uintptr(size),
+		uintptr(unsafe.Pointer(&size)),
+		uintptr(dwFlags),
+	)
+	if r != 0 {
+		if winErr := maybeWinErr(r); winErr != nil {
+			msg = winErr
+		}
+		return nil, uint32(r), fmt.Errorf("nCryptSignHash() returned %X (%v)", r, msg)
+	}
+	if size == 0 {
+		return nil, 0, fmt.Errorf("nCryptSignHash() returned an empty output")
+	}
+
+	return signedData, 0, nil
 }
 
-func nCryptTranslateHandle(
+func NCryptTranslateHandle(
 	phProvider *uintptr, /* NCRYPT_PROV_HANDLE* */
 	phKey *uintptr, /* NCRYPT_KEY_HANDLE* */
 	hLegacyProv uintptr, /* HCRYPTPROV */
@@ -2411,20 +2757,20 @@ func nCryptTranslateHandle(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptTranslateHandle() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptTranslateHandle() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptVerifyClaim(
+func NCryptVerifyClaim(
 	hSubjectKey uintptr, /* NCRYPT_KEY_HANDLE */
 	hAuthorityKey uintptr, /* NCRYPT_KEY_HANDLE */
 	dwClaimType uint32, /* DWORD */
-	pParameterList *bCryptBufferDesc, /* NCryptBufferDesc* */
+	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	pbClaimBlob *byte, /* PBYTE */
 	cbClaimBlob uint32, /* DWORD */
-	pOutput *bCryptBufferDesc, /* NCryptBufferDesc* */
+	pOutput *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
@@ -2442,36 +2788,34 @@ func nCryptVerifyClaim(
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptVerifyClaim() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptVerifyClaim() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil
 }
 
-func nCryptVerifySignature(
+func NCryptVerifySignature(
 	hKey uintptr, /* NCRYPT_KEY_HANDLE */
 	pPaddingInfo unsafe.Pointer, /* VOID* */
-	pbHashValue *byte, /* PBYTE */
-	cbHashValue uint32, /* DWORD */
-	pbSignature *byte, /* PBYTE */
-	cbSignature uint32, /* DWORD */
+	pbHashValue []byte, /* PBYTE */
+	pbSignature []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
 	r, _, msg := nCryptVerifySignatureProc.Call(
 		uintptr(hKey),
 		uintptr(pPaddingInfo),
-		uintptr(unsafe.Pointer(pbHashValue)),
-		uintptr(cbHashValue),
-		uintptr(unsafe.Pointer(pbSignature)),
-		uintptr(cbSignature),
+		uintptr(unsafe.Pointer(&pbHashValue[0])),
+		uintptr(len(pbHashValue)),
+		uintptr(unsafe.Pointer(&pbSignature[0])),
+		uintptr(len(pbSignature)),
 		uintptr(dwFlags),
 	)
 	if r != 0 {
 		if winErr := maybeWinErr(r); winErr != nil {
 			msg = winErr
 		}
-		return uint32(r), fmt.Errorf("nCryptVerifySignature() returned %X: %v", r, msg)
+		return uint32(r), fmt.Errorf("nCryptVerifySignature() returned %X (%v)", r, msg)
 	}
 
 	return 0, nil

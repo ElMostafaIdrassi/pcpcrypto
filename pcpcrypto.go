@@ -77,24 +77,24 @@ func (k pcpPrivateKey) Delete() error {
 	var flags uint32
 
 	// Get a handle to the PCP KSP
-	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
+	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return err
 	}
-	defer nCryptFreeObject(hProvider)
+	defer NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = ncryptSilentFlag
+	flags = NcryptSilentFlag
 
 	// Try to get a handle to the key by its name
-	_, err = nCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
+	_, err = NCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
 		return err
 	}
-	defer nCryptFreeObject(hKey)
+	defer NCryptFreeObject(hKey)
 
 	// Try to delete the key
-	_, err = nCryptDeleteKey(hKey, 0)
+	_, err = NCryptDeleteKey(hKey, 0)
 	if err != nil {
 		return err
 	}
@@ -139,28 +139,28 @@ func FindKey(name string, password string) (Signer, error) {
 	var publicKey crypto.PublicKey
 
 	// Get a handle to the PCP KSP
-	_, err := nCryptOpenStorageProvider(&hProvider, msPlatformCryptoProvider, 0)
+	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer nCryptFreeObject(hProvider)
+	defer NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = ncryptSilentFlag
+	flags = NcryptSilentFlag
 
 	// Try to get a handle to the key by its name
-	_, err = nCryptOpenKey(hProvider, &hKey, name, 0, flags)
+	_, err = NCryptOpenKey(hProvider, &hKey, name, 0, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer nCryptFreeObject(hKey)
+	defer NCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, flags)
+	alg, _, err := NCryptGetProperty(hKey, NcryptAlgorithmGroupProperty, flags)
 	if err != nil {
 		return nil, err
 	}
-	algStr, err := utf16BytesToString(alg)
+	algStr, err := Utf16BytesToString(alg)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +168,11 @@ func FindKey(name string, password string) (Signer, error) {
 	// Read key's public part
 	var pubkeyBytes []byte
 	var isRSA bool
-	if algStr == ncryptRsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, flags)
+	if algStr == NcryptRsaAlgorithm {
+		pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptRsapublicBlob, nil, flags)
 		isRSA = true
-	} else if algStr == ncryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, flags)
+	} else if algStr == NcryptEcdsaAlgorithm {
+		pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptEccpublicBlob, nil, flags)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -209,13 +209,13 @@ func FindKey(name string, password string) (Signer, error) {
 		var keyCurve elliptic.Curve
 
 		magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-		if magic == bcryptEcdsaPublicP256Magic {
+		if magic == BcryptEcdsaPublicP256Magic {
 			keyByteSize = 32
 			keyCurve = elliptic.P256()
-		} else if magic == bcryptEcdsaPublicP384Magic {
+		} else if magic == BcryptEcdsaPublicP384Magic {
 			keyByteSize = 48
 			keyCurve = elliptic.P384()
-		} else if magic == bcryptEcdsaPublicP521Magic {
+		} else if magic == BcryptEcdsaPublicP521Magic {
 			keyByteSize = 66
 			keyCurve = elliptic.P521()
 		} else {
@@ -248,33 +248,33 @@ func FindKey(name string, password string) (Signer, error) {
 // creation, the PCP KSP creates a key that applies to the Current User.
 // Therefore, GetKeys will always retrieve the keys that apply to the
 // Current User.
-func GetKeys() ([]pcpPrivateKey, error) {
+func GetKeys() ([]Signer, error) {
 	var hProvider uintptr
 	var pState unsafe.Pointer
-	var pKeyName *nCryptKeyName
+	var pKeyName unsafe.Pointer
 	var flags uint32
 	var ret uint32
 	var err error
 
-	keys := make([]pcpPrivateKey, 0)
+	keys := make([]Signer, 0)
 
 	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
-	_, err = nCryptOpenStorageProvider(
+	_, err = NCryptOpenStorageProvider(
 		&hProvider,
-		msPlatformCryptoProvider,
+		MsPlatformCryptoProvider,
 		0,
 	)
 	if err != nil {
 		return nil, err
 	}
-	defer nCryptFreeObject(hProvider)
+	defer NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = ncryptSilentFlag
+	flags = NcryptSilentFlag
 
 	// Retrieve 1 key item at a time.
 	for {
-		ret, err = nCryptEnumKeys(
+		ret, err = NCryptEnumKeys(
 			hProvider,
 			"",
 			&pKeyName,
@@ -288,103 +288,111 @@ func GetKeys() ([]pcpPrivateKey, error) {
 				return nil, err
 			}
 		} else {
-			keyName := windows.UTF16PtrToString(pKeyName.pszName)
+			keyNameSt := unsafe.Slice((*NcryptKeyName)(pKeyName), 1)
+			if keyNameSt != nil || len(keyNameSt) != 1 {
+				keyName := windows.UTF16PtrToString(keyNameSt[0].PszName)
 
-			var hKey uintptr
-			var pubkeyBytes []byte
-			var isRSA bool
+				var hKey uintptr
+				var pubkeyBytes []byte
+				var isRSA bool
 
-			// Open a handle to the key
-			_, err = nCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
-			if err != nil {
-				return nil, err
-			}
-			defer nCryptFreeObject(hKey)
+				// Open a handle to the key
+				_, err = NCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
+				if err != nil {
+					return nil, err
+				}
+				defer NCryptFreeObject(hKey)
 
-			// Get key's algorithm
-			alg, _, err := getNCryptBufferProperty(hKey, ncryptAlgorithmGroupProperty, flags)
-			if err != nil {
-				return nil, err
-			}
-			algStr, err := utf16BytesToString(alg)
-			if err != nil {
-				return nil, err
-			}
-
-			// Read key's public part
-			if algStr == ncryptRsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptRsapublicBlob, flags)
-				isRSA = true
-			} else if algStr == ncryptEcdsaAlgorithm {
-				pubkeyBytes, _, err = getNCryptKeyBlob(hKey, bcryptEccpublicBlob, flags)
-			} else {
-				continue
-			}
-			if err != nil {
-				return nil, err
-			}
-
-			if isRSA {
-
-				// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
-				eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
-				nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
-
-				eBytes := pubkeyBytes[24 : 24+eSize]
-				nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
-
-				eInt := big.NewInt(0)
-				eInt.SetBytes(eBytes)
-				nInt := big.NewInt(0)
-				nInt.SetBytes(nBytes)
-
-				publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
-
-				keys = append(keys, pcpPrivateKey{
-					name:     keyName,
-					password: "",
-					pubKey:   publicKey,
-				})
-			} else {
-
-				// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
-				var keyByteSize int
-				var keyCurve elliptic.Curve
-
-				magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-				if magic == bcryptEcdsaPublicP256Magic {
-					keyByteSize = 32
-					keyCurve = elliptic.P256()
-				} else if magic == bcryptEcdsaPublicP384Magic {
-					keyByteSize = 48
-					keyCurve = elliptic.P384()
-				} else if magic == bcryptEcdsaPublicP521Magic {
-					keyByteSize = 66
-					keyCurve = elliptic.P521()
-				} else {
-					return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
+				// Get key's algorithm
+				alg, _, err := NCryptGetProperty(hKey, NcryptAlgorithmGroupProperty, flags)
+				if err != nil {
+					return nil, err
+				}
+				algStr, err := Utf16BytesToString(alg)
+				if err != nil {
+					return nil, err
 				}
 
-				xBytes := pubkeyBytes[8 : 8+keyByteSize]
-				yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
+				// Read key's public part
+				if algStr == NcryptRsaAlgorithm {
+					pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptRsapublicBlob, nil, flags)
+					isRSA = true
+				} else if algStr == NcryptEcdsaAlgorithm {
+					pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptEccpublicBlob, nil, flags)
+				} else {
+					continue
+				}
+				if err != nil {
+					return nil, err
+				}
 
-				xInt := big.NewInt(0)
-				xInt.SetBytes(xBytes)
-				yInt := big.NewInt(0)
-				yInt.SetBytes(yBytes)
+				if isRSA {
 
-				publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
+					// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
+					eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
+					nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
 
-				keys = append(keys, pcpPrivateKey{
-					name:     keyName,
-					password: "",
-					pubKey:   publicKey,
-				})
+					eBytes := pubkeyBytes[24 : 24+eSize]
+					nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
+
+					eInt := big.NewInt(0)
+					eInt.SetBytes(eBytes)
+					nInt := big.NewInt(0)
+					nInt.SetBytes(nBytes)
+
+					publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
+
+					keys = append(keys, &pcpRSAPrivateKey{
+						pcpPrivateKey{
+							name:     keyName,
+							password: "",
+							pubKey:   publicKey,
+						},
+					})
+				} else {
+
+					// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
+					var keyByteSize int
+					var keyCurve elliptic.Curve
+
+					magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
+					if magic == BcryptEcdsaPublicP256Magic {
+						keyByteSize = 32
+						keyCurve = elliptic.P256()
+					} else if magic == BcryptEcdsaPublicP384Magic {
+						keyByteSize = 48
+						keyCurve = elliptic.P384()
+					} else if magic == BcryptEcdsaPublicP521Magic {
+						keyByteSize = 66
+						keyCurve = elliptic.P521()
+					} else {
+						return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
+					}
+
+					xBytes := pubkeyBytes[8 : 8+keyByteSize]
+					yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
+
+					xInt := big.NewInt(0)
+					xInt.SetBytes(xBytes)
+					yInt := big.NewInt(0)
+					yInt.SetBytes(yBytes)
+
+					publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
+
+					keys = append(keys, &pcpECDSAPrivateKey{
+						pcpPrivateKey{
+							name:     keyName,
+							password: "",
+							pubKey:   publicKey,
+						},
+					})
+				}
 			}
+
 		}
 	}
-	nCryptFreeBuffer(pState)
-	nCryptFreeBuffer(unsafe.Pointer(pKeyName))
+	NCryptFreeBuffer(pState)
+	NCryptFreeBuffer(unsafe.Pointer(pKeyName))
 
 	return keys, nil
 }

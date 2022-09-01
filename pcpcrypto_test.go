@@ -23,6 +23,44 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestGetKeys(t *testing.T) {
+	uuidName1, err := uuid.NewRandom()
+	require.NoError(t, err)
+	length := uint32(1024)
+	name1 := uuidName1.String()
+	key1, err := GenerateRSAKey(name1, "", length, true)
+	defer key1.Delete()
+	require.NoError(t, err)
+	require.NotNil(t, key1)
+	require.Equal(t, key1.Name(), name1)
+	require.Equal(t, key1.Size(), (length+7)/8)
+
+	uuidName2, err := uuid.NewRandom()
+	require.NoError(t, err)
+	name2 := uuidName2.String()
+	key2, err := GenerateECDSAKey(name2, "", elliptic.P256(), true)
+	defer key2.Delete()
+	require.NoError(t, err)
+	require.NotNil(t, key2)
+	require.Equal(t, key2.Name(), name2)
+	require.Equal(t, key2.Size(), uint32((elliptic.P256().Params().BitSize+7)/8))
+
+	foundKey1 := false
+	foundKey2 := false
+	keys, err := GetKeys()
+	require.NoError(t, err)
+	for _, key := range keys {
+		if key.Name() == key1.Name() && key.Size() == key1.Size() {
+			foundKey1 = true
+		}
+		if key.Name() == key2.Name() && key.Size() == key2.Size() {
+			foundKey2 = true
+		}
+	}
+	require.Equal(t, foundKey1, true)
+	require.Equal(t, foundKey2, true)
+}
+
 func TestRSADeleteKey(t *testing.T) {
 
 	// Generate a new RSA-1024 key with a random unique name and an empty password
