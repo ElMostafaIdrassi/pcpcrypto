@@ -23,6 +23,7 @@ import (
 	"io"
 	"math/big"
 
+	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/cryptobyte"
 	"golang.org/x/crypto/cryptobyte/asn1"
@@ -58,15 +59,15 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	}
 
 	// Get a handle to the PCP KSP
-	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
+	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hProvider)
+	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the opening flags
 	if len(k.password) != 0 {
-		openFlags |= NcryptSilentFlag
+		openFlags |= internal.NcryptSilentFlag
 	}
 
 	// Set the other flags
@@ -76,30 +77,30 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	// Otherwise, if no password is set, do not set the flag, meaning a UI might
 	// be shown to ask for it if the key needs one.
 	if len(k.password) != 0 {
-		flags = NcryptSilentFlag
+		flags = internal.NcryptSilentFlag
 	}
 
 	// Try to get a handle to the key by its name
-	_, err = NCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
+	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hKey)
+	defer internal.NCryptFreeObject(hKey)
 
 	// Set the key password / pin before signing if required.
 	if len(k.password) != 0 {
-		passwordBlob, err := StringToUtf16Bytes(k.password)
+		passwordBlob, err := internal.StringToUtf16Bytes(k.password)
 		if err != nil {
 			return nil, err
 		}
-		_, err = NCryptSetProperty(hKey, NcryptPinProperty, passwordBlob, flags)
+		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPinProperty, passwordBlob, flags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Sign
-	sig, _, err = NCryptSignHash(hKey, nil, msg, flags)
+	sig, _, err = internal.NCryptSignHash(hKey, nil, msg, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -149,31 +150,31 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	var flags uint32
 
 	// Get a handle to the PCP KSP
-	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
+	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hProvider)
+	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the creation flags
 	if overwrite {
-		creationFlags |= NcryptOverwriteKeyFlag
+		creationFlags |= internal.NcryptOverwriteKeyFlag
 	}
 
 	// Set the other flags
 	if len(password) != 0 {
-		flags |= NcryptSilentFlag
+		flags |= internal.NcryptSilentFlag
 	}
 
 	// Check the specified curve
 	curveName := ""
 	switch curve {
 	case elliptic.P256():
-		curveName = BcryptEcdsaP256Algorithm
+		curveName = internal.BcryptEcdsaP256Algorithm
 	case elliptic.P384():
-		curveName = BcryptEcdsaP384Algorithm
+		curveName = internal.BcryptEcdsaP384Algorithm
 	case elliptic.P521():
-		curveName = BcryptEcdsaP521Algorithm
+		curveName = internal.BcryptEcdsaP521Algorithm
 	default:
 		return nil, fmt.Errorf("unsupported curve")
 	}
@@ -188,32 +189,32 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	}
 
 	// Start the creation of the key
-	_, err = NCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, creationFlags)
+	_, err = internal.NCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, creationFlags)
 	if err != nil {
 		return nil, err
 	}
 
 	// If password is given, set it as NCRYPT_PIN_PROPERTY
 	if len(password) != 0 {
-		passwordBlob, err := StringToUtf16Bytes(password)
+		passwordBlob, err := internal.StringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
-		_, err = NCryptSetProperty(hKey, NcryptPinProperty, passwordBlob, flags)
+		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPinProperty, passwordBlob, flags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Finalize (create) the key
-	_, err = NCryptFinalizeKey(hKey, flags)
+	_, err = internal.NCryptFinalizeKey(hKey, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hKey)
+	defer internal.NCryptFreeObject(hKey)
 
 	// Read key's public part
-	pubkeyBytes, _, err := NCryptExportKey(hKey, 0, BcryptEccpublicBlob, nil, flags)
+	pubkeyBytes, _, err := internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -222,13 +223,13 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	var keyByteSize int
 	var keyCurve elliptic.Curve
 	magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-	if magic == BcryptEcdsaPublicP256Magic {
+	if magic == internal.BcryptEcdsaPublicP256Magic {
 		keyByteSize = 32
 		keyCurve = elliptic.P256()
-	} else if magic == BcryptEcdsaPublicP384Magic {
+	} else if magic == internal.BcryptEcdsaPublicP384Magic {
 		keyByteSize = 48
 		keyCurve = elliptic.P384()
-	} else if magic == BcryptEcdsaPublicP521Magic {
+	} else if magic == internal.BcryptEcdsaPublicP521Magic {
 		keyByteSize = 66
 		keyCurve = elliptic.P521()
 	} else {

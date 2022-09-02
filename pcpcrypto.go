@@ -24,6 +24,7 @@ import (
 	"math/big"
 	"unsafe"
 
+	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
 	"golang.org/x/sys/windows"
 )
 
@@ -77,24 +78,24 @@ func (k pcpPrivateKey) Delete() error {
 	var flags uint32
 
 	// Get a handle to the PCP KSP
-	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
+	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return err
 	}
-	defer NCryptFreeObject(hProvider)
+	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = NcryptSilentFlag
+	flags = internal.NcryptSilentFlag
 
 	// Try to get a handle to the key by its name
-	_, err = NCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
+	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
 	if err != nil {
 		return err
 	}
-	defer NCryptFreeObject(hKey)
+	defer internal.NCryptFreeObject(hKey)
 
 	// Try to delete the key
-	_, err = NCryptDeleteKey(hKey, 0)
+	_, err = internal.NCryptDeleteKey(hKey, 0)
 	if err != nil {
 		return err
 	}
@@ -139,28 +140,28 @@ func FindKey(name string, password string) (Signer, error) {
 	var publicKey crypto.PublicKey
 
 	// Get a handle to the PCP KSP
-	_, err := NCryptOpenStorageProvider(&hProvider, MsPlatformCryptoProvider, 0)
+	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hProvider)
+	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = NcryptSilentFlag
+	flags = internal.NcryptSilentFlag
 
 	// Try to get a handle to the key by its name
-	_, err = NCryptOpenKey(hProvider, &hKey, name, 0, flags)
+	_, err = internal.NCryptOpenKey(hProvider, &hKey, name, 0, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hKey)
+	defer internal.NCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	alg, _, err := NCryptGetProperty(hKey, NcryptAlgorithmGroupProperty, flags)
+	alg, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
 	if err != nil {
 		return nil, err
 	}
-	algStr, err := Utf16BytesToString(alg)
+	algStr, err := internal.Utf16BytesToString(alg)
 	if err != nil {
 		return nil, err
 	}
@@ -168,11 +169,11 @@ func FindKey(name string, password string) (Signer, error) {
 	// Read key's public part
 	var pubkeyBytes []byte
 	var isRSA bool
-	if algStr == NcryptRsaAlgorithm {
-		pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptRsapublicBlob, nil, flags)
+	if algStr == internal.NcryptRsaAlgorithm {
+		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
 		isRSA = true
-	} else if algStr == NcryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptEccpublicBlob, nil, flags)
+	} else if algStr == internal.NcryptEcdsaAlgorithm {
+		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -209,13 +210,13 @@ func FindKey(name string, password string) (Signer, error) {
 		var keyCurve elliptic.Curve
 
 		magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-		if magic == BcryptEcdsaPublicP256Magic {
+		if magic == internal.BcryptEcdsaPublicP256Magic {
 			keyByteSize = 32
 			keyCurve = elliptic.P256()
-		} else if magic == BcryptEcdsaPublicP384Magic {
+		} else if magic == internal.BcryptEcdsaPublicP384Magic {
 			keyByteSize = 48
 			keyCurve = elliptic.P384()
-		} else if magic == BcryptEcdsaPublicP521Magic {
+		} else if magic == internal.BcryptEcdsaPublicP521Magic {
 			keyByteSize = 66
 			keyCurve = elliptic.P521()
 		} else {
@@ -259,22 +260,22 @@ func GetKeys() ([]Signer, error) {
 	keys := make([]Signer, 0)
 
 	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
-	_, err = NCryptOpenStorageProvider(
+	_, err = internal.NCryptOpenStorageProvider(
 		&hProvider,
-		MsPlatformCryptoProvider,
+		internal.MsPlatformCryptoProvider,
 		0,
 	)
 	if err != nil {
 		return nil, err
 	}
-	defer NCryptFreeObject(hProvider)
+	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the flags
-	flags = NcryptSilentFlag
+	flags = internal.NcryptSilentFlag
 
 	// Retrieve 1 key item at a time.
 	for {
-		ret, err = NCryptEnumKeys(
+		ret, err = internal.NCryptEnumKeys(
 			hProvider,
 			"",
 			&pKeyName,
@@ -288,7 +289,7 @@ func GetKeys() ([]Signer, error) {
 				return nil, err
 			}
 		} else {
-			keyNameSt := unsafe.Slice((*NcryptKeyName)(pKeyName), 1)
+			keyNameSt := unsafe.Slice((*internal.NcryptKeyName)(pKeyName), 1)
 			if keyNameSt != nil || len(keyNameSt) != 1 {
 				keyName := windows.UTF16PtrToString(keyNameSt[0].PszName)
 
@@ -297,28 +298,28 @@ func GetKeys() ([]Signer, error) {
 				var isRSA bool
 
 				// Open a handle to the key
-				_, err = NCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
+				_, err = internal.NCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
 				if err != nil {
 					return nil, err
 				}
-				defer NCryptFreeObject(hKey)
+				defer internal.NCryptFreeObject(hKey)
 
 				// Get key's algorithm
-				alg, _, err := NCryptGetProperty(hKey, NcryptAlgorithmGroupProperty, flags)
+				alg, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
 				if err != nil {
 					return nil, err
 				}
-				algStr, err := Utf16BytesToString(alg)
+				algStr, err := internal.Utf16BytesToString(alg)
 				if err != nil {
 					return nil, err
 				}
 
 				// Read key's public part
-				if algStr == NcryptRsaAlgorithm {
-					pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptRsapublicBlob, nil, flags)
+				if algStr == internal.NcryptRsaAlgorithm {
+					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
 					isRSA = true
-				} else if algStr == NcryptEcdsaAlgorithm {
-					pubkeyBytes, _, err = NCryptExportKey(hKey, 0, BcryptEccpublicBlob, nil, flags)
+				} else if algStr == internal.NcryptEcdsaAlgorithm {
+					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
 				} else {
 					continue
 				}
@@ -356,13 +357,13 @@ func GetKeys() ([]Signer, error) {
 					var keyCurve elliptic.Curve
 
 					magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-					if magic == BcryptEcdsaPublicP256Magic {
+					if magic == internal.BcryptEcdsaPublicP256Magic {
 						keyByteSize = 32
 						keyCurve = elliptic.P256()
-					} else if magic == BcryptEcdsaPublicP384Magic {
+					} else if magic == internal.BcryptEcdsaPublicP384Magic {
 						keyByteSize = 48
 						keyCurve = elliptic.P384()
-					} else if magic == BcryptEcdsaPublicP521Magic {
+					} else if magic == internal.BcryptEcdsaPublicP521Magic {
 						keyByteSize = 66
 						keyCurve = elliptic.P521()
 					} else {
@@ -391,8 +392,8 @@ func GetKeys() ([]Signer, error) {
 
 		}
 	}
-	NCryptFreeBuffer(pState)
-	NCryptFreeBuffer(unsafe.Pointer(pKeyName))
+	internal.NCryptFreeBuffer(pState)
+	internal.NCryptFreeBuffer(unsafe.Pointer(pKeyName))
 
 	return keys, nil
 }
