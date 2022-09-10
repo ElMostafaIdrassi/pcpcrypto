@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021, El Mostafa IDRASSI.
+// Copyright (c) 2020-2022, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,10 +26,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, curve elliptic.Curve, toBeDeleted bool) {
+func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, curve elliptic.Curve, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateECDSAKey(name, password, curve, true)
+	key, err := GenerateECDSAKey(name, password, isUICompatible, curve, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -40,7 +40,7 @@ func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, cur
 	require.Equal(t, key.Size(), uint32((curve.Params().BitSize+7)/8))
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password)
+	keyBis, err := FindKey(key.Name(), password, isUICompatible)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -70,26 +70,33 @@ func testECDSASignDigest(t *testing.T, key crypto.Signer, hash crypto.Hash) {
 
 func TestECDSAGenerateKey(t *testing.T) {
 	// We only test NIST-P256 as not all chips support the other curves.
-	t.Run("ECDSAGEN-P256-NoName-NoPass", func(t *testing.T) { testECDSAGenerateAndFindKey(t, "", "", elliptic.P256(), true) })
-	t.Run("ECDSAGEN-P256-NoName-Pass", func(t *testing.T) { testECDSAGenerateAndFindKey(t, "", "password123", elliptic.P256(), true) })
+	t.Run("ECDSAGEN-P256-NoName-NoPass", func(t *testing.T) { testECDSAGenerateAndFindKey(t, "", "", false, elliptic.P256(), true) })
 	t.Run("ECDSAGEN-P256-Name-NoPass", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testECDSAGenerateAndFindKey(t, name, "", elliptic.P256(), true)
+		testECDSAGenerateAndFindKey(t, name, "", false, elliptic.P256(), true)
 	})
-	t.Run("ECDSAGEN-P256-Name-Pass", func(t *testing.T) {
+	t.Run("ECDSAGEN-P256-NoName-Pass-NotUICompatible", func(t *testing.T) { testECDSAGenerateAndFindKey(t, "", "password123", false, elliptic.P256(), true) })
+	t.Run("ECDSAGEN-P256-Name-Pass-NotUICompatible", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testECDSAGenerateAndFindKey(t, name, "password123", elliptic.P256(), true)
+		testECDSAGenerateAndFindKey(t, name, "password123", false, elliptic.P256(), true)
+	})
+	t.Run("ECDSAGEN-P256-NoName-Pass-UICompatible", func(t *testing.T) { testECDSAGenerateAndFindKey(t, "", "password123", true, elliptic.P256(), true) })
+	t.Run("ECDSAGEN-P256-Name-Pass-UICompatible", func(t *testing.T) {
+		uuidName, err := uuid.NewRandom()
+		require.NoError(t, err)
+		name := uuidName.String()
+		testECDSAGenerateAndFindKey(t, name, "password123", true, elliptic.P256(), true)
 	})
 }
 
-func TestECDSASignWithPass(t *testing.T) {
+func TestECDSASignWithPassNotUICompatible(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "password123", elliptic.P256(), true)
+	key, err := GenerateECDSAKey("", "password123", false, elliptic.P256(), 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {
@@ -101,10 +108,58 @@ func TestECDSASignWithPass(t *testing.T) {
 	t.Run("ECDSASIGN-SHA256", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA256) })
 }
 
+func TestECDSASignWithPassUICompatible(t *testing.T) {
+
+	// Generate key
+	key, err := GenerateECDSAKey("", "password123", true, elliptic.P256(), 0, true)
+	require.NoError(t, err)
+	require.NotNil(t, key)
+	defer func() {
+		require.NoError(t, key.Delete())
+	}()
+
+	// Test signatures
+	t.Run("ECDSASIGN-SHA1", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA1) })
+	t.Run("ECDSASIGN-SHA256", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA256) })
+}
+
+/*
+// This test prompts for the password using the Windows UI,
+// therefore, it is commented out. Uncomment to test.
+func TestECDSASignWithPassUICompatiblePrompt(t *testing.T) {
+
+	// Generate key
+	keyGen, err := GenerateECDSAKey("", "password123", true, elliptic.P256(), 0, true)
+	require.NoError(t, err)
+	require.NotNil(t, keyGen)
+	defer func() {
+		require.NoError(t, keyGen.Delete())
+	}()
+	key, err := FindKey(keyGen.Name(), "", true)
+	require.NoError(t, err)
+	require.NotNil(t, keyGen)
+
+	// Because these tests run in parallel, we need this hack
+	// to run them one at a time. This is to avoid triggering
+	// TPM's dictionary attack lockout and requiring us to
+	// reboot the machine.
+	awaitElement := sync.WaitGroup{}
+	awaitElement.Add(1)
+
+	// Test signatures
+	t.Run("ECDSASIGN-SHA1", func(t *testing.T) {
+		testECDSASignDigest(t, key, crypto.SHA1)
+		awaitElement.Done()
+	})
+	awaitElement.Wait()
+	t.Run("ECDSASIGN-SHA256", func(t *testing.T) { testECDSASignDigest(t, key, crypto.SHA256) })
+}
+*/
+
 func TestECDSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "", elliptic.P256(), true)
+	key, err := GenerateECDSAKey("", "", false, elliptic.P256(), 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {

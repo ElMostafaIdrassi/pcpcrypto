@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021, El Mostafa IDRASSI.
+// Copyright (c) 2020-2022, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testRSAGenerateAndFindKey(t *testing.T, name string, password string, length uint32, toBeDeleted bool) {
+func testRSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, length uint32, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateRSAKey(name, password, length, true)
+	key, err := GenerateRSAKey(name, password, isUICompatible, length, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -38,7 +38,7 @@ func testRSAGenerateAndFindKey(t *testing.T, name string, password string, lengt
 	require.Equal(t, key.Size(), (length+7)/8)
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password)
+	keyBis, err := FindKey(key.Name(), password, isUICompatible)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -91,41 +91,55 @@ func testRSASignDigestPKCS1v15(t *testing.T, key crypto.Signer, hash crypto.Hash
 }
 
 func TestRSAGenerateKey(t *testing.T) {
-	t.Run("RSAGEN-1024-NoName-NoPass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "", 1024, true) })
-	t.Run("RSAGEN-1024-NoName-Pass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", 1024, true) })
+	t.Run("RSAGEN-1024-NoName-NoPass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "", false, 1024, true) })
 	t.Run("RSAGEN-1024-Name-NoPass", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testRSAGenerateAndFindKey(t, name, "", 1024, true)
+		testRSAGenerateAndFindKey(t, name, "", false, 1024, true)
 	})
-	t.Run("RSAGEN-1024-Name-Pass", func(t *testing.T) {
+	t.Run("RSAGEN-1024-NoName-Pass-NotUICompatible", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", false, 1024, true) })
+	t.Run("RSAGEN-1024-Name-Pass-NotUICompatible", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testRSAGenerateAndFindKey(t, name, "password123", 1024, true)
+		testRSAGenerateAndFindKey(t, name, "password123", false, 1024, true)
+	})
+	t.Run("RSAGEN-1024-NoName-Pass-UICompatible", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", true, 1024, true) })
+	t.Run("RSAGEN-1024-Name-Pass-UICompatible", func(t *testing.T) {
+		uuidName, err := uuid.NewRandom()
+		require.NoError(t, err)
+		name := uuidName.String()
+		testRSAGenerateAndFindKey(t, name, "password123", true, 1024, true)
 	})
 
-	t.Run("RSAGEN-2048-NoName-NoPass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "", 2048, true) })
-	t.Run("RSAGEN-2048-NoName-Pass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", 2048, true) })
+	t.Run("RSAGEN-2048-NoName-NoPass", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "", false, 2048, true) })
 	t.Run("RSAGEN-2048-Name-NoPass", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testRSAGenerateAndFindKey(t, name, "", 2048, true)
+		testRSAGenerateAndFindKey(t, name, "", false, 2048, true)
 	})
-	t.Run("RSAGEN-2048-Name-Pass", func(t *testing.T) {
+	t.Run("RSAGEN-2048-NoName-Pass-NotUICompatible", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", false, 2048, true) })
+	t.Run("RSAGEN-2048-Name-Pass-NotUICompatible", func(t *testing.T) {
 		uuidName, err := uuid.NewRandom()
 		require.NoError(t, err)
 		name := uuidName.String()
-		testRSAGenerateAndFindKey(t, name, "password123", 2048, true)
+		testRSAGenerateAndFindKey(t, name, "password123", false, 2048, true)
+	})
+	t.Run("RSAGEN-2048-NoName-Pass-UICompatible", func(t *testing.T) { testRSAGenerateAndFindKey(t, "", "password123", true, 2048, true) })
+	t.Run("RSAGEN-2048-Name-Pass-UICompatible", func(t *testing.T) {
+		uuidName, err := uuid.NewRandom()
+		require.NoError(t, err)
+		name := uuidName.String()
+		testRSAGenerateAndFindKey(t, name, "password123", true, 2048, true)
 	})
 }
 
-func TestRSASignWithPass(t *testing.T) {
+func TestRSASignWithPassNotUICompatible(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "password123", 1024, true)
+	key1024, err := GenerateRSAKey("", "password123", false, 1024, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
@@ -152,7 +166,7 @@ func TestRSASignWithPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "password123", 2048, true)
+	key2048, err := GenerateRSAKey("", "password123", false, 2048, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {
@@ -179,10 +193,149 @@ func TestRSASignWithPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-2048-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key2048, crypto.SHA512) })
 }
 
+func TestRSASignWithPassUICompatible(t *testing.T) {
+
+	// Generate key
+	key1024, err := GenerateRSAKey("", "password123", true, 1024, 0, true)
+	require.NoError(t, err)
+	require.NotNil(t, key1024)
+	defer func() {
+		require.NoError(t, key1024.Delete())
+	}()
+
+	// At the time of writing, we have the following :
+	// 1 / Setting salt length in padding info always fails, whetever its value is.
+	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
+	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//     the TPM's chip default salt length.
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthAuto) })
+	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthAuto) })
+	//t.Run("RSASIGNPSS-1024-SALTAUTO-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-1024-SALTAUTO-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	t.Run("RSASIGNPKCS-1024-SHA1", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA1) })
+	t.Run("RSASIGNPKCS-1024-SHA256", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA256) })
+	t.Run("RSASIGNPKCS-1024-SHA384", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA384) })
+	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
+
+	// Generate key
+	key2048, err := GenerateRSAKey("", "password123", true, 2048, 0, true)
+	require.NoError(t, err)
+	require.NotNil(t, key2048)
+	defer func() {
+		require.NoError(t, key2048.Delete())
+	}()
+
+	// At the time of writing, we have the following :
+	// 1 / Setting salt length in padding info always fails, whetever its value is.
+	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
+	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//     the TPM's chip default salt length.
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthEqualsHash) })     // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthEqualsHash) }) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-2048-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	t.Run("RSASIGNPSS-2048-SALTAUTO-SHA1", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA1, rsa.PSSSaltLengthAuto) })
+	t.Run("RSASIGNPSS-2048-SALTAUTO-SHA256", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA256, rsa.PSSSaltLengthAuto) })
+	//t.Run("RSASIGNPSS-2048-SALTAUTO-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA384, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-2048-SALTAUTO-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key2048, crypto.SHA512, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	t.Run("RSASIGNPKCS-2048-SHA1", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key2048, crypto.SHA1) })
+	t.Run("RSASIGNPKCS-2048-SHA256", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key2048, crypto.SHA256) })
+	t.Run("RSASIGNPKCS-2048-SHA384", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key2048, crypto.SHA384) })
+	t.Run("RSASIGNPKCS-2048-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key2048, crypto.SHA512) })
+}
+
+/*
+// This test prompts for the password using the Windows UI,
+// therefore, it is commented out. Uncomment to test.
+func TestRSASignWithPassUICompatiblePrompt(t *testing.T) {
+
+	// Generate key
+	key1024Gen, err := GenerateRSAKey("", "password123", true, 1024, 0, true)
+	require.NoError(t, err)
+	require.NotNil(t, key1024Gen)
+	defer func() {
+		require.NoError(t, key1024Gen.Delete())
+	}()
+	key1024, err := FindKey(key1024Gen.Name(), "", true)
+	require.NoError(t, err)
+	require.NotNil(t, key1024)
+
+	// Because these tests run in parallel, we need this hack
+	// to run them one at a time. This is to avoid triggering
+	// TPM's dictionary attack lockout and requiring us to
+	// reboot the machine.
+	awaitElement := sync.WaitGroup{}
+	awaitElement.Add(1)
+
+	// At the time of writing, we have the following :
+	// 1 / Setting salt length in padding info always fails, whetever its value is.
+	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
+	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//     the TPM's chip default salt length.
+	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA1", func(t *testing.T) {
+		testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthEqualsHash)
+		awaitElement.Done()
+	}) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA256", func(t *testing.T) {
+		testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthEqualsHash)
+		awaitElement.Done()
+	}) // TPM_E_PCP_UNSUPPORTED_PSS_SALT on pre 1.16 ?
+	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-1024-SALTEQUALS-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthEqualsHash) }) // NTE_NOT_SUPPORTED
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA1", func(t *testing.T) {
+		testRSASignDigestPSS(t, key1024, crypto.SHA1, rsa.PSSSaltLengthAuto)
+		awaitElement.Done()
+	})
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPSS-1024-SALTAUTO-SHA256", func(t *testing.T) {
+		testRSASignDigestPSS(t, key1024, crypto.SHA256, rsa.PSSSaltLengthAuto)
+		awaitElement.Done()
+	})
+	//t.Run("RSASIGNPSS-1024-SALTAUTO-SHA384", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA384, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	//t.Run("RSASIGNPSS-1024-SALTAUTO-SHA512", func(t *testing.T) { testRSASignDigestPSS(t, key1024, crypto.SHA512, rsa.PSSSaltLengthAuto) }) // NTE_NOT_SUPPORTED
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPKCS-1024-SHA1", func(t *testing.T) {
+		testRSASignDigestPKCS1v15(t, key1024, crypto.SHA1)
+		awaitElement.Done()
+	})
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPKCS-1024-SHA256", func(t *testing.T) {
+		testRSASignDigestPKCS1v15(t, key1024, crypto.SHA256)
+		awaitElement.Done()
+	})
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPKCS-1024-SHA384", func(t *testing.T) {
+		testRSASignDigestPKCS1v15(t, key1024, crypto.SHA384)
+		awaitElement.Done()
+	})
+	awaitElement.Wait()
+	awaitElement.Add(1)
+	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) {
+		testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512)
+		awaitElement.Done()
+	})
+}
+*/
+
 func TestRSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "", 1024, true)
+	key1024, err := GenerateRSAKey("", "", false, 1024, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
@@ -209,7 +362,7 @@ func TestRSASignWithoutPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "", 2048, true)
+	key2048, err := GenerateRSAKey("", "", false, 2048, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {

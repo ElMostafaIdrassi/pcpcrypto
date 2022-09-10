@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021, El Mostafa IDRASSI.
+// Copyright (c) 2020-2022, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"math/big"
@@ -26,6 +28,13 @@ import (
 
 	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
 	"golang.org/x/sys/windows"
+)
+
+const (
+	KeyUsageAllowDecrypt      = 0x00000001 // NcryptAllowDecryptFlag
+	KeyUsageAllowSigning      = 0x00000002 // NcryptAllowSigningFlag
+	KeyUsageAllowKeyAgreement = 0x00000004 // NcryptAllowKeyAgreementFlag
+	KeyUsageAllowAllUsages    = 0x00ffffff // NcryptAllowAllUsages
 )
 
 // Signer implements crypto.Signer and additional functions (i.e. Name()).
@@ -43,6 +52,9 @@ type Signer interface {
 	// Size returns the PCP public key size.
 	Size() uint32
 
+	// KeyUsage returns the PCP key usage.
+	KeyUsage() uint32
+
 	// Delete deletes the PCP key.
 	Delete() error
 }
@@ -56,9 +68,10 @@ type Signer interface {
 // pcpRSAPrivateKey and pcpECDSAPrivateKey each implement the remaining
 // Sign() and Size() functions.
 type pcpPrivateKey struct {
-	name     string           // name is the PCP key name.
-	password string           // password is the PCP key password / pin.
-	pubKey   crypto.PublicKey // pubKey is the public part of the PCP key.
+	name           string           // name is the PCP key name.
+	passwordDigest []byte           // passwordDigest is the PCP key password / pin digest (SHA-1 if UI compatible, SHA-256 otherwise)
+	pubKey         crypto.PublicKey // pubKey is the public part of the PCP key.
+	keyUsage       uint32           // keyUsage is the PCP key usage.
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -69,6 +82,11 @@ func (k pcpPrivateKey) Public() crypto.PublicKey {
 // Name returns the PCP key name.
 func (k pcpPrivateKey) Name() string {
 	return k.name
+}
+
+// KeyUsage returns the PCP key usage.
+func (k pcpPrivateKey) KeyUsage() uint32 {
+	return k.keyUsage
 }
 
 // Delete deletes the PCP key.
@@ -113,31 +131,27 @@ func (k pcpPrivateKey) Delete() error {
 // Otherwise, if no password is set, a UI prompt might show up during the
 // signature asking for the password / pin if the key needs one.
 //
+// We differentiate between :
+//	- PCP keys created with a password set in the Windows UI,
+//	- PCP keys created with a password set programmatically using NCRYPT_PIN_PORPERTY.
+// A password set via the UI prompt is transformed internally into its
+// SHA-1 digest, while a password set programmatically via NCRYPT_PIN_PROPERTY is
+// transformed internally into its SHA-256 digest.
+// Therefore, if isUICompatible is set to true, we will store the SHA-1 of the password,
+// while we will store its SHA-256 if isUICompatible is set to false.
+//
 // At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
 // creation, the PCP KSP creates a key that applies to the Current User.
 // Therefore, the search will always look for keys that apply for the Current User.
 //
 // After all operations are done on the resulting key, its handle should be
 // freed by calling the Close() function on the key.
-//
-// N.B :
-// If the key was created using a password entered in the UI prompt, entering
-// the correct password in the UI prompt will succeed, but setting it
-// programmatically in NCRYPT_PIN_PROPERTY will always fail.
-//
-// If the key was created using a password set in NCRYPT_PIN_PROPERTY,
-// entering the correct password in the UI prompt will always fail, but setting it
-// programmatically in NCRYPT_PIN_PROPERTY will succeed.
-//
-// This is not a bug in the PCP KSP and is a normal behaviour : a password set
-// via the UI prompt is transformed internally into its SHA-1 digest, while a
-// password set programmatically via NCRYPT_PIN_PROPERTY is transformed internally
-// into its SHA256 digest.
-func FindKey(name string, password string) (Signer, error) {
+func FindKey(name string, password string, isUICompatible bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var flags uint32
 	var publicKey crypto.PublicKey
+	var passwordDigest []byte
 
 	// Get a handle to the PCP KSP
 	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
@@ -157,22 +171,50 @@ func FindKey(name string, password string) (Signer, error) {
 	defer internal.NCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	alg, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
+	algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
 	if err != nil {
 		return nil, err
 	}
-	algStr, err := internal.Utf16BytesToString(alg)
+	alg, err := internal.Utf16BytesToString(algBytes)
 	if err != nil {
 		return nil, err
+	}
+
+	// Get key's usage
+	usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, flags)
+	if err != nil {
+		return nil, err
+	}
+	if len(usageBytes) != 4 {
+		return nil, fmt.Errorf("nCryptGetProperty() returned unexpcted output: expected 4 bytes, got %v bytes", len(usageBytes))
+	}
+	usage := binary.LittleEndian.Uint32(usageBytes)
+
+	// Get the password digest.
+	if password != "" {
+		passwordBlob, err := internal.StringToUtf16Bytes(password)
+		if err != nil {
+			return nil, err
+		}
+		passwordBlob = passwordBlob[:len(passwordBlob)-2] // need to get rid of the last two 0x00 (L"\0")
+		if isUICompatible {
+			passwordSha1Bytes := sha1.Sum(passwordBlob)
+			passwordDigest = passwordSha1Bytes[:]
+		} else {
+			passwordSha256Bytes := sha256.Sum256(passwordBlob)
+			passwordDigest = passwordSha256Bytes[:]
+		}
+	} else {
+		passwordDigest = nil
 	}
 
 	// Read key's public part
 	var pubkeyBytes []byte
 	var isRSA bool
-	if algStr == internal.NcryptRsaAlgorithm {
+	if alg == internal.NcryptRsaAlgorithm {
 		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
 		isRSA = true
-	} else if algStr == internal.NcryptEcdsaAlgorithm {
+	} else if alg == internal.NcryptEcdsaAlgorithm {
 		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
@@ -198,9 +240,10 @@ func FindKey(name string, password string) (Signer, error) {
 
 		return &pcpRSAPrivateKey{
 			pcpPrivateKey{
-				name:     name,
-				password: password,
-				pubKey:   publicKey,
+				name:           name,
+				passwordDigest: passwordDigest,
+				pubKey:         publicKey,
+				keyUsage:       usage,
 			},
 		}, nil
 	} else {
@@ -235,9 +278,10 @@ func FindKey(name string, password string) (Signer, error) {
 
 		return &pcpECDSAPrivateKey{
 			pcpPrivateKey{
-				name:     name,
-				password: password,
-				pubKey:   publicKey,
+				name:           name,
+				passwordDigest: passwordDigest,
+				pubKey:         publicKey,
+				keyUsage:       usage,
 			},
 		}, nil
 	}
@@ -305,20 +349,30 @@ func GetKeys() ([]Signer, error) {
 				defer internal.NCryptFreeObject(hKey)
 
 				// Get key's algorithm
-				alg, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
+				algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
 				if err != nil {
 					return nil, err
 				}
-				algStr, err := internal.Utf16BytesToString(alg)
+				alg, err := internal.Utf16BytesToString(algBytes)
 				if err != nil {
 					return nil, err
 				}
 
+				// Get key's usage
+				usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, flags)
+				if err != nil {
+					return nil, err
+				}
+				if len(usageBytes) != 4 {
+					return nil, fmt.Errorf("nCryptGetProperty() returned unexpcted output: expected 4 bytes, got %v bytes", len(usageBytes))
+				}
+				keyUsage := binary.LittleEndian.Uint32(usageBytes)
+
 				// Read key's public part
-				if algStr == internal.NcryptRsaAlgorithm {
+				if alg == internal.NcryptRsaAlgorithm {
 					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
 					isRSA = true
-				} else if algStr == internal.NcryptEcdsaAlgorithm {
+				} else if alg == internal.NcryptEcdsaAlgorithm {
 					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
 				} else {
 					continue
@@ -345,9 +399,10 @@ func GetKeys() ([]Signer, error) {
 
 					keys = append(keys, &pcpRSAPrivateKey{
 						pcpPrivateKey{
-							name:     keyName,
-							password: "",
-							pubKey:   publicKey,
+							name:           keyName,
+							passwordDigest: nil,
+							pubKey:         publicKey,
+							keyUsage:       keyUsage,
 						},
 					})
 				} else {
@@ -382,9 +437,10 @@ func GetKeys() ([]Signer, error) {
 
 					keys = append(keys, &pcpECDSAPrivateKey{
 						pcpPrivateKey{
-							name:     keyName,
-							password: "",
-							pubKey:   publicKey,
+							name:           keyName,
+							passwordDigest: nil,
+							pubKey:         publicKey,
+							keyUsage:       keyUsage,
 						},
 					})
 				}

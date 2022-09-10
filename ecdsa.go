@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2021, El Mostafa IDRASSI.
+// Copyright (c) 2020-2022, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ import (
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -66,7 +68,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	defer internal.NCryptFreeObject(hProvider)
 
 	// Set the opening flags
-	if len(k.password) != 0 {
+	if k.passwordDigest != nil {
 		openFlags |= internal.NcryptSilentFlag
 	}
 
@@ -76,7 +78,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	// the operation will fail silently.
 	// Otherwise, if no password is set, do not set the flag, meaning a UI might
 	// be shown to ask for it if the key needs one.
-	if len(k.password) != 0 {
+	if k.passwordDigest != nil {
 		flags = internal.NcryptSilentFlag
 	}
 
@@ -88,12 +90,8 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	defer internal.NCryptFreeObject(hKey)
 
 	// Set the key password / pin before signing if required.
-	if len(k.password) != 0 {
-		passwordBlob, err := internal.StringToUtf16Bytes(k.password)
-		if err != nil {
-			return nil, err
-		}
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPinProperty, passwordBlob, flags)
+	if k.passwordDigest != nil {
+		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, k.passwordDigest, flags)
 		if err != nil {
 			return nil, err
 		}
@@ -130,6 +128,15 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // If password is empty, it will generate the key with no password / pin, making it
 // usable with no authentication.
 //
+// If isUICompatible is set to false, and if a password is set, the user will only be
+// able to authenticate to the key programmatically, by setting either of the
+// NCRYPT_PIN_PROPERTY or the NCRYPT_PCP_USAGEAUTH_PROPERTY properties, but never
+// via the Windows UI.
+// If isUICompatible is set to true, and if a password is set, the user will only be
+// able to authenticate to the key via the Windows UI or by setting the
+// NCRYPT_PCP_USAGEAUTH_PROPERTY property, but never by setting the
+// NCRYPT_PIN_PROPERTY property.
+//
 // If overwrite is set, and if a key with the same name already exists, it will
 // be overwritten.
 //
@@ -141,13 +148,27 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // creation, the PCP KSP creates a key that applies to the Current User.
 // Therefore, GenerateECDSAKey will always generate keys that apply for the Current User.
 //
-// The key usage is left to be the default one for ECDSA, which is Sign.
-// TODO: Support UI Policies + manually set key usages.
-func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwrite bool) (Signer, error) {
+// The key usage can be set by combining the following flags using the OR operation :
+//	- KeyUsageAllowDecrypt
+//	- KeyUsageAllowSigning
+// 	- KeyUsageAllowKeyAgreement
+//	- KeyUsageAllowAllUsages
+// If keyUsage is set to 0 instead, the default key usage will be used, which is
+// SignOnly for ECDSA keys.
+//
+// TODO: Support UI Policies.
+func GenerateECDSAKey(name string, password string, isUICompatible bool, curve elliptic.Curve, keyUsage uint32, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var creationFlags uint32
 	var flags uint32
+
+	// Check that keyUsage contains a valid combination
+	if keyUsage != 0 &&
+		keyUsage != KeyUsageAllowAllUsages &&
+		(keyUsage & ^(uint32(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement))) != 0 {
+		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage)
+	}
 
 	// Get a handle to the PCP KSP
 	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
@@ -194,13 +215,41 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 		return nil, err
 	}
 
-	// If password is given, set it as NCRYPT_PIN_PROPERTY
+	// If password is given, set it as NCRYPT_PCP_USAGE_AUTH_PROPERTY either :
+	//	- after SHA-1 if UI compatibility is required
+	//	- or after SHA-256 otherwise
+	var passwordDigest []byte
 	if len(password) != 0 {
 		passwordBlob, err := internal.StringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPinProperty, passwordBlob, flags)
+		passwordBlob = passwordBlob[:len(passwordBlob)-2] // need to get rid of the last two 0x00 (L"\0")
+		if isUICompatible {
+			passwordBlobSha1 := sha1.Sum(passwordBlob)
+			passwordDigest = passwordBlobSha1[:]
+		} else {
+			passwordBlobSha256 := sha256.Sum256(passwordBlob)
+			passwordDigest = passwordBlobSha256[:]
+		}
+		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, passwordDigest, flags)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		passwordDigest = nil
+	}
+
+	// Set the key type.
+	if keyUsage != 0 {
+		keyUsageBytes := make([]byte, 4)
+		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage)
+		_, err = internal.NCryptSetProperty(
+			hKey,
+			internal.NcryptKeyUsageProperty,
+			keyUsageBytes,
+			flags,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -246,9 +295,10 @@ func GenerateECDSAKey(name string, password string, curve elliptic.Curve, overwr
 	// Return *pcpECDSAPrivateKey instance
 	return &pcpECDSAPrivateKey{
 		pcpPrivateKey{
-			name:     name,
-			password: password,
-			pubKey:   publicKey,
+			name:           name,
+			passwordDigest: passwordDigest,
+			pubKey:         publicKey,
+			keyUsage:       keyUsage,
 		},
 	}, nil
 }
