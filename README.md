@@ -20,21 +20,14 @@ The pcpCrypto package is installable using go get: `go get github.com/ElMostafaI
 Each PCP-generated TPM key is persistent in regards to the PCP KSP : it has a name and persists
 through reboots. 
 
-In order to achieve this persistence, the PCP KSP creates, for each 
-PCP-generated TPM key, a corresponding file which contains all the information 
-about the public and private parts of the key. For a key that applies to the current user `<username>`, this file resides in 
-`C:\Users\<username>\AppData\Local\Microsoft\Crypto\PCPKSP\<SHA1DIGEST\`, has a name 
-that is the `SHA-1 digest` of the key's name and the extension `PCPKEY`.
+In order to achieve this persistence, the PCP KSP creates, for each PCP-generated TPM key, a corresponding file which contains all the information about the public and private parts of the key. 
+For a key that applies to the current user `<username>`, this file resides in `C:\Users\<username>\AppData\Local\Microsoft\Crypto\PCPKSP\<SHA1DIGEST\`, has a name that is the `SHA-1 digest` of the key's name and the extension `PCPKEY`. 
+For a key that applies to the local machine, this file resides in `C:\ProgramData\Microsoft\Crypto\PCPKSP\<SHA1DIGEST\`, has a name that is the 
+`SHA-1 digest` of the key's name and the extension `PCPKEY`.
 
-This gives the PCP KSP the ability to actually load the key into the TPM's volatile 
-memory at each `NCryptOpenKey` and unload it at each `NCryptFreeObject`, 
-in the manner of a `TPM2-TSS-ENGINE` encrypted blob file.
+This gives the PCP KSP the ability to actually load the key into the TPM's volatile memory at each `NCryptOpenKey` and unload it at each `NCryptFreeObject`, in the manner of a `TPM2-TSS-ENGINE` encrypted blob file.
 
-Therefore, PCP KSP keys are not persistent in regards to the TPM chip itself.
-They are merely transient keys that are created inside of the TPM using 
-`NCryptCreatePersistedKey` and exported immediately into the aforementioned 
-PCP file when `NCryptFinalizeKey` is called. These PCP files will then allow 
-the PCP KSP to reload the key into TPM's volatile memory whenever needed.
+Therefore, PCP KSP keys are not persistent in regards to the TPM chip itself. They are merely transient keys that are created inside of the TPM using `NCryptCreatePersistedKey` and exported immediately into the aforementioned PCP file when `NCryptFinalizeKey` is called. These PCP files will then allow the PCP KSP to reload the key into TPM's volatile memory whenever needed.
 
 ## Known Limitations
 

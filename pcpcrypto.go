@@ -55,6 +55,9 @@ type Signer interface {
 	// KeyUsage returns the PCP key usage.
 	KeyUsage() uint32
 
+	// IsLocalMachine returns whether the key applies to the Local Machine or to the Current User.
+	IsLocalMachine() bool
+
 	// Delete deletes the PCP key.
 	Delete() error
 }
@@ -72,6 +75,7 @@ type pcpPrivateKey struct {
 	passwordDigest []byte           // passwordDigest is the PCP key password / pin digest (SHA-1 if UI compatible, SHA-256 otherwise)
 	pubKey         crypto.PublicKey // pubKey is the public part of the PCP key.
 	keyUsage       uint32           // keyUsage is the PCP key usage.
+	isLocalMachine bool             // isLocalMachine determines whether the key applies to the Local Machine or to the Current User.
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -89,6 +93,11 @@ func (k pcpPrivateKey) KeyUsage() uint32 {
 	return k.keyUsage
 }
 
+// IsLocalMachine returns whether the key applies to the Local Machine or to the Current User.
+func (k pcpPrivateKey) IsLocalMachine() bool {
+	return k.isLocalMachine
+}
+
 // Delete deletes the PCP key.
 func (k pcpPrivateKey) Delete() error {
 	var hProvider uintptr
@@ -104,6 +113,9 @@ func (k pcpPrivateKey) Delete() error {
 
 	// Set the flags
 	flags = internal.NcryptSilentFlag
+	if k.isLocalMachine {
+		flags |= internal.NcryptMachineKeyFlag
+	}
 
 	// Try to get a handle to the key by its name
 	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
@@ -140,13 +152,12 @@ func (k pcpPrivateKey) Delete() error {
 // Therefore, if isUICompatible is set to true, we will store the SHA-1 of the password,
 // while we will store its SHA-256 if isUICompatible is set to false.
 //
-// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
-// creation, the PCP KSP creates a key that applies to the Current User.
-// Therefore, the search will always look for keys that apply for the Current User.
+// If isLocalMachine is set to true, the search will look for keys that apply to the
+// Local Machine. Otherwise, it will look for keys that apply for the Current User.
 //
 // After all operations are done on the resulting key, its handle should be
 // freed by calling the Close() function on the key.
-func FindKey(name string, password string, isUICompatible bool) (Signer, error) {
+func FindKey(name string, password string, isUICompatible bool, isLocalMachine bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var flags uint32
@@ -162,6 +173,9 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 
 	// Set the flags
 	flags = internal.NcryptSilentFlag
+	if isLocalMachine {
+		flags |= internal.NcryptMachineKeyFlag
+	}
 
 	// Try to get a handle to the key by its name
 	_, err = internal.NCryptOpenKey(hProvider, &hKey, name, 0, flags)
@@ -171,7 +185,7 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 	defer internal.NCryptFreeObject(hKey)
 
 	// Get key's algorithm
-	algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
+	algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, internal.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +195,7 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 	}
 
 	// Get key's usage
-	usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, flags)
+	usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, internal.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
@@ -212,10 +226,10 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 	var pubkeyBytes []byte
 	var isRSA bool
 	if alg == internal.NcryptRsaAlgorithm {
-		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
+		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, 0)
 		isRSA = true
 	} else if alg == internal.NcryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
+		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, 0)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -244,6 +258,7 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 				passwordDigest: passwordDigest,
 				pubKey:         publicKey,
 				keyUsage:       usage,
+				isLocalMachine: isLocalMachine,
 			},
 		}, nil
 	} else {
@@ -282,6 +297,7 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 				passwordDigest: passwordDigest,
 				pubKey:         publicKey,
 				keyUsage:       usage,
+				isLocalMachine: isLocalMachine,
 			},
 		}, nil
 	}
@@ -289,11 +305,9 @@ func FindKey(name string, password string, isUICompatible bool) (Signer, error) 
 
 // GetKeys tries to retrieve all existing PCP keys.
 //
-// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
-// creation, the PCP KSP creates a key that applies to the Current User.
-// Therefore, GetKeys will always retrieve the keys that apply to the
-// Current User.
-func GetKeys() ([]Signer, error) {
+// If isLocalMachine is set to true, the search will retrieve the keys that apply to the
+// Local Machine. Otherwise, it will retrieve the keys that apply for the Current User.
+func GetKeys(isLocalMachine bool) ([]Signer, error) {
 	var hProvider uintptr
 	var pState unsafe.Pointer
 	var pKeyName unsafe.Pointer
@@ -316,6 +330,9 @@ func GetKeys() ([]Signer, error) {
 
 	// Set the flags
 	flags = internal.NcryptSilentFlag
+	if isLocalMachine {
+		flags |= internal.NcryptMachineKeyFlag
+	}
 
 	// Retrieve 1 key item at a time.
 	for {
@@ -349,7 +366,7 @@ func GetKeys() ([]Signer, error) {
 				defer internal.NCryptFreeObject(hKey)
 
 				// Get key's algorithm
-				algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, flags)
+				algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, internal.NcryptSilentFlag)
 				if err != nil {
 					return nil, err
 				}
@@ -359,7 +376,7 @@ func GetKeys() ([]Signer, error) {
 				}
 
 				// Get key's usage
-				usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, flags)
+				usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, internal.NcryptSilentFlag)
 				if err != nil {
 					return nil, err
 				}
@@ -370,10 +387,10 @@ func GetKeys() ([]Signer, error) {
 
 				// Read key's public part
 				if alg == internal.NcryptRsaAlgorithm {
-					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
+					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, 0)
 					isRSA = true
 				} else if alg == internal.NcryptEcdsaAlgorithm {
-					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
+					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, 0)
 				} else {
 					continue
 				}
@@ -403,6 +420,7 @@ func GetKeys() ([]Signer, error) {
 							passwordDigest: nil,
 							pubKey:         publicKey,
 							keyUsage:       keyUsage,
+							isLocalMachine: isLocalMachine,
 						},
 					})
 				} else {
@@ -441,6 +459,7 @@ func GetKeys() ([]Signer, error) {
 							passwordDigest: nil,
 							pubKey:         publicKey,
 							keyUsage:       keyUsage,
+							isLocalMachine: isLocalMachine,
 						},
 					})
 				}

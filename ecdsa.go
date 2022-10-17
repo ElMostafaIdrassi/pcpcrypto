@@ -71,6 +71,9 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	if k.passwordDigest != nil {
 		openFlags |= internal.NcryptSilentFlag
 	}
+	if k.isLocalMachine {
+		openFlags |= internal.NcryptMachineKeyFlag
+	}
 
 	// Set the other flags
 	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG, meaning
@@ -144,9 +147,8 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // GenerateECDSAKey only supports NIST-P256/P384/P521 which are the only curves supported
 // by the PCP KSP (at the time of writing).
 //
-// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
-// creation, the PCP KSP creates a key that applies to the Current User.
-// Therefore, GenerateECDSAKey will always generate keys that apply for the Current User.
+// If isLocalMachine is set to true, GenerateRSAKey will generate keys that apply to the
+// Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
 //	- KeyUsageAllowDecrypt
@@ -157,7 +159,7 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // SignOnly for ECDSA keys.
 //
 // TODO: Support UI Policies.
-func GenerateECDSAKey(name string, password string, isUICompatible bool, curve elliptic.Curve, keyUsage uint32, overwrite bool) (Signer, error) {
+func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, curve elliptic.Curve, keyUsage uint32, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var creationFlags uint32
@@ -180,6 +182,9 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, curve e
 	// Set the creation flags
 	if overwrite {
 		creationFlags |= internal.NcryptOverwriteKeyFlag
+	}
+	if isLocalMachine {
+		creationFlags |= internal.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -299,6 +304,7 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, curve e
 			passwordDigest: passwordDigest,
 			pubKey:         publicKey,
 			keyUsage:       keyUsage,
+			isLocalMachine: isLocalMachine,
 		},
 	}, nil
 }

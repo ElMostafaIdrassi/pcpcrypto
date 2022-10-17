@@ -27,7 +27,7 @@ import (
 func testRSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, length uint32, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateRSAKey(name, password, isUICompatible, length, 0, true)
+	key, err := GenerateRSAKey(name, password, isUICompatible, false, length, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -38,7 +38,7 @@ func testRSAGenerateAndFindKey(t *testing.T, name string, password string, isUIC
 	require.Equal(t, key.Size(), (length+7)/8)
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password, isUICompatible)
+	keyBis, err := FindKey(key.Name(), password, isUICompatible, false)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -139,7 +139,7 @@ func TestRSAGenerateKey(t *testing.T) {
 func TestRSASignWithPassNotUICompatible(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "password123", false, 1024, 0, true)
+	key1024, err := GenerateRSAKey("", "password123", false, false, 1024, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
@@ -166,7 +166,7 @@ func TestRSASignWithPassNotUICompatible(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "password123", false, 2048, 0, true)
+	key2048, err := GenerateRSAKey("", "password123", false, false, 2048, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {
@@ -196,7 +196,7 @@ func TestRSASignWithPassNotUICompatible(t *testing.T) {
 func TestRSASignWithPassUICompatible(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "password123", true, 1024, 0, true)
+	key1024, err := GenerateRSAKey("", "password123", true, false, 1024, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
@@ -223,7 +223,7 @@ func TestRSASignWithPassUICompatible(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "password123", true, 2048, 0, true)
+	key2048, err := GenerateRSAKey("", "password123", true, false, 2048, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {
@@ -335,7 +335,7 @@ func TestRSASignWithPassUICompatiblePrompt(t *testing.T) {
 func TestRSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key1024, err := GenerateRSAKey("", "", false, 1024, 0, true)
+	key1024, err := GenerateRSAKey("", "", false, false, 1024, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key1024)
 	defer func() {
@@ -362,7 +362,7 @@ func TestRSASignWithoutPass(t *testing.T) {
 	t.Run("RSASIGNPKCS-1024-SHA512", func(t *testing.T) { testRSASignDigestPKCS1v15(t, key1024, crypto.SHA512) })
 
 	// Generate key
-	key2048, err := GenerateRSAKey("", "", false, 2048, 0, true)
+	key2048, err := GenerateRSAKey("", "", false, false, 2048, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key2048)
 	defer func() {

@@ -29,7 +29,7 @@ import (
 func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, curve elliptic.Curve, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateECDSAKey(name, password, isUICompatible, curve, 0, true)
+	key, err := GenerateECDSAKey(name, password, isUICompatible, false, curve, 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -40,7 +40,7 @@ func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, isU
 	require.Equal(t, key.Size(), uint32((curve.Params().BitSize+7)/8))
 
 	// Find the key
-	keyBis, err := FindKey(key.Name(), password, isUICompatible)
+	keyBis, err := FindKey(key.Name(), password, isUICompatible, false)
 	require.NoError(t, err)
 	require.NotNil(t, keyBis)
 	require.Equal(t, key.Name(), keyBis.Name())
@@ -96,7 +96,7 @@ func TestECDSAGenerateKey(t *testing.T) {
 func TestECDSASignWithPassNotUICompatible(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "password123", false, elliptic.P256(), 0, true)
+	key, err := GenerateECDSAKey("", "password123", false, false, elliptic.P256(), 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {
@@ -111,7 +111,7 @@ func TestECDSASignWithPassNotUICompatible(t *testing.T) {
 func TestECDSASignWithPassUICompatible(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "password123", true, elliptic.P256(), 0, true)
+	key, err := GenerateECDSAKey("", "password123", true, false, elliptic.P256(), 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {
@@ -159,7 +159,7 @@ func TestECDSASignWithPassUICompatiblePrompt(t *testing.T) {
 func TestECDSASignWithoutPass(t *testing.T) {
 
 	// Generate key
-	key, err := GenerateECDSAKey("", "", false, elliptic.P256(), 0, true)
+	key, err := GenerateECDSAKey("", "", false, false, elliptic.P256(), 0, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	defer func() {

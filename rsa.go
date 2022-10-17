@@ -70,6 +70,9 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	if k.passwordDigest != nil {
 		openFlags |= internal.NcryptSilentFlag
 	}
+	if k.isLocalMachine {
+		openFlags |= internal.NcryptMachineKeyFlag
+	}
 
 	// Set the other flags
 	// If a password is set for the key, set the flag NCRYPT_SILENT_FLAG, meaning
@@ -272,9 +275,8 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 // Supported RSA bit lengths are dictated by the TPM chip (usually 1024 and 2048)
 // and by the PCP KSP. Therefore, there is no restriction on bitLength by GenerateRSAKey.
 //
-// At the time of writing, and even if we set the NCRYPT_MACHINE_KEY_FLAG flag during
-// creation, the PCP KSP creates a key that applies to the Current User.
-// Therefore, GenerateRSAKey will always generate keys that apply for the Current User.
+// If isLocalMachine is set to true, GenerateRSAKey will generate keys that apply to the
+// Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
 //	- KeyUsageAllowDecrypt
@@ -285,7 +287,7 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 // Sign + Decrypt for RSA keys.
 //
 // TODO: Support UI Policies.
-func GenerateRSAKey(name string, password string, isUICompatible bool, bitLength uint32, keyUsage uint32, overwrite bool) (Signer, error) {
+func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, bitLength uint32, keyUsage uint32, overwrite bool) (Signer, error) {
 	var hProvider uintptr
 	var hKey uintptr
 	var creationFlags uint32
@@ -308,6 +310,9 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, bitLength
 	// Set the creation flags
 	if overwrite {
 		creationFlags |= internal.NcryptOverwriteKeyFlag
+	}
+	if isLocalMachine {
+		creationFlags |= internal.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -409,6 +414,7 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, bitLength
 			passwordDigest: passwordDigest,
 			pubKey:         publicKey,
 			keyUsage:       keyUsage,
+			isLocalMachine: isLocalMachine,
 		},
 	}, nil
 }
