@@ -393,6 +393,19 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 	//	Read key's public part
 	pubkeyBytes, _, err := internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
 	if err != nil {
+		internal.NCryptDeleteKey(hKey, flags)
+		return nil, err
+	}
+
+	// Get the path to the PCP file.
+	pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, flags)
+	if err != nil {
+		internal.NCryptDeleteKey(hKey, flags)
+		return nil, err
+	}
+	pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+	if err != nil {
+		internal.NCryptDeleteKey(hKey, flags)
 		return nil, err
 	}
 
@@ -415,6 +428,7 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 			pubKey:         publicKey,
 			keyUsage:       keyUsage,
 			isLocalMachine: isLocalMachine,
+			path:           pcpPath,
 		},
 	}, nil
 }

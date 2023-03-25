@@ -58,6 +58,9 @@ type Signer interface {
 	// IsLocalMachine returns whether the key applies to the Local Machine or to the Current User.
 	IsLocalMachine() bool
 
+	// Path returns the path to the PCP key file on disk.
+	Path() string
+
 	// Delete deletes the PCP key.
 	Delete() error
 }
@@ -76,6 +79,7 @@ type pcpPrivateKey struct {
 	pubKey         crypto.PublicKey // pubKey is the public part of the PCP key.
 	keyUsage       uint32           // keyUsage is the PCP key usage.
 	isLocalMachine bool             // isLocalMachine determines whether the key applies to the Local Machine or to the Current User.
+	path           string           // path is the PCP key file path.
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -96,6 +100,11 @@ func (k pcpPrivateKey) KeyUsage() uint32 {
 // IsLocalMachine returns whether the key applies to the Local Machine or to the Current User.
 func (k pcpPrivateKey) IsLocalMachine() bool {
 	return k.isLocalMachine
+}
+
+// Path returns the path to the PCP key file on disk.
+func (k pcpPrivateKey) Path() string {
+	return k.path
 }
 
 // Delete deletes the PCP key.
@@ -222,6 +231,16 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 		passwordDigest = nil
 	}
 
+	// Get the path to the PCP file.
+	pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, internal.NcryptSilentFlag)
+	if err != nil {
+		return nil, err
+	}
+	pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+	if err != nil {
+		return nil, err
+	}
+
 	// Read key's public part
 	var pubkeyBytes []byte
 	var isRSA bool
@@ -298,6 +317,7 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 				pubKey:         publicKey,
 				keyUsage:       usage,
 				isLocalMachine: isLocalMachine,
+				path:           pcpPath,
 			},
 		}, nil
 	}
@@ -385,6 +405,16 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 				}
 				keyUsage := binary.LittleEndian.Uint32(usageBytes)
 
+				// Get the path to the PCP file.
+				pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, internal.NcryptSilentFlag)
+				if err != nil {
+					return nil, err
+				}
+				pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+				if err != nil {
+					return nil, err
+				}
+
 				// Read key's public part
 				if alg == internal.NcryptRsaAlgorithm {
 					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, 0)
@@ -421,6 +451,7 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 							pubKey:         publicKey,
 							keyUsage:       keyUsage,
 							isLocalMachine: isLocalMachine,
+							path:           pcpPath,
 						},
 					})
 				} else {
@@ -460,6 +491,7 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 							pubKey:         publicKey,
 							keyUsage:       keyUsage,
 							isLocalMachine: isLocalMachine,
+							path:           pcpPath,
 						},
 					})
 				}
