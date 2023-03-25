@@ -1392,35 +1392,66 @@ type NcryptTpmLoadableKeyBlobHeader struct {
 //////////////////////////////////////////////////////////////////////////////////////
 
 var (
-	nCrypt                         = windows.MustLoadDLL("ncrypt.dll")
-	nCryptCreateClaimProc          = nCrypt.MustFindProc("NCryptCreateClaim")
-	nCryptCreatePersistedKeyProc   = nCrypt.MustFindProc("NCryptCreatePersistedKey")
-	nCryptDecryptProc              = nCrypt.MustFindProc("NCryptDecrypt")
-	nCryptDeleteKeyProc            = nCrypt.MustFindProc("NCryptDeleteKey")
-	nCryptDeriveKeyProc            = nCrypt.MustFindProc("NCryptDeriveKey")
-	nCryptEncryptProc              = nCrypt.MustFindProc("NCryptEncrypt")
-	nCryptEnumAlgorithmsProc       = nCrypt.MustFindProc("NCryptEnumAlgorithms")
-	nCryptEnumKeysProc             = nCrypt.MustFindProc("NCryptEnumKeys")
-	nCryptEnumStorageProvidersProc = nCrypt.MustFindProc("NCryptEnumStorageProviders")
-	nCryptExportKeyProc            = nCrypt.MustFindProc("NCryptExportKey")
-	nCryptFinalizeKeyProc          = nCrypt.MustFindProc("NCryptFinalizeKey")
-	nCryptFreeBufferProc           = nCrypt.MustFindProc("NCryptFreeBuffer")
-	nCryptFreeObjectProc           = nCrypt.MustFindProc("NCryptFreeObject")
-	nCryptGetPropertyProc          = nCrypt.MustFindProc("NCryptGetProperty")
-	nCryptImportKeyProc            = nCrypt.MustFindProc("NCryptImportKey")
-	nCryptIsAlgSupportedProc       = nCrypt.MustFindProc("NCryptIsAlgSupported")
-	nCryptIsKeyHandleProc          = nCrypt.MustFindProc("NCryptIsKeyHandle")
-	nCryptKeyDerivationProc        = nCrypt.MustFindProc("NCryptKeyDerivation")
-	nCryptNotifyChangeKeyProc      = nCrypt.MustFindProc("NCryptNotifyChangeKey")
-	nCryptOpenKeyProc              = nCrypt.MustFindProc("NCryptOpenKey")
-	nCryptOpenStorageProviderProc  = nCrypt.MustFindProc("NCryptOpenStorageProvider")
-	nCryptSecretAgreementProc      = nCrypt.MustFindProc("NCryptSecretAgreement")
-	nCryptSetPropertyProc          = nCrypt.MustFindProc("NCryptSetProperty")
-	nCryptSignHashProc             = nCrypt.MustFindProc("NCryptSignHash")
-	nCryptTranslateHandleProc      = nCrypt.MustFindProc("NCryptTranslateHandle")
-	nCryptVerifyClaimProc          = nCrypt.MustFindProc("NCryptVerifyClaim")
-	nCryptVerifySignatureProc      = nCrypt.MustFindProc("NCryptVerifySignature")
+	nCrypt                         *windows.DLL
+	nCryptCreateClaimProc          *windows.Proc
+	nCryptCreatePersistedKeyProc   *windows.Proc
+	nCryptDecryptProc              *windows.Proc
+	nCryptDeleteKeyProc            *windows.Proc
+	nCryptDeriveKeyProc            *windows.Proc
+	nCryptEncryptProc              *windows.Proc
+	nCryptEnumAlgorithmsProc       *windows.Proc
+	nCryptEnumKeysProc             *windows.Proc
+	nCryptEnumStorageProvidersProc *windows.Proc
+	nCryptExportKeyProc            *windows.Proc
+	nCryptFinalizeKeyProc          *windows.Proc
+	nCryptFreeBufferProc           *windows.Proc
+	nCryptFreeObjectProc           *windows.Proc
+	nCryptGetPropertyProc          *windows.Proc
+	nCryptImportKeyProc            *windows.Proc
+	nCryptIsAlgSupportedProc       *windows.Proc
+	nCryptIsKeyHandleProc          *windows.Proc
+	nCryptKeyDerivationProc        *windows.Proc
+	nCryptNotifyChangeKeyProc      *windows.Proc
+	nCryptOpenKeyProc              *windows.Proc
+	nCryptOpenStorageProviderProc  *windows.Proc
+	nCryptSecretAgreementProc      *windows.Proc
+	nCryptSetPropertyProc          *windows.Proc
+	nCryptSignHashProc             *windows.Proc
+	nCryptTranslateHandleProc      *windows.Proc
+	nCryptVerifyClaimProc          *windows.Proc
+	nCryptVerifySignatureProc      *windows.Proc
 )
+
+func init() {
+	nCrypt = windows.MustLoadDLL("ncrypt.dll")
+	nCryptCreateClaimProc, _ = nCrypt.FindProc("NCryptCreateClaim")
+	nCryptCreatePersistedKeyProc, _ = nCrypt.FindProc("NCryptCreatePersistedKey")
+	nCryptDecryptProc, _ = nCrypt.FindProc("NCryptDecrypt")
+	nCryptDeleteKeyProc, _ = nCrypt.FindProc("NCryptDeleteKey")
+	nCryptDeriveKeyProc, _ = nCrypt.FindProc("NCryptDeriveKey")
+	nCryptEncryptProc, _ = nCrypt.FindProc("NCryptEncrypt")
+	nCryptEnumAlgorithmsProc, _ = nCrypt.FindProc("NCryptEnumAlgorithms")
+	nCryptEnumKeysProc, _ = nCrypt.FindProc("NCryptEnumKeys")
+	nCryptEnumStorageProvidersProc, _ = nCrypt.FindProc("NCryptEnumStorageProviders")
+	nCryptExportKeyProc, _ = nCrypt.FindProc("NCryptExportKey")
+	nCryptFinalizeKeyProc, _ = nCrypt.FindProc("NCryptFinalizeKey")
+	nCryptFreeBufferProc, _ = nCrypt.FindProc("NCryptFreeBuffer")
+	nCryptFreeObjectProc, _ = nCrypt.FindProc("NCryptFreeObject")
+	nCryptGetPropertyProc, _ = nCrypt.FindProc("NCryptGetProperty")
+	nCryptImportKeyProc, _ = nCrypt.FindProc("NCryptImportKey")
+	nCryptIsAlgSupportedProc, _ = nCrypt.FindProc("NCryptIsAlgSupported")
+	nCryptIsKeyHandleProc, _ = nCrypt.FindProc("NCryptIsKeyHandle")
+	nCryptKeyDerivationProc, _ = nCrypt.FindProc("NCryptKeyDerivation")
+	nCryptNotifyChangeKeyProc, _ = nCrypt.FindProc("NCryptNotifyChangeKey")
+	nCryptOpenKeyProc, _ = nCrypt.FindProc("NCryptOpenKey")
+	nCryptOpenStorageProviderProc, _ = nCrypt.FindProc("NCryptOpenStorageProvider")
+	nCryptSecretAgreementProc, _ = nCrypt.FindProc("NCryptSecretAgreement")
+	nCryptSetPropertyProc, _ = nCrypt.FindProc("NCryptSetProperty")
+	nCryptSignHashProc, _ = nCrypt.FindProc("NCryptSignHash")
+	nCryptTranslateHandleProc, _ = nCrypt.FindProc("NCryptTranslateHandle")
+	nCryptVerifyClaimProc, _ = nCrypt.FindProc("NCryptVerifyClaim")
+	nCryptVerifySignatureProc, _ = nCrypt.FindProc("NCryptVerifySignature")
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 // Windows error codes.
@@ -1977,6 +2008,10 @@ func NCryptCreateClaim(
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
 
+	if nCryptCreateClaimProc == nil {
+		return nil, 0, fmt.Errorf("nCryptCreateClaim() not found in ncrypt.dll")
+	}
+
 	var size uint32
 	r, _, msg := nCryptCreateClaimProc.Call(
 		uintptr(hSubjectKey),
@@ -2031,6 +2066,10 @@ func NCryptCreatePersistedKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptCreatePersistedKeyProc == nil {
+		return 0, fmt.Errorf("nCryptCreatePersistedKey() not found in ncrypt.dll")
+	}
+
 	utf16AlgID, err := StringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
@@ -2065,6 +2104,10 @@ func NCryptDecrypt(
 	pPaddingInfo unsafe.Pointer, /* VOID* */
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
+
+	if nCryptDecryptProc == nil {
+		return nil, 0, fmt.Errorf("nCryptDecryptProc() not found in ncrypt.dll")
+	}
 
 	var size uint32
 	r, _, msg := nCryptDecryptProc.Call(
@@ -2116,6 +2159,10 @@ func NCryptDeleteKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptDeleteKeyProc == nil {
+		return 0, fmt.Errorf("nCryptDeleteKey() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptDeleteKeyProc.Call(
 		uintptr(hKey),
 		uintptr(dwFlags),
@@ -2136,6 +2183,10 @@ func NCryptDeriveKey(
 	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
+
+	if nCryptDeriveKeyProc == nil {
+		return nil, 0, fmt.Errorf("nCryptDeriveKey() not found in ncrypt.dll")
+	}
 
 	utf16KDF, err := windows.UTF16FromString(pwszKDF)
 	if err != nil {
@@ -2192,6 +2243,10 @@ func NCryptEncrypt(
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
 
+	if nCryptEncryptProc == nil {
+		return nil, 0, fmt.Errorf("nCryptEncrypt() not found in ncrypt.dll")
+	}
+
 	var size uint32
 	r, _, msg := nCryptEncryptProc.Call(
 		uintptr(hKey),
@@ -2245,6 +2300,10 @@ func NCryptEnumAlgorithms(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptEnumAlgorithmsProc == nil {
+		return 0, fmt.Errorf("nCryptEnumAlgorithms() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptEnumAlgorithmsProc.Call(
 		uintptr(hProvider),
 		uintptr(dwAlgOperations),
@@ -2269,6 +2328,10 @@ func NCryptEnumKeys(
 	ppEnumState *unsafe.Pointer, /* PVOID* */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
+
+	if nCryptEnumKeysProc == nil {
+		return 0, fmt.Errorf("nCryptEnumKeys() not found in ncrypt.dll")
+	}
 
 	utf16Property, err := StringToUtf16Ptr(pszScope)
 	if err != nil {
@@ -2298,6 +2361,10 @@ func NCryptEnumStorageProviders(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptEnumStorageProvidersProc == nil {
+		return 0, fmt.Errorf("nCryptEnumStorageProvidersProc() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptEnumStorageProvidersProc.Call(
 		uintptr(unsafe.Pointer(pdwProviderCount)),
 		uintptr(unsafe.Pointer(ppProviderList)),
@@ -2320,6 +2387,10 @@ func NCryptExportKey(
 	pParameterList *BcryptBufferDesc, /* NCryptBufferDesc* */
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
+
+	if nCryptExportKeyProc == nil {
+		return nil, 0, fmt.Errorf("nCryptExportKey() not found in ncrypt.dll")
+	}
 
 	var size uint32
 
@@ -2377,6 +2448,10 @@ func NCryptFinalizeKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptFinalizeKeyProc == nil {
+		return 0, fmt.Errorf("nCryptFinalizeKey() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptFinalizeKeyProc.Call(
 		uintptr(hKey),
 		uintptr(dwFlags),
@@ -2395,6 +2470,10 @@ func NCryptFreeBuffer(
 	pvInput unsafe.Pointer, /* PVOID */
 ) (uint32, error) {
 
+	if nCryptFreeBufferProc == nil {
+		return 0, fmt.Errorf("nCryptFreeBuffer() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptFreeBufferProc.Call(
 		uintptr(pvInput),
 	)
@@ -2411,6 +2490,10 @@ func NCryptFreeBuffer(
 func NCryptFreeObject(
 	hObject uintptr, /* NCRYPT_HANDLE */
 ) (uint32, error) {
+
+	if nCryptFreeObjectProc == nil {
+		return 0, fmt.Errorf("nCryptFreeObject() not found in ncrypt.dll")
+	}
 
 	r, _, msg := nCryptFreeObjectProc.Call(
 		uintptr(hObject),
@@ -2430,6 +2513,10 @@ func NCryptGetProperty(
 	pszProperty string, /* LPCWSTR */
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
+
+	if nCryptGetPropertyProc == nil {
+		return nil, 0, fmt.Errorf("nCryptGetProperty() not found in ncrypt.dll")
+	}
 
 	var size uint32
 
@@ -2488,6 +2575,10 @@ func NCryptImportKey(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptImportKeyProc == nil {
+		return 0, fmt.Errorf("nCryptImportKey() not found in ncrypt.dll")
+	}
+
 	utf16BlobType, err := StringToUtf16Ptr(pszBlobType)
 	if err != nil {
 		return 0, err
@@ -2519,6 +2610,10 @@ func NCryptIsAlgSupported(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptIsAlgSupportedProc == nil {
+		return 0, fmt.Errorf("nCryptIsAlgSupported() not found in ncrypt.dll")
+	}
+
 	utf16AlgID, err := StringToUtf16Ptr(pszAlgID)
 	if err != nil {
 		return 0, err
@@ -2541,12 +2636,16 @@ func NCryptIsAlgSupported(
 
 func NCryptIsKeyHandle(
 	hKey uintptr, /* NCRYPT_PROV_HANDLE */
-) bool {
+) (bool, error) {
+
+	if nCryptIsKeyHandleProc == nil {
+		return false, fmt.Errorf("nCryptIsKeyHandleProc() not found in ncrypt.dll")
+	}
 
 	r, _, _ := nCryptIsKeyHandleProc.Call(
 		uintptr(hKey),
 	)
-	return r != 0
+	return r != 0, nil
 }
 
 func NCryptKeyDerivation(
@@ -2557,6 +2656,10 @@ func NCryptKeyDerivation(
 	pcbResult *uint32, /* DWORD* */
 	dwFlags uint32, /* ULONG */
 ) (uint32, error) {
+
+	if nCryptKeyDerivationProc == nil {
+		return 0, fmt.Errorf("nCryptKeyDerivation() not found in ncrypt.dll")
+	}
 
 	r, _, msg := nCryptKeyDerivationProc.Call(
 		uintptr(hKey),
@@ -2583,6 +2686,10 @@ func NCryptOpenKey(
 	dwLegacyKeySpec uint32, /* DWORD */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
+
+	if nCryptOpenKeyProc == nil {
+		return 0, fmt.Errorf("nCryptOpenKey() not found in ncrypt.dll")
+	}
 
 	utf16KeyName, err := StringToUtf16Ptr(pszKeyName)
 	if err != nil {
@@ -2612,6 +2719,10 @@ func NCryptOpenStorageProvider(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptOpenStorageProviderProc == nil {
+		return 0, fmt.Errorf("nCryptOpenStorageProvider() not found in ncrypt.dll")
+	}
+
 	utf16ProviderName, err := StringToUtf16Ptr(pszProviderName)
 	if err != nil {
 		return 0, err
@@ -2639,6 +2750,10 @@ func NCryptSecretAgreement(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptSecretAgreementProc == nil {
+		return 0, fmt.Errorf("nCryptSecretAgreement() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptSecretAgreementProc.Call(
 		uintptr(hPrivKey),
 		uintptr(hPubKey),
@@ -2661,6 +2776,10 @@ func NCryptSetProperty(
 	pbInput []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
+
+	if nCryptSetPropertyProc == nil {
+		return 0, fmt.Errorf("nCryptSetProperty() not found in ncrypt.dll")
+	}
 
 	utf16Property, err := StringToUtf16Ptr(pszProperty)
 	if err != nil {
@@ -2690,6 +2809,10 @@ func NCryptSignHash(
 	pbHashValue []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) ([]byte, uint32, error) {
+
+	if nCryptSignHashProc == nil {
+		return nil, 0, fmt.Errorf("nCryptSignHash() not found in ncrypt.dll")
+	}
 
 	var size uint32
 	r, _, msg := nCryptSignHashProc.Call(
@@ -2745,6 +2868,10 @@ func NCryptTranslateHandle(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptTranslateHandleProc == nil {
+		return 0, fmt.Errorf("nCryptTranslateHandle() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptTranslateHandleProc.Call(
 		uintptr(unsafe.Pointer(phProvider)),
 		uintptr(unsafe.Pointer(phKey)),
@@ -2774,6 +2901,10 @@ func NCryptVerifyClaim(
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
 
+	if nCryptVerifyClaimProc == nil {
+		return 0, fmt.Errorf("nCryptVerifyClaim() not found in ncrypt.dll")
+	}
+
 	r, _, msg := nCryptVerifyClaimProc.Call(
 		uintptr(hSubjectKey),
 		uintptr(hAuthorityKey),
@@ -2801,6 +2932,10 @@ func NCryptVerifySignature(
 	pbSignature []byte, /* PBYTE */
 	dwFlags uint32, /* DWORD */
 ) (uint32, error) {
+
+	if nCryptVerifySignatureProc == nil {
+		return 0, fmt.Errorf("nCryptVerifySignature() not found in ncrypt.dll")
+	}
 
 	r, _, msg := nCryptVerifySignatureProc.Call(
 		uintptr(hKey),
