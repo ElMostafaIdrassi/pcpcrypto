@@ -24,10 +24,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
-	"unsafe"
 
-	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
-	"golang.org/x/sys/windows"
+	"github.com/ElMostafaIdrassi/goncrypt"
 )
 
 const (
@@ -36,6 +34,14 @@ const (
 	KeyUsageAllowKeyAgreement = 0x00000004 // NcryptAllowKeyAgreementFlag
 	KeyUsageAllowAllUsages    = 0x00ffffff // NcryptAllowAllUsages
 )
+
+func Initialize(customLogger goncrypt.Logger) (errRet error) {
+	return goncrypt.Initialize(customLogger)
+}
+
+func Finalize() {
+	goncrypt.Finalize()
+}
 
 // Signer implements crypto.Signer and additional functions (i.e. Name()).
 //
@@ -109,32 +115,30 @@ func (k pcpPrivateKey) Path() string {
 
 // Delete deletes the PCP key.
 func (k pcpPrivateKey) Delete() error {
-	var hProvider uintptr
-	var hKey uintptr
-	var flags uint32
+	var flags goncrypt.NcryptFlag
 
 	// Get a handle to the PCP KSP
-	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the flags
-	flags = internal.NcryptSilentFlag
+	flags = goncrypt.NcryptSilentFlag
 	if k.isLocalMachine {
-		flags |= internal.NcryptMachineKeyFlag
+		flags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Try to get a handle to the key by its name
-	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, flags)
+	key, _, err := provider.OpenKey(k.name, 0, flags)
 	if err != nil {
 		return err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
 	// Try to delete the key
-	_, err = internal.NCryptDeleteKey(hKey, 0)
+	_, err = key.Delete(0)
 	if err != nil {
 		return err
 	}
@@ -167,55 +171,53 @@ func (k pcpPrivateKey) Delete() error {
 // After all operations are done on the resulting key, its handle should be
 // freed by calling the Close() function on the key.
 func FindKey(name string, password string, isUICompatible bool, isLocalMachine bool) (Signer, error) {
-	var hProvider uintptr
-	var hKey uintptr
-	var flags uint32
+	var flags goncrypt.NcryptFlag
 	var publicKey crypto.PublicKey
 	var passwordDigest []byte
 
 	// Get a handle to the PCP KSP
-	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the flags
-	flags = internal.NcryptSilentFlag
+	flags = goncrypt.NcryptSilentFlag
 	if isLocalMachine {
-		flags |= internal.NcryptMachineKeyFlag
+		flags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Try to get a handle to the key by its name
-	_, err = internal.NCryptOpenKey(hProvider, &hKey, name, 0, flags)
+	key, _, err := provider.OpenKey(name, 0, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
 	// Get key's algorithm
-	algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, internal.NcryptSilentFlag)
+	algBytes, _, err := key.GetProperty(goncrypt.NcryptAlgorithmGroupProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
-	alg, err := internal.Utf16BytesToString(algBytes)
+	alg, err := utf16BytesToString(algBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get key's usage
-	usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, internal.NcryptSilentFlag)
+	usageBytes, _, err := key.GetProperty(goncrypt.NcryptKeyUsageProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
 	if len(usageBytes) != 4 {
-		return nil, fmt.Errorf("nCryptGetProperty() returned unexpcted output: expected 4 bytes, got %v bytes", len(usageBytes))
+		return nil, fmt.Errorf("GetProperty() returned unexpected output: expected 4 bytes, got %v bytes", len(usageBytes))
 	}
 	usage := binary.LittleEndian.Uint32(usageBytes)
 
 	// Get the password digest.
 	if password != "" {
-		passwordBlob, err := internal.StringToUtf16Bytes(password)
+		passwordBlob, err := stringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
@@ -232,11 +234,11 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 	}
 
 	// Get the path to the PCP file.
-	pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, internal.NcryptSilentFlag)
+	pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
 	}
-	pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+	pcpPath, err := utf16BytesToString(pcpPathBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -244,11 +246,11 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 	// Read key's public part
 	var pubkeyBytes []byte
 	var isRSA bool
-	if alg == internal.NcryptRsaAlgorithm {
-		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, 0)
+	if alg == string(goncrypt.NcryptRsaAlgorithm) {
+		pubkeyBytes, _, err = key.Export(goncrypt.Key{}, goncrypt.NcryptRsaPublicBlob, nil, 0)
 		isRSA = true
-	} else if alg == internal.NcryptEcdsaAlgorithm {
-		pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, 0)
+	} else if alg == string(goncrypt.NcryptEcdsaAlgorithm) {
+		pubkeyBytes, _, err = key.Export(goncrypt.Key{}, goncrypt.NcryptEccPublicBlob, nil, 0)
 	} else {
 		return nil, fmt.Errorf("unsupported algo: only RSA and ECDSA keys are supported")
 	}
@@ -287,13 +289,13 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 		var keyCurve elliptic.Curve
 
 		magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-		if magic == internal.BcryptEcdsaPublicP256Magic {
+		if magic == uint32(goncrypt.BcryptEcdsaPublicP256Magic) {
 			keyByteSize = 32
 			keyCurve = elliptic.P256()
-		} else if magic == internal.BcryptEcdsaPublicP384Magic {
+		} else if magic == uint32(goncrypt.BcryptEcdsaPublicP384Magic) {
 			keyByteSize = 48
 			keyCurve = elliptic.P384()
-		} else if magic == internal.BcryptEcdsaPublicP521Magic {
+		} else if magic == uint32(goncrypt.BcryptEcdsaPublicP521Magic) {
 			keyByteSize = 66
 			keyCurve = elliptic.P521()
 		} else {
@@ -328,179 +330,141 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 // If isLocalMachine is set to true, the search will retrieve the keys that apply to the
 // Local Machine. Otherwise, it will retrieve the keys that apply for the Current User.
 func GetKeys(isLocalMachine bool) ([]Signer, error) {
-	var hProvider uintptr
-	var pState unsafe.Pointer
-	var pKeyName unsafe.Pointer
-	var flags uint32
-	var ret uint32
+	var flags goncrypt.NcryptFlag
 	var err error
 
 	keys := make([]Signer, 0)
 
 	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
-	_, err = internal.NCryptOpenStorageProvider(
-		&hProvider,
-		internal.MsPlatformCryptoProvider,
-		0,
-	)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the flags
-	flags = internal.NcryptSilentFlag
+	flags = goncrypt.NcryptSilentFlag
 	if isLocalMachine {
-		flags |= internal.NcryptMachineKeyFlag
+		flags |= goncrypt.NcryptMachineKeyFlag
 	}
 
-	// Retrieve 1 key item at a time.
-	for {
-		ret, err = internal.NCryptEnumKeys(
-			hProvider,
-			"",
-			&pKeyName,
-			&pState,
-			flags,
-		)
+	// Retrieve all keys.
+	keysInfo, _, err := provider.EnumKeys("", flags)
+	if err != nil {
+		return nil, err
+	}
+	for _, keyInfo := range keysInfo {
+		var pubkeyBytes []byte
+		var isRSA bool
+
+		// Open a handle to the key
+		key, _, err := provider.OpenKey(keyInfo.Name, 0, flags)
 		if err != nil {
-			if ret == 0x8009002A { // NTE_NO_MORE_ITEMS
-				break
-			} else {
-				return nil, err
-			}
+			return nil, err
+		}
+		defer key.Close()
+
+		// Get key's usage
+		usageBytes, _, err := key.GetProperty(goncrypt.NcryptKeyUsageProperty, goncrypt.NcryptSilentFlag)
+		if err != nil {
+			return nil, err
+		}
+		if len(usageBytes) != 4 {
+			return nil, fmt.Errorf("GetProperty() returned unexpected output: expected 4 bytes, got %v bytes", len(usageBytes))
+		}
+		keyUsage := binary.LittleEndian.Uint32(usageBytes)
+
+		// Get the path to the PCP file.
+		pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
+		if err != nil {
+			return nil, err
+		}
+		pcpPath, err := utf16BytesToString(pcpPathBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// Read key's public part
+		if keyInfo.Alg == goncrypt.NcryptRsaAlgorithm {
+			pubkeyBytes, _, err = key.Export(goncrypt.Key{}, goncrypt.NcryptRsaPublicBlob, nil, 0)
+			isRSA = true
+		} else if keyInfo.Alg == goncrypt.NcryptEcdsaAlgorithm {
+			pubkeyBytes, _, err = key.Export(goncrypt.Key{}, goncrypt.NcryptEccPublicBlob, nil, 0)
 		} else {
-			keyNameSt := unsafe.Slice((*internal.NcryptKeyName)(pKeyName), 1)
-			if keyNameSt != nil || len(keyNameSt) != 1 {
-				keyName := windows.UTF16PtrToString(keyNameSt[0].PszName)
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
 
-				var hKey uintptr
-				var pubkeyBytes []byte
-				var isRSA bool
+		if isRSA {
 
-				// Open a handle to the key
-				_, err = internal.NCryptOpenKey(hProvider, &hKey, keyName, 0, flags)
-				if err != nil {
-					return nil, err
-				}
-				defer internal.NCryptFreeObject(hKey)
+			// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
+			eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
+			nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
 
-				// Get key's algorithm
-				algBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptAlgorithmGroupProperty, internal.NcryptSilentFlag)
-				if err != nil {
-					return nil, err
-				}
-				alg, err := internal.Utf16BytesToString(algBytes)
-				if err != nil {
-					return nil, err
-				}
+			eBytes := pubkeyBytes[24 : 24+eSize]
+			nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
 
-				// Get key's usage
-				usageBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptKeyUsageProperty, internal.NcryptSilentFlag)
-				if err != nil {
-					return nil, err
-				}
-				if len(usageBytes) != 4 {
-					return nil, fmt.Errorf("nCryptGetProperty() returned unexpcted output: expected 4 bytes, got %v bytes", len(usageBytes))
-				}
-				keyUsage := binary.LittleEndian.Uint32(usageBytes)
+			eInt := big.NewInt(0)
+			eInt.SetBytes(eBytes)
+			nInt := big.NewInt(0)
+			nInt.SetBytes(nBytes)
 
-				// Get the path to the PCP file.
-				pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, internal.NcryptSilentFlag)
-				if err != nil {
-					return nil, err
-				}
-				pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
-				if err != nil {
-					return nil, err
-				}
+			publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
 
-				// Read key's public part
-				if alg == internal.NcryptRsaAlgorithm {
-					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, 0)
-					isRSA = true
-				} else if alg == internal.NcryptEcdsaAlgorithm {
-					pubkeyBytes, _, err = internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, 0)
-				} else {
-					continue
-				}
-				if err != nil {
-					return nil, err
-				}
+			keys = append(keys, &pcpRSAPrivateKey{
+				pcpPrivateKey{
+					name:           keyInfo.Name,
+					passwordDigest: nil,
+					pubKey:         publicKey,
+					keyUsage:       keyUsage,
+					isLocalMachine: isLocalMachine,
+					path:           pcpPath,
+				},
+			})
+		} else {
 
-				if isRSA {
+			// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
+			var keyByteSize int
+			var keyCurve elliptic.Curve
 
-					// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
-					eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
-					nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
-
-					eBytes := pubkeyBytes[24 : 24+eSize]
-					nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
-
-					eInt := big.NewInt(0)
-					eInt.SetBytes(eBytes)
-					nInt := big.NewInt(0)
-					nInt.SetBytes(nBytes)
-
-					publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
-
-					keys = append(keys, &pcpRSAPrivateKey{
-						pcpPrivateKey{
-							name:           keyName,
-							passwordDigest: nil,
-							pubKey:         publicKey,
-							keyUsage:       keyUsage,
-							isLocalMachine: isLocalMachine,
-							path:           pcpPath,
-						},
-					})
-				} else {
-
-					// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
-					var keyByteSize int
-					var keyCurve elliptic.Curve
-
-					magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-					if magic == internal.BcryptEcdsaPublicP256Magic {
-						keyByteSize = 32
-						keyCurve = elliptic.P256()
-					} else if magic == internal.BcryptEcdsaPublicP384Magic {
-						keyByteSize = 48
-						keyCurve = elliptic.P384()
-					} else if magic == internal.BcryptEcdsaPublicP521Magic {
-						keyByteSize = 66
-						keyCurve = elliptic.P521()
-					} else {
-						return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
-					}
-
-					xBytes := pubkeyBytes[8 : 8+keyByteSize]
-					yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
-
-					xInt := big.NewInt(0)
-					xInt.SetBytes(xBytes)
-					yInt := big.NewInt(0)
-					yInt.SetBytes(yBytes)
-
-					publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
-
-					keys = append(keys, &pcpECDSAPrivateKey{
-						pcpPrivateKey{
-							name:           keyName,
-							passwordDigest: nil,
-							pubKey:         publicKey,
-							keyUsage:       keyUsage,
-							isLocalMachine: isLocalMachine,
-							path:           pcpPath,
-						},
-					})
-				}
+			magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
+			if magic == uint32(goncrypt.BcryptEcdsaPublicP256Magic) {
+				keyByteSize = 32
+				keyCurve = elliptic.P256()
+			} else if magic == uint32(goncrypt.BcryptEcdsaPublicP384Magic) {
+				keyByteSize = 48
+				keyCurve = elliptic.P384()
+			} else if magic == uint32(goncrypt.BcryptEcdsaPublicP521Magic) {
+				keyByteSize = 66
+				keyCurve = elliptic.P521()
+			} else {
+				return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
 			}
 
+			xBytes := pubkeyBytes[8 : 8+keyByteSize]
+			yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
+
+			xInt := big.NewInt(0)
+			xInt.SetBytes(xBytes)
+			yInt := big.NewInt(0)
+			yInt.SetBytes(yBytes)
+
+			publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
+
+			keys = append(keys, &pcpECDSAPrivateKey{
+				pcpPrivateKey{
+					name:           keyInfo.Name,
+					passwordDigest: nil,
+					pubKey:         publicKey,
+					keyUsage:       keyUsage,
+					isLocalMachine: isLocalMachine,
+					path:           pcpPath,
+				},
+			})
 		}
 	}
-	internal.NCryptFreeBuffer(pState)
-	internal.NCryptFreeBuffer(unsafe.Pointer(pKeyName))
 
 	return keys, nil
 }

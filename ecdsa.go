@@ -25,7 +25,7 @@ import (
 	"io"
 	"math/big"
 
-	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
+	"github.com/ElMostafaIdrassi/goncrypt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/cryptobyte"
 	"golang.org/x/crypto/cryptobyte/asn1"
@@ -46,10 +46,8 @@ func (k *pcpECDSAPrivateKey) Size() uint32 {
 // Sign is a required method of the crypto.Signer interface
 func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) ([]byte, error) {
 
-	var hProvider uintptr
-	var hKey uintptr
-	var openFlags uint32
-	var flags uint32
+	var openFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
 	var b cryptobyte.Builder
 	var sig []byte
 
@@ -61,18 +59,18 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	}
 
 	// Get a handle to the PCP KSP
-	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the opening flags
 	if k.passwordDigest != nil {
-		openFlags |= internal.NcryptSilentFlag
+		openFlags |= goncrypt.NcryptSilentFlag
 	}
 	if k.isLocalMachine {
-		openFlags |= internal.NcryptMachineKeyFlag
+		openFlags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -82,26 +80,26 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 	// Otherwise, if no password is set, do not set the flag, meaning a UI might
 	// be shown to ask for it if the key needs one.
 	if k.passwordDigest != nil {
-		flags = internal.NcryptSilentFlag
+		flags = goncrypt.NcryptSilentFlag
 	}
 
 	// Try to get a handle to the key by its name
-	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
+	key, _, err := provider.OpenKey(k.name, 0, openFlags)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
 	// Set the key password / pin before signing if required.
 	if k.passwordDigest != nil {
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, k.passwordDigest, flags)
+		_, err = key.SetProperty(goncrypt.NcryptPcpUsageauthProperty, k.passwordDigest, flags)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	// Sign
-	sig, _, err = internal.NCryptSignHash(hKey, nil, msg, flags)
+	sig, _, err = key.Sign(nil, msg, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -160,10 +158,8 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 //
 // TODO: Support UI Policies.
 func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, curve elliptic.Curve, keyUsage uint32, overwrite bool) (Signer, error) {
-	var hProvider uintptr
-	var hKey uintptr
-	var creationFlags uint32
-	var flags uint32
+	var creationFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
 
 	// Check that keyUsage contains a valid combination
 	if keyUsage != 0 &&
@@ -173,34 +169,34 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 	}
 
 	// Get a handle to the PCP KSP
-	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the creation flags
 	if overwrite {
-		creationFlags |= internal.NcryptOverwriteKeyFlag
+		creationFlags |= goncrypt.NcryptOverwriteKeyFlag
 	}
 	if isLocalMachine {
-		creationFlags |= internal.NcryptMachineKeyFlag
+		creationFlags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
 	if len(password) != 0 {
-		flags |= internal.NcryptSilentFlag
+		flags |= goncrypt.NcryptSilentFlag
 	}
 
 	// Check the specified curve
-	curveName := ""
+	var curveName goncrypt.NcryptAlgorithm
 	switch curve {
 	case elliptic.P256():
-		curveName = internal.BcryptEcdsaP256Algorithm
+		curveName = goncrypt.NcryptEcdsaP256Algorithm
 	case elliptic.P384():
-		curveName = internal.BcryptEcdsaP384Algorithm
+		curveName = goncrypt.NcryptEcdsaP384Algorithm
 	case elliptic.P521():
-		curveName = internal.BcryptEcdsaP521Algorithm
+		curveName = goncrypt.NcryptEcdsaP521Algorithm
 	default:
 		return nil, fmt.Errorf("unsupported curve")
 	}
@@ -214,18 +210,12 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 		name = uuidName.String()
 	}
 
-	// Start the creation of the key
-	_, err = internal.NCryptCreatePersistedKey(hProvider, &hKey, curveName, name, 0, creationFlags)
-	if err != nil {
-		return nil, err
-	}
-
 	// If password is given, set it as NCRYPT_PCP_USAGE_AUTH_PROPERTY either :
 	//	- after SHA-1 if UI compatibility is required
 	//	- or after SHA-256 otherwise
 	var passwordDigest []byte
 	if len(password) != 0 {
-		passwordBlob, err := internal.StringToUtf16Bytes(password)
+		passwordBlob, err := stringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
@@ -237,52 +227,47 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 			passwordBlobSha256 := sha256.Sum256(passwordBlob)
 			passwordDigest = passwordBlobSha256[:]
 		}
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, passwordDigest, flags)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		passwordDigest = nil
 	}
 
-	// Set the key type.
+	// Set the key usage.
+	var keyUsageBytes []byte
 	if keyUsage != 0 {
-		keyUsageBytes := make([]byte, 4)
+		keyUsageBytes = make([]byte, 4)
 		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage)
-		_, err = internal.NCryptSetProperty(
-			hKey,
-			internal.NcryptKeyUsageProperty,
-			keyUsageBytes,
-			flags,
-		)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	// Finalize (create) the key
-	_, err = internal.NCryptFinalizeKey(hKey, flags)
+	// Set the properties.
+	properties := map[goncrypt.NcryptProperty][]byte{}
+	if keyUsageBytes != nil {
+		properties[goncrypt.NcryptKeyUsageProperty] = keyUsageBytes
+	}
+	if passwordDigest != nil {
+		properties[goncrypt.NcryptPcpUsageauthProperty] = passwordDigest
+	}
+
+	// Create the key.
+	key, _, err := provider.CreatePersistedKey(curveName, name, 0, properties, creationFlags, flags, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
-	// Read key's public part
-	pubkeyBytes, _, err := internal.NCryptExportKey(hKey, 0, internal.BcryptEccpublicBlob, nil, flags)
+	//	Read key's public part
+	pubkeyBytes, _, err := key.Export(goncrypt.Key{}, goncrypt.NcryptEccPublicBlob, nil, flags)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
 
 	// Get the path to the PCP file.
-	pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, flags)
+	pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
-	pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+	pcpPath, err := utf16BytesToString(pcpPathBytes)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
 
@@ -290,13 +275,13 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 	var keyByteSize int
 	var keyCurve elliptic.Curve
 	magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
-	if magic == internal.BcryptEcdsaPublicP256Magic {
+	if magic == uint32(goncrypt.BcryptEcdsaPublicP256Magic) {
 		keyByteSize = 32
 		keyCurve = elliptic.P256()
-	} else if magic == internal.BcryptEcdsaPublicP384Magic {
+	} else if magic == uint32(goncrypt.BcryptEcdsaPublicP384Magic) {
 		keyByteSize = 48
 		keyCurve = elliptic.P384()
-	} else if magic == internal.BcryptEcdsaPublicP521Magic {
+	} else if magic == uint32(goncrypt.BcryptEcdsaPublicP521Magic) {
 		keyByteSize = 66
 		keyCurve = elliptic.P521()
 	} else {

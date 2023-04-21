@@ -22,10 +22,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ElMostafaIdrassi/goncrypt"
 	"github.com/ElMostafaIdrassi/pcpcrypto"
 )
 
 func main() {
+	err := pcpcrypto.Initialize(goncrypt.NewDefaultLogger(goncrypt.LogLevelNone))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "pcpcrypto.Initialize() failed: %v\n", err)
+		return
+	}
+	defer pcpcrypto.Finalize()
+
 	key, err := pcpcrypto.GenerateRSAKey("", "", false, false, 1024, 0, true)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pcpcrypto.GenerateRSAKey() failed: %v\n", err)

@@ -15,13 +15,37 @@
 package pcpcrypto
 
 import (
+	"flag"
+	"os"
 	"testing"
 
 	"crypto/elliptic"
 
+	"github.com/ElMostafaIdrassi/goncrypt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
+
+var (
+	verbose    bool
+	testLogger goncrypt.Logger
+)
+
+func TestMain(m *testing.M) {
+	flag.BoolVar(&verbose, "verbose", false, "Run tests in verbose mode")
+	flag.Parse()
+	if verbose {
+		testLogger = goncrypt.NewDefaultLogger(goncrypt.LogLevelDebug)
+	} else {
+		testLogger = goncrypt.NewDefaultLogger(goncrypt.LogLevelNone)
+	}
+
+	Initialize(testLogger)
+	defer Finalize()
+
+	exitCode := m.Run()
+	os.Exit(exitCode)
+}
 
 func TestGetCurrentUserKeys(t *testing.T) {
 	uuidName1, err := uuid.NewRandom()
@@ -69,7 +93,7 @@ func TestGetCurrentUserKeys(t *testing.T) {
 /* This test requires Admin Privs
 */
 /*
-func TestLocalMachineKeys(t *testing.T) {
+func TestGetLocalMachineKeys(t *testing.T) {
 	uuidName1, err := uuid.NewRandom()
 	require.NoError(t, err)
 	length := uint32(1024)
@@ -112,7 +136,7 @@ func TestLocalMachineKeys(t *testing.T) {
 }
 */
 
-func TestRSADeleteKey(t *testing.T) {
+func TestDeleteRSAKey(t *testing.T) {
 
 	// Generate a new RSA-1024 key with a random unique name and an empty password
 	uuidName, err := uuid.NewRandom()
@@ -142,7 +166,7 @@ func TestRSADeleteKey(t *testing.T) {
 	require.Nil(t, keyBis)
 }
 
-func TestECDSADeleteKey(t *testing.T) {
+func TestDeleteECDSAKey(t *testing.T) {
 
 	// Generate a new ECDSA-P256 key with a random name and an empty password
 	uuidName, err := uuid.NewRandom()

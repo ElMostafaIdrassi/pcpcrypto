@@ -43,4 +43,4 @@ keySizeInBytes - digestSizeInBytes - 2
 
 * Even with the `NCRYPT_TPM_PAD_PSS_IGNORE_SALT` hack, PCP KSP can only sign `SHA1` and `SHA256` digests and fails to sign `SHA384` and `SHA512` digests using `PKCS#1 PSS` scheme with error `NTE_NOT_SUPPORTED`.
 
-* The PCP KSP fails to sign `SHA384` and `SHA512` digests using an `ECDSA NIST P256` key with error code `0x802801D5`. This means the KSP does not truncate the digests that are longer than the curve's bit size before signing.
+* The PCP KSP fails to sign `SHA384` and `SHA512` digests using an `ECDSA NIST P256` key with error code `TPM_20_E_SIZE`. This means the KSP does not truncate the digests that are longer than the curve's bit size before signing.

@@ -25,7 +25,7 @@ import (
 	"math/big"
 	"unsafe"
 
-	"github.com/ElMostafaIdrassi/pcpcrypto/internal"
+	"github.com/ElMostafaIdrassi/goncrypt"
 	"github.com/google/uuid"
 	"golang.org/x/sys/windows"
 )
@@ -45,11 +45,9 @@ func (k *pcpRSAPrivateKey) Size() uint32 {
 // Sign is a required method of the crypto.Signer interface.
 func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOpts) (signature []byte, err error) {
 
-	var hProvider uintptr
-	var hKey uintptr
 	var hash crypto.Hash
-	var openFlags uint32
-	var flags uint32
+	var openFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
 
 	// If opts is null or opts.HashFunc is 0, it means msg is not a digest and
 	// must be signed directly. This is not recommended except for interoperability.
@@ -60,18 +58,18 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	hash = opts.HashFunc()
 
 	// Get a handle to the PCP KSP.
-	_, err = internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the opening flags
 	if k.passwordDigest != nil {
-		openFlags |= internal.NcryptSilentFlag
+		openFlags |= goncrypt.NcryptSilentFlag
 	}
 	if k.isLocalMachine {
-		openFlags |= internal.NcryptMachineKeyFlag
+		openFlags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
@@ -81,19 +79,19 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 	// Otherwise, if no password is set, do not set the flag, meaning a UI might
 	// be shown to ask for it if the key needs one.
 	if k.passwordDigest != nil {
-		flags = internal.NcryptSilentFlag
+		flags = goncrypt.NcryptSilentFlag
 	}
 
 	// Try to get a handle to the key by its name.
-	_, err = internal.NCryptOpenKey(hProvider, &hKey, k.name, 0, openFlags)
+	key, _, err := provider.OpenKey(k.name, 0, openFlags)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
 	// Set the key password / pin before signing if required.
 	if k.passwordDigest != nil {
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, k.passwordDigest, flags)
+		_, err = key.SetProperty(goncrypt.NcryptPcpUsageauthProperty, k.passwordDigest, flags)
 		if err != nil {
 			return nil, err
 		}
@@ -101,9 +99,9 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 
 	// Sign
 	if pssOpts, ok := opts.(*rsa.PSSOptions); ok {
-		return signPSS(k, hKey, msg, hash, pssOpts)
+		return signPSS(k, key, msg, hash, pssOpts)
 	}
-	return signPKCS1v15(k, hKey, msg, hash)
+	return signPKCS1v15(k, key, msg, hash)
 }
 
 // In order to sign with PSS, the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT must be set
@@ -119,11 +117,11 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 //
 // Also, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto,
 // so that the salt is detected using the 0x01 delimiter.
-func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash, opts *rsa.PSSOptions) ([]byte, error) {
+func signPSS(priv *pcpRSAPrivateKey, key goncrypt.Key, msg []byte, hash crypto.Hash, opts *rsa.PSSOptions) ([]byte, error) {
 
 	var saltLength uint32
-	var flags uint32
-	var paddingInfo internal.BcryptPssPaddingInfo
+	var flags goncrypt.NcryptFlag
+	var paddingInfo goncrypt.BcryptPssPaddingInfo
 	var sig []byte
 
 	// opts.Hash, if not zero, overrides the passed hash function.
@@ -150,26 +148,26 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	}
 
 	// Setup the PSS padding info.
-	paddingInfo.CbSalt = saltLength
+	paddingInfo.SaltLen = saltLength
 	switch hash {
 	case crypto.SHA1:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha1Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha1Algorithm))
 			break
 		}
 	case crypto.SHA256:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha256Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha256Algorithm))
 			break
 		}
 	case crypto.SHA384:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha384Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha384Algorithm))
 			break
 		}
 	case crypto.SHA512:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha512Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha512Algorithm))
 			break
 		}
 	default:
@@ -184,13 +182,13 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	// the operation will fail silently.
 	// Otherwise, if no password is set, do not set the flag, meaning if the key
 	// needs a password, a UI might be shown to ask for it if the key needs one.
-	flags = internal.BcryptPadPss | internal.NcryptTpmPadPssIgnoreSalt
+	flags = goncrypt.NcryptPadPssFlag | goncrypt.NcryptTpmPadPssIgnoreSalt
 	if priv.passwordDigest != nil {
-		flags |= internal.NcryptSilentFlag
+		flags |= goncrypt.NcryptSilentFlag
 	}
 
 	// Sign.
-	sig, _, err := internal.NCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), msg, flags)
+	sig, _, err := key.Sign(unsafe.Pointer(&paddingInfo), msg, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -198,32 +196,32 @@ func signPSS(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash,
 	return sig, nil
 }
 
-func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.Hash) ([]byte, error) {
+func signPKCS1v15(priv *pcpRSAPrivateKey, key goncrypt.Key, msg []byte, hash crypto.Hash) ([]byte, error) {
 
 	var sig []byte
-	var paddingInfo internal.BcryptPkcs1PaddingInfo
-	var flags uint32
+	var paddingInfo goncrypt.BcryptPkcs1PaddingInfo
+	var flags goncrypt.NcryptFlag
 
 	// Setup the PKCS1v15 padding info.
 	switch hash {
 	case crypto.SHA1:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha1Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha1Algorithm))
 			break
 		}
 	case crypto.SHA256:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha256Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha256Algorithm))
 			break
 		}
 	case crypto.SHA384:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha384Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha384Algorithm))
 			break
 		}
 	case crypto.SHA512:
 		{
-			paddingInfo.PszAlgId, _ = windows.UTF16FromString(internal.BcryptSha512Algorithm)
+			paddingInfo.AlgId, _ = windows.UTF16PtrFromString(string(goncrypt.NcryptSha512Algorithm))
 			break
 		}
 	default:
@@ -238,13 +236,13 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 	// the operation will fail silently.
 	// Otherwise, if no password is set, do not set the flag, meaning a UI might
 	// be shown to ask for it if the key needs one.
-	flags = internal.BcryptPadPkcs1
+	flags = goncrypt.NcryptPadPkcs1Flag
 	if priv.passwordDigest != nil {
-		flags |= internal.NcryptSilentFlag
+		flags |= goncrypt.NcryptSilentFlag
 	}
 
 	// Sign.
-	sig, _, err := internal.NCryptSignHash(hKey, unsafe.Pointer(&paddingInfo), msg, flags)
+	sig, _, err := key.Sign(unsafe.Pointer(&paddingInfo), msg, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -288,10 +286,8 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, hKey uintptr, msg []byte, hash crypto.
 //
 // TODO: Support UI Policies.
 func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, bitLength uint32, keyUsage uint32, overwrite bool) (Signer, error) {
-	var hProvider uintptr
-	var hKey uintptr
-	var creationFlags uint32
-	var flags uint32
+	var creationFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
 
 	// Check that keyUsage contains a valid combination
 	if keyUsage != 0 &&
@@ -301,23 +297,23 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 	}
 
 	// Get a handle to the PCP KSP
-	_, err := internal.NCryptOpenStorageProvider(&hProvider, internal.MsPlatformCryptoProvider, 0)
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hProvider)
+	defer provider.Close()
 
 	// Set the creation flags
 	if overwrite {
-		creationFlags |= internal.NcryptOverwriteKeyFlag
+		creationFlags |= goncrypt.NcryptOverwriteKeyFlag
 	}
 	if isLocalMachine {
-		creationFlags |= internal.NcryptMachineKeyFlag
+		creationFlags |= goncrypt.NcryptMachineKeyFlag
 	}
 
 	// Set the other flags
 	if len(password) != 0 {
-		flags |= internal.NcryptSilentFlag
+		flags |= goncrypt.NcryptSilentFlag
 	}
 
 	// If name is empty, generate a unique random one
@@ -329,26 +325,16 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 		name = uuidName.String()
 	}
 
-	// Start the creation of the key
-	_, err = internal.NCryptCreatePersistedKey(hProvider, &hKey, internal.BcryptRsaAlgorithm, name, 0, creationFlags)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set the length of the key
+	// Set the length of the key.
 	lengthBytes := make([]byte, 4)
 	binary.LittleEndian.PutUint32(lengthBytes, bitLength)
-	_, err = internal.NCryptSetProperty(hKey, internal.NcryptLengthProperty, lengthBytes, flags)
-	if err != nil {
-		return nil, err
-	}
 
 	// If password is given, set it as NCRYPT_PCP_USAGE_AUTH_PROPERTY either :
 	//	- after SHA-1 if UI compatibility is required
 	//	- or after SHA-256 otherwise
 	var passwordDigest []byte
 	if len(password) != 0 {
-		passwordBlob, err := internal.StringToUtf16Bytes(password)
+		passwordBlob, err := stringToUtf16Bytes(password)
 		if err != nil {
 			return nil, err
 		}
@@ -360,52 +346,49 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 			passwordBlobSha256 := sha256.Sum256(passwordBlob)
 			passwordDigest = passwordBlobSha256[:]
 		}
-		_, err = internal.NCryptSetProperty(hKey, internal.NcryptPcpUsageauthProperty, passwordDigest, flags)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		passwordDigest = nil
 	}
 
-	// Set the key type.
+	// Set the key usage.
+	var keyUsageBytes []byte
 	if keyUsage != 0 {
-		keyUsageBytes := make([]byte, 4)
+		keyUsageBytes = make([]byte, 4)
 		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage)
-		_, err = internal.NCryptSetProperty(
-			hKey,
-			internal.NcryptKeyUsageProperty,
-			keyUsageBytes,
-			flags,
-		)
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	// Finalize (create) the key
-	_, err = internal.NCryptFinalizeKey(hKey, flags)
+	// Set the properties.
+	properties := map[goncrypt.NcryptProperty][]byte{
+		goncrypt.NcryptLengthProperty: lengthBytes,
+	}
+	if keyUsageBytes != nil {
+		properties[goncrypt.NcryptKeyUsageProperty] = keyUsageBytes
+	}
+	if passwordDigest != nil {
+		properties[goncrypt.NcryptPcpUsageauthProperty] = passwordDigest
+	}
+
+	// Create the key.
+	key, _, err := provider.CreatePersistedKey(goncrypt.NcryptRsaAlgorithm, name, 0, properties, creationFlags, flags, flags)
 	if err != nil {
 		return nil, err
 	}
-	defer internal.NCryptFreeObject(hKey)
+	defer key.Close()
 
 	//	Read key's public part
-	pubkeyBytes, _, err := internal.NCryptExportKey(hKey, 0, internal.BcryptRsapublicBlob, nil, flags)
+	pubkeyBytes, _, err := key.Export(goncrypt.Key{}, goncrypt.NcryptRsaPublicBlob, nil, flags)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
 
 	// Get the path to the PCP file.
-	pcpPathBytes, _, err := internal.NCryptGetProperty(hKey, internal.NcryptUniqueNameProperty, flags)
+	pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
-	pcpPath, err := internal.Utf16BytesToString(pcpPathBytes)
+	pcpPath, err := utf16BytesToString(pcpPathBytes)
 	if err != nil {
-		internal.NCryptDeleteKey(hKey, flags)
+		key.Delete(flags)
 		return nil, err
 	}
 
