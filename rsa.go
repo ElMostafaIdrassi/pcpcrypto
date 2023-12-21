@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022, El Mostafa IDRASSI.
+// Copyright (c) 2020-2023, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -109,8 +109,8 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 // TPM_E_PCP_UNSUPPORTED_PSS_SALT, regardless of the cbSalt value set in BCRYPT_PSS_PADDING_INFO.
 //
 // The reason is related to how the TPM chip works :
-//	- Pre-TPM Spec-1.16 TPM chips use a salt length equal to the maximum allowed salt size.
-//	- Post-TPM Spec-1.16 TPM chips use a salt length equal to the hash length.
+//   - Pre-TPM Spec-1.16 TPM chips use a salt length equal to the maximum allowed salt size.
+//   - Post-TPM Spec-1.16 TPM chips use a salt length equal to the hash length.
 //
 // Thus, we need to set the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT to tell the PCP KSP to ignore the
 // passed salt length and default to the TPM's chip supported salt length.
@@ -277,10 +277,11 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, key goncrypt.Key, msg []byte, hash cry
 // Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
-//	- KeyUsageAllowDecrypt
-//	- KeyUsageAllowSigning
-// 	- KeyUsageAllowKeyAgreement
-//	- KeyUsageAllowAllUsages
+//   - KeyUsageAllowDecrypt
+//   - KeyUsageAllowSigning
+//   - KeyUsageAllowKeyAgreement
+//   - KeyUsageAllowAllUsages
+//
 // If keyUsage is set to 0 instead, the default key usage will be used, which is
 // Sign + Decrypt for RSA keys.
 //

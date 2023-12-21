@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022, El Mostafa IDRASSI.
+// Copyright (c) 2020-2023, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -158,8 +158,9 @@ func (k pcpPrivateKey) Delete() error {
 // signature asking for the password / pin if the key needs one.
 //
 // We differentiate between :
-//	- PCP keys created with a password set in the Windows UI,
-//	- PCP keys created with a password set programmatically using NCRYPT_PIN_PORPERTY.
+//   - PCP keys created with a password set in the Windows UI,
+//   - PCP keys created with a password set programmatically using NCRYPT_PIN_PORPERTY.
+//
 // A password set via the UI prompt is transformed internally into its
 // SHA-1 digest, while a password set programmatically via NCRYPT_PIN_PROPERTY is
 // transformed internally into its SHA-256 digest.

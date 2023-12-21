@@ -1,4 +1,4 @@
-// Copyright (c) 2020-2022, El Mostafa IDRASSI.
+// Copyright (c) 2020-2023, El Mostafa IDRASSI.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -149,10 +149,11 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
-//	- KeyUsageAllowDecrypt
-//	- KeyUsageAllowSigning
-// 	- KeyUsageAllowKeyAgreement
-//	- KeyUsageAllowAllUsages
+//   - KeyUsageAllowDecrypt
+//   - KeyUsageAllowSigning
+//   - KeyUsageAllowKeyAgreement
+//   - KeyUsageAllowAllUsages
+//
 // If keyUsage is set to 0 instead, the default key usage will be used, which is
 // SignOnly for ECDSA keys.
 //
