@@ -10,6 +10,7 @@ For the moment, pcpCrypto only implements the following (more is yet to come) :
 * Generation and retrieval of RSA and ECDSA PCP keys.
 * RSA digest signing using PKCS#1 v1.5 & PSS schemes.
 * ECDSA digest signing.
+* TPM Sealing / Usealing using the TPM SRK.
 
 ## Installation
 
