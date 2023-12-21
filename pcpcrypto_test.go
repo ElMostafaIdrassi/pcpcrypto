@@ -195,3 +195,17 @@ func TestDeleteECDSAKey(t *testing.T) {
 	require.Error(t, err)
 	require.Nil(t, keyBis)
 }
+
+func TestSealUnseal(t *testing.T) {
+	dataToSeal := []byte("Very secret data")
+	password := "12345678"
+
+	sealedData, err := SealDataWithTPM(dataToSeal, password)
+	require.NoError(t, err)
+	require.NotNil(t, sealedData)
+
+	unsealedData, err := UnsealDataWithTPM(sealedData, password)
+	require.NoError(t, err)
+	require.NotNil(t, unsealedData)
+	require.Equal(t, dataToSeal, unsealedData)
+}

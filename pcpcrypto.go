@@ -24,6 +24,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
+	"unsafe"
 
 	"github.com/ElMostafaIdrassi/goncrypt"
 )
@@ -467,4 +468,110 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 	}
 
 	return keys, nil
+}
+
+// SealDataWithTPM seals the passed data using the TPM.
+//
+// The data is sealed using the TPM's SRK (Storage Root Key) and can only be
+// unsealed on the same machine, by any user.
+//
+// If a password is provided, is it used as an additional TPM Sealing Password
+// and the sealed data can only be unsealed if the same password is provided,
+// on the same machine, by any user.
+func SealDataWithTPM(dataToSeal []byte, password string) ([]byte, error) {
+	var buf goncrypt.BcryptBuffer
+	var bufDesc goncrypt.BcryptBufferDesc
+	var padding unsafe.Pointer
+	var err error
+
+	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer provider.Close()
+
+	// Open a handle to the "Microsoft Platform Crypto Provider" RSA Sealing key.
+	key, _, err := provider.OpenKey(goncrypt.TpmRsaSrkSealKey, 0, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		return nil, err
+	}
+	defer key.Close()
+
+	// If we have a password, set it up in a buffer.
+	if password != "" {
+		passwordBytes := []byte(password)
+
+		buf.BufferLen = uint32(len(passwordBytes))
+		buf.Buffer = &passwordBytes[0]
+		buf.BufferType = uint32(goncrypt.NcryptBufferTpmSealPassword)
+
+		bufs := make([]goncrypt.BcryptBuffer, 1)
+		bufs[0] = buf
+		bufDesc.Version = uint32(goncrypt.BcryptBufferVersion)
+		bufDesc.BuffersLen = 1
+		bufDesc.Buffers = &bufs[0]
+
+		padding = unsafe.Pointer(&bufDesc)
+	}
+
+	// Seal the data.
+	sealedData, _, err := key.Encrypt(dataToSeal, padding, goncrypt.NcryptSealingFlag)
+	if err != nil {
+		return nil, err
+	}
+
+	return sealedData, nil
+}
+
+// UnsealDataWithTPM unseals the passed data using the TPM.
+//
+// The data is unsealed using the TPM's SRK (Storage Root Key) on the same
+// machine it was sealed on, by any user.
+//
+// If a password was used to seal the data, it must be provided to unseal it.
+func UnsealDataWithTPM(dataToUnseal []byte, password string) ([]byte, error) {
+	var buf goncrypt.BcryptBuffer
+	var bufDesc goncrypt.BcryptBufferDesc
+	var padding unsafe.Pointer
+	var err error
+
+	// Open a handle to the "Microsoft Platform Crypto Provider" provider.
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer provider.Close()
+
+	// Open a handle to the "Microsoft Platform Crypto Provider" RSA Sealing key.
+	key, _, err := provider.OpenKey(goncrypt.TpmRsaSrkSealKey, 0, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		return nil, err
+	}
+	defer key.Close()
+
+	// If we have a password, set it up in a buffer.
+	if password != "" {
+		passwordBytes := []byte(password)
+
+		buf.BufferLen = uint32(len(passwordBytes))
+		buf.Buffer = &passwordBytes[0]
+		buf.BufferType = uint32(goncrypt.NcryptBufferTpmSealPassword)
+
+		bufs := make([]goncrypt.BcryptBuffer, 1)
+		bufs[0] = buf
+		bufDesc.Version = uint32(goncrypt.BcryptBufferVersion)
+		bufDesc.BuffersLen = 1
+		bufDesc.Buffers = &bufs[0]
+
+		padding = unsafe.Pointer(&bufDesc)
+	}
+
+	// Unseal the data.
+	unsealedData, _, err := key.Decrypt(dataToUnseal, padding, goncrypt.NcryptSealingFlag)
+	if err != nil {
+		return nil, err
+	}
+
+	return unsealedData, nil
 }

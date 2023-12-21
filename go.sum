@@ -1,5 +1,5 @@
-github.com/ElMostafaIdrassi/goncrypt v0.0.0-20230421002133-4d275ddf5ef9 h1:upjNQajuYXEpoR9NhAeKmk9Tf02y6xKQSHLMaeTIIJI=
-github.com/ElMostafaIdrassi/goncrypt v0.0.0-20230421002133-4d275ddf5ef9/go.mod h1:jsoN0k1qJ2ibSIEZ+4PpuKAIZG1a8cCzAVa64Tm0lAo=
+github.com/ElMostafaIdrassi/goncrypt v0.0.0-20231221185439-c95697be56fc h1:pRjKfOyQ0LMUrcHo6KtdHZqTUMFlZZwbWNRkjprYDdg=
+github.com/ElMostafaIdrassi/goncrypt v0.0.0-20231221185439-c95697be56fc/go.mod h1:jsoN0k1qJ2ibSIEZ+4PpuKAIZG1a8cCzAVa64Tm0lAo=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
