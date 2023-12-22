@@ -1,13 +1,13 @@
 module github.com/ElMostafaIdrassi/pcpcrypto
 
-go 1.17
+go 1.20
 
 require (
 	github.com/ElMostafaIdrassi/goncrypt v0.0.0-20231221185439-c95697be56fc
-	github.com/google/uuid v1.3.0
-	github.com/stretchr/testify v1.8.2
-	golang.org/x/crypto v0.8.0
-	golang.org/x/sys v0.7.0
+	github.com/google/uuid v1.5.0
+	github.com/stretchr/testify v1.8.4
+	golang.org/x/crypto v0.17.0
+	golang.org/x/sys v0.15.0
 )
 
 require (
