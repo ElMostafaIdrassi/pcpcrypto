@@ -282,6 +282,7 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 				pubKey:         publicKey,
 				keyUsage:       usage,
 				isLocalMachine: isLocalMachine,
+				path:           pcpPath,
 			},
 		}, nil
 	} else {
