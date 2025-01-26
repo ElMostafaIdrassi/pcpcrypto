@@ -74,7 +74,7 @@ func TestECDSASignWithPass(t *testing.T) {
 		}
 		for testHashName, testHash := range testHashes {
 			t.Run(fmt.Sprintf("P256-%s-%s", testCase, testHashName), func(t *testing.T) {
-				key, _ := GenerateECDSAKey("", "password123", testIsUiCompatible, false, elliptic.P256(), 0, true)
+				key, _ := GenerateECDSAKey("", "password123", testIsUiCompatible, false, elliptic.P256(), KeyUsageDefault, true)
 				defer key.Delete()
 				testECDSASignDigest(t, key, testHash)
 			})
@@ -94,7 +94,7 @@ func TestECDSASignWithoutPass(t *testing.T) {
 
 	for testHashName, testHash := range testHashes {
 		t.Run(fmt.Sprintf("P256-%s", testHashName), func(t *testing.T) {
-			key, _ := GenerateECDSAKey("", "", false, false, elliptic.P256(), 0, true)
+			key, _ := GenerateECDSAKey("", "", false, false, elliptic.P256(), KeyUsageDefault, true)
 			defer key.Delete()
 			testECDSASignDigest(t, key, testHash)
 		})
@@ -115,7 +115,7 @@ func TestECDSASignWithPassPrompt(t *testing.T) {
 
 	for testHashName, testHash := range testHashes {
 		t.Run(fmt.Sprintf("P256-%s", testHashName), func(t *testing.T) {
-			key, _ := GenerateECDSAKey("", "password123", true, false, elliptic.P256(), 0, true)
+			key, _ := GenerateECDSAKey("", "password123", true, false, elliptic.P256(), KeyUsageDefault, true)
 			defer key.Delete()
 			foundKey, _ := FindKey(key.Name(), "", true, false)
 			testECDSASignDigest(t, foundKey, testHash)
@@ -127,7 +127,7 @@ func TestECDSASignWithPassPrompt(t *testing.T) {
 func testECDSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, curve elliptic.Curve, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateECDSAKey(name, password, isUICompatible, false, curve, 0, true)
+	key, err := GenerateECDSAKey(name, password, isUICompatible, false, curve, KeyUsageDefault, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {

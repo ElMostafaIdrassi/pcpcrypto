@@ -32,16 +32,20 @@ Therefore, PCP KSP keys are not persistent in regards to the TPM chip itself. Th
 
 ## Known Limitations
 
-* The PCP KSP fails to sign using `PKCS#1 PSS` scheme, whatever the passed salt length is.
+* The PCP KSP fails to sign using `PKCS#1 PSS` scheme if the passed salt length is not equal to the one supported by the TPM chip.
 The reason is that TPM chips come in 2 variations : 
-  * Chips that follow the Pre-TPM Spec-1.16 : these chips use a salt length that is always equal to the maximum allowed salt length, which is given by:
+  * Chips that follow the Pre-TPM Spec-1.16 : these chips can only use a salt length that is always equal to the maximum allowed salt length, which is given by:
 ``
 keySizeInBytes - digestSizeInBytes - 2
 ``
-  * Chips that follow the Post-TPM Spec-1.16 : these chips use a salt length that is always equal to the hash length.
+  * Chips that follow the Post-TPM Spec-1.16 : these chips can only use a salt length that is always equal to the hash length.
 
-  This means that the PCP KSP needs to use the salt length that the TPM chip supports instead of the one chosen by the caller. Therefore, the PCP KSP developers have given us the flag `NCRYPT_TPM_PAD_PSS_IGNORE_SALT` which needs to be passed during the signature. This option forces the PCP KSP to ignore the passed salt length and to always use the one that is supported by the TPM chip. This makes some TPMs incompatible with implementations that require the salt length to be equal to the hash length (i.e. TLS 1.3).
+  This means that the PCP KSP needs to be passed a salt length that is equal exactly to the value that the TPM chip supports.
+  Therefore, if we pass a salt length that is equal to the hash length when using a Pre-TPM Spec-1.16 chip, the PCP KSP will either fail with the error `TPM_E_PCP_UNSUPPORTED_PSS_SALT` or return a zeroed signature. Same goes for Post-TPM Spec-1.16 chips if we pass a salt length that is equal to the maximum allowed salt length.
+  Since the caller may not know the spec of the TPM chip they are using prior to calling the PCP KSP, this can be a problem.
+  Therefore, the PCP KSP developers have given us the flag `NCRYPT_TPM_PAD_PSS_IGNORE_SALT`. If this option is set in the flags of the sign call, it tells the PCP KSP to ignore the passed salt length and to always use the one that is supported by the TPM chip. This effectively ensures that the PCP KSP will always sign using the correct salt length, regardless of the TPM chip's spec, and will return the correct signature.
+  Note that this implicitly means that Pre-TPM Spec-1.16 chips do not support TLS 1.3, since the salt length in TLS 1.3 muist always be equal to the hash length.
 
-* Even with the `NCRYPT_TPM_PAD_PSS_IGNORE_SALT` hack, PCP KSP can only sign `SHA1` and `SHA256` digests and fails to sign `SHA384` and `SHA512` digests using `PKCS#1 PSS` scheme with error `NTE_NOT_SUPPORTED`.
+* Even with the `NCRYPT_TPM_PAD_PSS_IGNORE_SALT` hack, the PCP KSP can only sign `SHA1` and `SHA256` digests and fails to sign `SHA384` and `SHA512` digests using `PKCS#1 PSS` scheme with the error `NTE_NOT_SUPPORTED`.
 
-* The PCP KSP fails to sign `SHA384` and `SHA512` digests using an `ECDSA NIST P256` key with error code `TPM_20_E_SIZE`. This means the KSP does not truncate the digests that are longer than the curve's bit size before signing.
+* The PCP KSP fails to sign `SHA384` and `SHA512` digests using an `ECDSA NIST P256` key with error code `TPM_20_E_SIZE`. This means that the KSP does not truncate the digests that are longer than the curve's bit size before signing.

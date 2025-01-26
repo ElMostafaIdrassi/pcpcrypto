@@ -106,14 +106,16 @@ func (k *pcpRSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.SignerOp
 
 // In order to sign with PSS, the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT must be set
 // when calling NCryptSignHash, because otherwise, the signature fails with
-// TPM_E_PCP_UNSUPPORTED_PSS_SALT, regardless of the cbSalt value set in BCRYPT_PSS_PADDING_INFO.
+// TPM_E_PCP_UNSUPPORTED_PSS_SALT, if the cbSalt value set in BCRYPT_PSS_PADDING_INFO
+// does not correspond to the TPM chip's supported salt length.
 //
 // The reason is related to how the TPM chip works :
-//   - Pre-TPM Spec-1.16 TPM chips use a salt length equal to the maximum allowed salt size.
-//   - Post-TPM Spec-1.16 TPM chips use a salt length equal to the hash length.
+//   - Pre-TPM Spec-1.16 TPM chips support only a salt length equal to the maximum allowed salt size.
+//   - Post-TPM Spec-1.16 TPM chips support only a salt length equal to the hash length.
 //
 // Thus, we need to set the flag NCRYPT_TPM_PAD_PSS_IGNORE_SALT to tell the PCP KSP to ignore the
-// passed salt length and default to the TPM's chip supported salt length.
+// passed salt length and default to the TPM's chip supported salt length. This is the only way
+// to make this work if the caller has no knowledge of the TPM chip's supported salt length.
 //
 // Also, when verifying the signature, pssOptions must have saltLength set to rsa.PSSSaltLengthAuto,
 // so that the salt is detected using the 0x01 delimiter.
@@ -277,24 +279,30 @@ func signPKCS1v15(priv *pcpRSAPrivateKey, key goncrypt.Key, msg []byte, hash cry
 // Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
-//   - KeyUsageAllowDecrypt
-//   - KeyUsageAllowSigning
-//   - KeyUsageAllowKeyAgreement
-//   - KeyUsageAllowAllUsages
+//   - AllowDecrypt
+//   - AllowSigning
+//   - AllowKeyAgreement
+//   - AllowAllUsages
 //
-// If keyUsage is set to 0 instead, the default key usage will be used, which is
+// If keyUsage is set to Default instead, the default key usage will be used, which is
 // Sign + Decrypt for RSA keys.
-//
-// TODO: Support UI Policies.
-func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, bitLength uint32, keyUsage uint32, overwrite bool) (Signer, error) {
+func GenerateRSAKey(
+	name string,
+	password string,
+	isUICompatible bool,
+	isLocalMachine bool,
+	bitLength uint32,
+	keyUsage KeyUsage,
+	overwrite bool,
+) (Signer, error) {
 	var creationFlags goncrypt.NcryptFlag
 	var flags goncrypt.NcryptFlag
 
 	// Check that keyUsage contains a valid combination
-	if keyUsage != 0 &&
+	if keyUsage != KeyUsageDefault &&
 		keyUsage != KeyUsageAllowAllUsages &&
-		(keyUsage & ^(uint32(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement))) != 0 {
-		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage)
+		(keyUsage & ^(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement)) != 0 {
+		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage.Value())
 	}
 
 	// Get a handle to the PCP KSP
@@ -353,7 +361,7 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 	var keyUsageBytes []byte
 	if keyUsage != 0 {
 		keyUsageBytes = make([]byte, 4)
-		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage)
+		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage.Value())
 	}
 
 	// Set the properties.
@@ -393,6 +401,10 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 		return nil, err
 	}
 
+	// Parse the PCP file.
+	// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+	public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
+
 	// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
 	eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
 	nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
@@ -413,6 +425,164 @@ func GenerateRSAKey(name string, password string, isUICompatible bool, isLocalMa
 			keyUsage:       keyUsage,
 			isLocalMachine: isLocalMachine,
 			path:           pcpPath,
+			public:         public,
+			private:        private,
+			digestPolicy:   digestPolicy,
+		},
+	}, nil
+}
+
+// GenerateRSAKeyWithUIPolicy is a variant of GenerateRSAKey that allows to specify
+// the key's UI policy instead of the key's password.
+func GenerateRSAKeyWithUIPolicy(
+	name string,
+	uiPolicy UIPolicy,
+	isLocalMachine bool,
+	bitLength uint32,
+	keyUsage KeyUsage,
+	overwrite bool,
+) (Signer, error) {
+	var creationFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
+	var ncryptUiPolicy goncrypt.NcryptUiPolicy
+
+	// Check that keyUsage contains a valid combination
+	if keyUsage != KeyUsageDefault &&
+		keyUsage != KeyUsageAllowAllUsages &&
+		(keyUsage & ^(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement)) != 0 {
+		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage.Value())
+	}
+
+	// Check that uiPolicy is valid
+	if uiPolicy != UIPolicyNoConsent &&
+		uiPolicy != UIPolicyConsentWithOptionalPIN &&
+		uiPolicy != UIPolicyConsentWithMandatoryPIN &&
+		uiPolicy != UIPolicyConsentWithMandatoryFingerprint {
+		return nil, fmt.Errorf("uiPolicy parameter contains an unexpected value (%x)", uiPolicy.Value())
+	}
+
+	// Setup the Ncrypt UI Policy
+	ncryptUiPolicy.Version = 1
+	ncryptUiPolicy.FriendlyName = name
+	if uiPolicy == UIPolicyConsentWithOptionalPIN {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiProtectKeyFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and an optional PIN."
+	} else if uiPolicy == UIPolicyConsentWithMandatoryPIN {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiForceHighProtectionFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and a mandatory PIN."
+	} else if uiPolicy == UIPolicyConsentWithMandatoryFingerprint {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiFingerprintProtectionFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and a mandatory Fingerprint."
+	}
+	uiPolicyBytes, err := ncryptUiPolicy.Serialize()
+	if err != nil {
+		return nil, fmt.Errorf("ncryptUiPolicy.Serialize() failed: %v", err)
+	}
+
+	// Get a handle to the PCP KSP
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer provider.Close()
+
+	// Set the creation flags
+	if overwrite {
+		creationFlags |= goncrypt.NcryptOverwriteKeyFlag
+	}
+	if isLocalMachine {
+		creationFlags |= goncrypt.NcryptMachineKeyFlag
+	}
+
+	// If name is empty, generate a unique random one
+	if name == "" {
+		uuidName, err := uuid.NewRandom()
+		if err != nil {
+			return nil, fmt.Errorf("uuid.NewRandom() failed: %v", err)
+		}
+		name = uuidName.String()
+	}
+
+	// Set the length of the key.
+	lengthBytes := make([]byte, 4)
+	binary.LittleEndian.PutUint32(lengthBytes, bitLength)
+
+	// Set the key usage.
+	var keyUsageBytes []byte
+	if keyUsage != KeyUsageDefault {
+		keyUsageBytes = make([]byte, 4)
+		binary.LittleEndian.PutUint32(keyUsageBytes, uint32(keyUsage))
+	}
+
+	// Set the properties.
+	properties := map[goncrypt.NcryptProperty][]byte{
+		goncrypt.NcryptLengthProperty:   lengthBytes,
+		goncrypt.NcryptUiPolicyProperty: uiPolicyBytes,
+	}
+	if keyUsageBytes != nil {
+		properties[goncrypt.NcryptKeyUsageProperty] = keyUsageBytes
+	}
+
+	// Create the key.
+	key, _, err := provider.CreatePersistedKey(goncrypt.NcryptRsaAlgorithm, name, 0, properties, creationFlags, flags, flags)
+	if err != nil {
+		return nil, err
+	}
+	defer key.Close()
+
+	//	Read key's public part
+	pubkeyBytes, _, err := key.Export(goncrypt.Key{}, goncrypt.NcryptRsaPublicBlob, nil, flags)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Get the path to the PCP file.
+	pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+	pcpPath, err := utf16BytesToString(pcpPathBytes)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Get the usage auth.
+	pcpUsageAuthBytes, _, err := key.GetProperty(goncrypt.NcryptPcpUsageauthProperty, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Parse the PCP file.
+	// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+	public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
+
+	// Construct rsa.PublicKey from BCRYPT_RSAPUBLIC_BLOB
+	eSize := binary.LittleEndian.Uint32(pubkeyBytes[8:12])
+	nSize := binary.LittleEndian.Uint32(pubkeyBytes[12:16])
+	eBytes := pubkeyBytes[24 : 24+eSize]
+	nBytes := pubkeyBytes[24+eSize : 24+eSize+nSize]
+	eInt := big.NewInt(0)
+	eInt.SetBytes(eBytes)
+	nInt := big.NewInt(0)
+	nInt.SetBytes(nBytes)
+	publicKey := &rsa.PublicKey{N: nInt, E: int(eInt.Int64())}
+
+	// Return *pcpRSAPrivateKey instance
+	return &pcpRSAPrivateKey{
+		pcpPrivateKey{
+			name:           name,
+			passwordDigest: pcpUsageAuthBytes,
+			pubKey:         publicKey,
+			keyUsage:       keyUsage,
+			isLocalMachine: isLocalMachine,
+			path:           pcpPath,
+			public:         public,
+			private:        private,
+			digestPolicy:   digestPolicy,
 		},
 	}, nil
 }

@@ -34,13 +34,26 @@ var (
 func TestMain(m *testing.M) {
 	flag.BoolVar(&verbose, "verbose", false, "Run tests in verbose mode")
 	flag.Parse()
-	if verbose {
-		testLogger = goncrypt.NewDefaultLogger(goncrypt.LogLevelDebug)
-	} else {
-		testLogger = goncrypt.NewDefaultLogger(goncrypt.LogLevelNone)
+
+	logFilePath := "pcpcrypto_test.log"
+	logFile, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		testLogger = goncrypt.NewDefaultStdoutLogger(goncrypt.LogLevelError)
+		testLogger.Errorf("Log file creation failed: %v", err)
+		os.Exit(1)
 	}
 
-	Initialize(testLogger)
+	if verbose {
+		testLogger = goncrypt.NewDefaultFileLogger(goncrypt.LogLevelDebug, logFile)
+	} else {
+		testLogger = goncrypt.NewDefaultFileLogger(goncrypt.LogLevelNone, logFile)
+	}
+
+	err = Initialize(testLogger)
+	if err != nil {
+		testLogger.Errorf("Initialize failed: %v", err)
+		os.Exit(1)
+	}
 	defer Finalize()
 
 	exitCode := m.Run()
@@ -52,7 +65,7 @@ func TestGetCurrentUserKeys(t *testing.T) {
 	require.NoError(t, err)
 	length := uint32(1024)
 	name1 := uuidName1.String()
-	key1, err := GenerateRSAKey(name1, "", false, false, length, 0, true)
+	key1, err := GenerateRSAKey(name1, "", false, false, length, KeyUsageDefault, true)
 	if key1 != nil {
 		defer key1.Delete()
 	}
@@ -64,7 +77,7 @@ func TestGetCurrentUserKeys(t *testing.T) {
 	uuidName2, err := uuid.NewRandom()
 	require.NoError(t, err)
 	name2 := uuidName2.String()
-	key2, err := GenerateECDSAKey(name2, "", false, false, elliptic.P256(), 0, true)
+	key2, err := GenerateECDSAKey(name2, "", false, false, elliptic.P256(), KeyUsageDefault, true)
 	if key2 != nil {
 		defer key2.Delete()
 	}
@@ -98,7 +111,7 @@ func TestGetLocalMachineKeys(t *testing.T) {
 	require.NoError(t, err)
 	length := uint32(1024)
 	name1 := uuidName1.String()
-	key1, err := GenerateRSAKey(name1, "", false, true, length, 0, true)
+	key1, err := GenerateRSAKey(name1, "", false, true, length, KeyUsageDefault, true)
 	if key1 != nil {
 		defer key1.Delete()
 	}
@@ -110,7 +123,7 @@ func TestGetLocalMachineKeys(t *testing.T) {
 	uuidName2, err := uuid.NewRandom()
 	require.NoError(t, err)
 	name2 := uuidName2.String()
-	key2, err := GenerateECDSAKey(name2, "", false, true, elliptic.P256(), 0, true)
+	key2, err := GenerateECDSAKey(name2, "", false, true, elliptic.P256(), KeyUsageDefault, true)
 	if key2 != nil {
 		defer key2.Delete()
 	}
@@ -143,7 +156,7 @@ func TestDeleteRSAKey(t *testing.T) {
 	require.NoError(t, err)
 	length := uint32(1024)
 	name := uuidName.String()
-	key, err := GenerateRSAKey(name, "", false, false, length, 0, true)
+	key, err := GenerateRSAKey(name, "", false, false, length, KeyUsageDefault, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.Equal(t, key.Name(), name)
@@ -173,7 +186,7 @@ func TestDeleteECDSAKey(t *testing.T) {
 	require.NoError(t, err)
 	curve := elliptic.P256()
 	name := uuidName.String()
-	key, err := GenerateECDSAKey(name, "", false, false, curve, 0, true)
+	key, err := GenerateECDSAKey(name, "", false, false, curve, KeyUsageDefault, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	require.Equal(t, key.Name(), name)

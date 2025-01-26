@@ -27,7 +27,14 @@ import (
 )
 
 func main() {
-	err := pcpcrypto.Initialize(goncrypt.NewDefaultLogger(goncrypt.LogLevelNone))
+	logFilePath := "csr_example.log"
+	logFile, err := os.OpenFile(logFilePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Log file creation failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	err = pcpcrypto.Initialize(goncrypt.NewDefaultFileLogger(goncrypt.LogLevelDebug, logFile))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "pcpcrypto.Initialize() failed: %v\n", err)
 		return

@@ -27,13 +27,7 @@ import (
 	"unsafe"
 
 	"github.com/ElMostafaIdrassi/goncrypt"
-)
-
-const (
-	KeyUsageAllowDecrypt      = 0x00000001 // NcryptAllowDecryptFlag
-	KeyUsageAllowSigning      = 0x00000002 // NcryptAllowSigningFlag
-	KeyUsageAllowKeyAgreement = 0x00000004 // NcryptAllowKeyAgreementFlag
-	KeyUsageAllowAllUsages    = 0x00ffffff // NcryptAllowAllUsages
+	"github.com/google/go-tpm/legacy/tpm2"
 )
 
 func Initialize(customLogger goncrypt.Logger) (errRet error) {
@@ -60,13 +54,22 @@ type Signer interface {
 	Size() uint32
 
 	// KeyUsage returns the PCP key usage.
-	KeyUsage() uint32
+	KeyUsage() KeyUsage
 
 	// IsLocalMachine returns whether the key applies to the Local Machine or to the Current User.
 	IsLocalMachine() bool
 
 	// Path returns the path to the PCP key file on disk.
 	Path() string
+
+	// TPMTPublicKey returns the TPMT_PUBLIC from the PCP key file
+	TPMTPublicKey() *tpm2.Public
+
+	// TPM2BPrivateKey returns the TPM2B_PRIVATE from the PCP key file
+	TPM2BPrivateKey() []byte
+
+	// TPMLDigestPolicy returns the TPML_DIGEST from the PCP key file
+	TPMLDigestPolicy() *tpm2.TPMLDigest
 
 	// Delete deletes the PCP key.
 	Delete() error
@@ -84,9 +87,13 @@ type pcpPrivateKey struct {
 	name           string           // name is the PCP key name.
 	passwordDigest []byte           // passwordDigest is the PCP key password / pin digest (SHA-1 if UI compatible, SHA-256 otherwise)
 	pubKey         crypto.PublicKey // pubKey is the public part of the PCP key.
-	keyUsage       uint32           // keyUsage is the PCP key usage.
+	keyUsage       KeyUsage         // keyUsage is the PCP key usage.
 	isLocalMachine bool             // isLocalMachine determines whether the key applies to the Local Machine or to the Current User.
 	path           string           // path is the PCP key file path.
+
+	public       *tpm2.Public     // TPMT_PUBLIC
+	private      []byte           // TPM2B_PRIVATE
+	digestPolicy *tpm2.TPMLDigest // TPML_DIGEST
 }
 
 // Public is a required method of the crypto.Signer interface.
@@ -100,7 +107,7 @@ func (k pcpPrivateKey) Name() string {
 }
 
 // KeyUsage returns the PCP key usage.
-func (k pcpPrivateKey) KeyUsage() uint32 {
+func (k pcpPrivateKey) KeyUsage() KeyUsage {
 	return k.keyUsage
 }
 
@@ -112,6 +119,18 @@ func (k pcpPrivateKey) IsLocalMachine() bool {
 // Path returns the path to the PCP key file on disk.
 func (k pcpPrivateKey) Path() string {
 	return k.path
+}
+
+func (k pcpPrivateKey) TPMTPublicKey() *tpm2.Public {
+	return k.public
+}
+
+func (k pcpPrivateKey) TPM2BPrivateKey() []byte {
+	return k.private
+}
+
+func (k pcpPrivateKey) TPMLDigestPolicy() *tpm2.TPMLDigest {
+	return k.digestPolicy
 }
 
 // Delete deletes the PCP key.
@@ -136,11 +155,11 @@ func (k pcpPrivateKey) Delete() error {
 	if err != nil {
 		return err
 	}
-	defer key.Close()
 
 	// Try to delete the key
 	_, err = key.Delete(0)
 	if err != nil {
+		key.Close()
 		return err
 	}
 
@@ -166,6 +185,8 @@ func (k pcpPrivateKey) Delete() error {
 // transformed internally into its SHA-256 digest.
 // Therefore, if isUICompatible is set to true, we will store the SHA-1 of the password,
 // while we will store its SHA-256 if isUICompatible is set to false.
+// Note that, if the key was created with a password set via the Windows UI prompt,
+// isUICompatible should be set to true.
 //
 // If isLocalMachine is set to true, the search will look for keys that apply to the
 // Local Machine. Otherwise, it will look for keys that apply for the Current User.
@@ -208,6 +229,7 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 	}
 
 	// Get key's usage
+	var keyUsage KeyUsage
 	usageBytes, _, err := key.GetProperty(goncrypt.NcryptKeyUsageProperty, goncrypt.NcryptSilentFlag)
 	if err != nil {
 		return nil, err
@@ -216,6 +238,7 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 		return nil, fmt.Errorf("GetProperty() returned unexpected output: expected 4 bytes, got %v bytes", len(usageBytes))
 	}
 	usage := binary.LittleEndian.Uint32(usageBytes)
+	keyUsage.fromNcryptFlag(goncrypt.NcryptKeyUsagePropertyFlag(usage))
 
 	// Get the password digest.
 	if password != "" {
@@ -244,6 +267,10 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 	if err != nil {
 		return nil, err
 	}
+
+	// Parse the PCP file.
+	// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+	public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
 
 	// Read key's public part
 	var pubkeyBytes []byte
@@ -280,9 +307,12 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 				name:           name,
 				passwordDigest: passwordDigest,
 				pubKey:         publicKey,
-				keyUsage:       usage,
+				keyUsage:       keyUsage,
 				isLocalMachine: isLocalMachine,
 				path:           pcpPath,
+				public:         public,
+				private:        private,
+				digestPolicy:   digestPolicy,
 			},
 		}, nil
 	} else {
@@ -320,9 +350,12 @@ func FindKey(name string, password string, isUICompatible bool, isLocalMachine b
 				name:           name,
 				passwordDigest: passwordDigest,
 				pubKey:         publicKey,
-				keyUsage:       usage,
+				keyUsage:       keyUsage,
 				isLocalMachine: isLocalMachine,
 				path:           pcpPath,
+				public:         public,
+				private:        private,
+				digestPolicy:   digestPolicy,
 			},
 		}, nil
 	}
@@ -368,6 +401,7 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 		defer key.Close()
 
 		// Get key's usage
+		var keyUsage KeyUsage
 		usageBytes, _, err := key.GetProperty(goncrypt.NcryptKeyUsageProperty, goncrypt.NcryptSilentFlag)
 		if err != nil {
 			return nil, err
@@ -375,7 +409,8 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 		if len(usageBytes) != 4 {
 			return nil, fmt.Errorf("GetProperty() returned unexpected output: expected 4 bytes, got %v bytes", len(usageBytes))
 		}
-		keyUsage := binary.LittleEndian.Uint32(usageBytes)
+		usage := binary.LittleEndian.Uint32(usageBytes)
+		keyUsage.fromNcryptFlag(goncrypt.NcryptKeyUsagePropertyFlag(usage))
 
 		// Get the path to the PCP file.
 		pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
@@ -386,6 +421,10 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		// Parse the PCP file.
+		// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+		public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
 
 		// Read key's public part
 		if keyInfo.Alg == goncrypt.NcryptRsaAlgorithm {
@@ -424,6 +463,9 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 					keyUsage:       keyUsage,
 					isLocalMachine: isLocalMachine,
 					path:           pcpPath,
+					public:         public,
+					private:        private,
+					digestPolicy:   digestPolicy,
 				},
 			})
 		} else {
@@ -464,6 +506,9 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 					keyUsage:       keyUsage,
 					isLocalMachine: isLocalMachine,
 					path:           pcpPath,
+					public:         public,
+					private:        private,
+					digestPolicy:   digestPolicy,
 				},
 			})
 		}
@@ -477,7 +522,7 @@ func GetKeys(isLocalMachine bool) ([]Signer, error) {
 // The data is sealed using the TPM's SRK (Storage Root Key) and can only be
 // unsealed on the same machine, by any user.
 //
-// If a password is provided, is it used as an additional TPM Sealing Password
+// If a password is provided, it is used as an additional TPM Sealing Password
 // and the sealed data can only be unsealed if the same password is provided,
 // on the same machine, by any user.
 func SealDataWithTPM(dataToSeal []byte, password string) ([]byte, error) {

@@ -149,24 +149,30 @@ func (k *pcpECDSAPrivateKey) Sign(rand io.Reader, msg []byte, opts crypto.Signer
 // Local Machine. Otherwise, it will generate keys that apply for the Current User.
 //
 // The key usage can be set by combining the following flags using the OR operation :
-//   - KeyUsageAllowDecrypt
-//   - KeyUsageAllowSigning
-//   - KeyUsageAllowKeyAgreement
-//   - KeyUsageAllowAllUsages
+//   - AllowDecrypt
+//   - AllowSigning
+//   - AllowKeyAgreement
+//   - AllowAllUsages
 //
-// If keyUsage is set to 0 instead, the default key usage will be used, which is
+// If keyUsage is set to Default instead, the default key usage will be used, which is
 // SignOnly for ECDSA keys.
-//
-// TODO: Support UI Policies.
-func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocalMachine bool, curve elliptic.Curve, keyUsage uint32, overwrite bool) (Signer, error) {
+func GenerateECDSAKey(
+	name string,
+	password string,
+	isUICompatible bool,
+	isLocalMachine bool,
+	curve elliptic.Curve,
+	keyUsage KeyUsage,
+	overwrite bool,
+) (Signer, error) {
 	var creationFlags goncrypt.NcryptFlag
 	var flags goncrypt.NcryptFlag
 
 	// Check that keyUsage contains a valid combination
-	if keyUsage != 0 &&
+	if keyUsage != KeyUsageDefault &&
 		keyUsage != KeyUsageAllowAllUsages &&
-		(keyUsage & ^(uint32(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement))) != 0 {
-		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage)
+		(keyUsage & ^(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement)) != 0 {
+		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage.Value())
 	}
 
 	// Get a handle to the PCP KSP
@@ -234,7 +240,7 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 	var keyUsageBytes []byte
 	if keyUsage != 0 {
 		keyUsageBytes = make([]byte, 4)
-		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage)
+		binary.LittleEndian.PutUint32(keyUsageBytes, keyUsage.Value())
 	}
 
 	// Set the properties.
@@ -272,6 +278,10 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 		return nil, err
 	}
 
+	// Parse the PCP file.
+	// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+	public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
+
 	// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
 	var keyByteSize int
 	var keyCurve elliptic.Curve
@@ -305,6 +315,185 @@ func GenerateECDSAKey(name string, password string, isUICompatible bool, isLocal
 			keyUsage:       keyUsage,
 			isLocalMachine: isLocalMachine,
 			path:           pcpPath,
+			public:         public,
+			private:        private,
+			digestPolicy:   digestPolicy,
+		},
+	}, nil
+}
+
+// GenerateECKeyWithUIPolicy is a variant of GenerateECKey that allows to specify
+// the key's UI policy instead of the key's password.
+func GenerateECKeyWithUIPolicy(
+	name string,
+	uiPolicy UIPolicy,
+	isLocalMachine bool,
+	curve elliptic.Curve,
+	keyUsage KeyUsage,
+	overwrite bool,
+) (Signer, error) {
+	var creationFlags goncrypt.NcryptFlag
+	var flags goncrypt.NcryptFlag
+	var ncryptUiPolicy goncrypt.NcryptUiPolicy
+
+	// Check that keyUsage contains a valid combination
+	if keyUsage != KeyUsageDefault &&
+		keyUsage != KeyUsageAllowAllUsages &&
+		(keyUsage & ^(KeyUsageAllowDecrypt|KeyUsageAllowSigning|KeyUsageAllowKeyAgreement)) != 0 {
+		return nil, fmt.Errorf("keyUsage parameter contains an unexpected combination of flags (%x)", keyUsage.Value())
+	}
+
+	// Check that uiPolicy is valid
+	if uiPolicy != UIPolicyNoConsent &&
+		uiPolicy != UIPolicyConsentWithOptionalPIN &&
+		uiPolicy != UIPolicyConsentWithMandatoryPIN &&
+		uiPolicy != UIPolicyConsentWithMandatoryFingerprint {
+		return nil, fmt.Errorf("uiPolicy parameter contains an unexpected value (%x)", uiPolicy.Value())
+	}
+
+	// Setup the Ncrypt UI Policy
+	ncryptUiPolicy.Version = 1
+	ncryptUiPolicy.FriendlyName = name
+	if uiPolicy == UIPolicyConsentWithOptionalPIN {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiProtectKeyFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and an optional PIN."
+	} else if uiPolicy == UIPolicyConsentWithMandatoryPIN {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiForceHighProtectionFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and a mandatory PIN."
+	} else if uiPolicy == UIPolicyConsentWithMandatoryFingerprint {
+		ncryptUiPolicy.Flags = goncrypt.NcryptUiFingerprintProtectionFlag
+		ncryptUiPolicy.Description = "This key requires usage consent and a mandatory Fingerprint."
+	}
+	uiPolicyBytes, err := ncryptUiPolicy.Serialize()
+	if err != nil {
+		return nil, fmt.Errorf("ncryptUiPolicy.Serialize() failed: %v", err)
+	}
+
+	// Get a handle to the PCP KSP
+	provider, _, err := goncrypt.OpenProvider(goncrypt.MsPlatformKeyStorageProvider, 0)
+	if err != nil {
+		return nil, err
+	}
+	defer provider.Close()
+
+	// Set the creation flags
+	if overwrite {
+		creationFlags |= goncrypt.NcryptOverwriteKeyFlag
+	}
+	if isLocalMachine {
+		creationFlags |= goncrypt.NcryptMachineKeyFlag
+	}
+
+	// Check the specified curve
+	var curveName goncrypt.NcryptAlgorithm
+	switch curve {
+	case elliptic.P256():
+		curveName = goncrypt.NcryptEcdsaP256Algorithm
+	case elliptic.P384():
+		curveName = goncrypt.NcryptEcdsaP384Algorithm
+	case elliptic.P521():
+		curveName = goncrypt.NcryptEcdsaP521Algorithm
+	default:
+		return nil, fmt.Errorf("unsupported curve")
+	}
+
+	// If name is empty, generate a unique random one
+	if name == "" {
+		uuidName, err := uuid.NewRandom()
+		if err != nil {
+			return nil, fmt.Errorf("uuid.NewRandom() failed: %v", err)
+		}
+		name = uuidName.String()
+	}
+
+	// Set the key usage.
+	var keyUsageBytes []byte
+	if keyUsage != KeyUsageDefault {
+		keyUsageBytes = make([]byte, 4)
+		binary.LittleEndian.PutUint32(keyUsageBytes, uint32(keyUsage))
+	}
+
+	// Set the properties.
+	properties := map[goncrypt.NcryptProperty][]byte{
+		goncrypt.NcryptUiPolicyProperty: uiPolicyBytes,
+	}
+	if keyUsageBytes != nil {
+		properties[goncrypt.NcryptKeyUsageProperty] = keyUsageBytes
+	}
+
+	// Create the key.
+	key, _, err := provider.CreatePersistedKey(curveName, name, 0, properties, creationFlags, flags, flags)
+	if err != nil {
+		return nil, err
+	}
+	defer key.Close()
+
+	// Read key's public part
+	pubkeyBytes, _, err := key.Export(goncrypt.Key{}, goncrypt.NcryptEccPublicBlob, nil, flags)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Get the path to the PCP file.
+	pcpPathBytes, _, err := key.GetProperty(goncrypt.NcryptUniqueNameProperty, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+	pcpPath, err := utf16BytesToString(pcpPathBytes)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Get the usage auth.
+	pcpUsageAuthBytes, _, err := key.GetProperty(goncrypt.NcryptPcpUsageauthProperty, goncrypt.NcryptSilentFlag)
+	if err != nil {
+		key.Delete(flags)
+		return nil, err
+	}
+
+	// Parse the PCP file.
+	// TODO: Here we are silently ignoring the error returned by ParsePCPKeyFile. Change this.
+	public, private, digestPolicy, _, _, _ := ParsePCPKeyFile(pcpPath)
+
+	// Construct ecdsa.PublicKey from BCRYPT_ECCPUBLIC_BLOB
+	var keyByteSize int
+	var keyCurve elliptic.Curve
+	magic := binary.LittleEndian.Uint32(pubkeyBytes[0:4])
+	if magic == uint32(goncrypt.BcryptEcdsaPublicP256Magic) {
+		keyByteSize = 32
+		keyCurve = elliptic.P256()
+	} else if magic == uint32(goncrypt.BcryptEcdsaPublicP384Magic) {
+		keyByteSize = 48
+		keyCurve = elliptic.P384()
+	} else if magic == uint32(goncrypt.BcryptEcdsaPublicP521Magic) {
+		keyByteSize = 66
+		keyCurve = elliptic.P521()
+	} else {
+		return nil, fmt.Errorf("unexpected ECC magic number %.8X", magic)
+	}
+	xBytes := pubkeyBytes[8 : 8+keyByteSize]
+	yBytes := pubkeyBytes[8+keyByteSize : 8+keyByteSize+keyByteSize]
+	xInt := big.NewInt(0)
+	xInt.SetBytes(xBytes)
+	yInt := big.NewInt(0)
+	yInt.SetBytes(yBytes)
+	publicKey := &ecdsa.PublicKey{Curve: keyCurve, X: xInt, Y: yInt}
+
+	// Return *pcpECDSAPrivateKey instance
+	return &pcpECDSAPrivateKey{
+		pcpPrivateKey{
+			name:           name,
+			passwordDigest: pcpUsageAuthBytes,
+			pubKey:         publicKey,
+			keyUsage:       keyUsage,
+			isLocalMachine: isLocalMachine,
+			path:           pcpPath,
+			public:         public,
+			private:        private,
+			digestPolicy:   digestPolicy,
 		},
 	}, nil
 }

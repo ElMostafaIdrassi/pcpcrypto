@@ -76,7 +76,7 @@ func TestRSASignPKCSWithPass(t *testing.T) {
 			}
 			for testHashName, testHash := range testHashes {
 				t.Run(fmt.Sprintf("%d-%s-%s", testKeyLength, testCase, testHashName), func(t *testing.T) {
-					key, _ := GenerateRSAKey("", "password123", testIsUiCompatible, false, testKeyLength, 0, true)
+					key, _ := GenerateRSAKey("", "password123", testIsUiCompatible, false, testKeyLength, KeyUsageDefault, true)
 					defer key.Delete()
 					testRSASignDigestPKCS1v15(t, key, testHash)
 				})
@@ -88,9 +88,9 @@ func TestRSASignPKCSWithPass(t *testing.T) {
 func TestRSASignPSSWithPass(t *testing.T) {
 
 	// At the time of writing, we have the following :
-	// 1 / Setting salt length in padding info always fails, whatever its value is.
+	// 1 / Signing with a salt length that is different from the salt length supported by the TPM chip fails.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
-	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//	   the PCP KSP disregards the salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
 	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
 	testKeyLengths := []uint32{1024, 2048}
@@ -117,7 +117,7 @@ func TestRSASignPSSWithPass(t *testing.T) {
 			for testHashName, testHash := range testHashes {
 				for testSaltLengthName, testSaltLength := range testSaltLengths {
 					t.Run(fmt.Sprintf("%d-%s-%s-%s", testKeyLength, testCase, testHashName, testSaltLengthName), func(t *testing.T) {
-						key, _ := GenerateRSAKey("", "password123", testIsUiCompatible, false, testKeyLength, 0, true)
+						key, _ := GenerateRSAKey("", "password123", testIsUiCompatible, false, testKeyLength, KeyUsageDefault, true)
 						defer key.Delete()
 						testRSASignDigestPSS(t, key, testHash, testSaltLength)
 					})
@@ -140,7 +140,7 @@ func TestRSASignPKCSWithoutPass(t *testing.T) {
 	for _, testKeyLength := range testKeyLengths {
 		for testHashName, testHash := range testHashes {
 			t.Run(fmt.Sprintf("%d-%s", testKeyLength, testHashName), func(t *testing.T) {
-				key, _ := GenerateRSAKey("", "", false, false, testKeyLength, 0, true)
+				key, _ := GenerateRSAKey("", "", false, false, testKeyLength, KeyUsageDefault, true)
 				defer key.Delete()
 				testRSASignDigestPKCS1v15(t, key, testHash)
 			})
@@ -151,9 +151,9 @@ func TestRSASignPKCSWithoutPass(t *testing.T) {
 func TestRSASignPSSWithoutPass(t *testing.T) {
 
 	// At the time of writing, we have the following :
-	// 1 / Setting salt length in padding info always fails, whatever its value is.
+	// 1 / Signing with a salt length that is different from the salt length supported by the TPM chip fails.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
-	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//	   the PCP KSP disregards the salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
 	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
 	testKeyLengths := []uint32{1024, 2048}
@@ -172,7 +172,7 @@ func TestRSASignPSSWithoutPass(t *testing.T) {
 		for testHashName, testHash := range testHashes {
 			for testSaltLengthName, testSaltLength := range testSaltLengths {
 				t.Run(fmt.Sprintf("%d-%s-%s", testKeyLength, testHashName, testSaltLengthName), func(t *testing.T) {
-					key, _ := GenerateRSAKey("", "", false, false, testKeyLength, 0, true)
+					key, _ := GenerateRSAKey("", "", false, false, testKeyLength, KeyUsageDefault, true)
 					defer key.Delete()
 					testRSASignDigestPSS(t, key, testHash, testSaltLength)
 				})
@@ -197,7 +197,7 @@ func TestRSASignPKCSWithPassPrompt(t *testing.T) {
 	for _, testKeyLength := range testKeyLengths {
 		for testHashName, testHash := range testHashes {
 			t.Run(fmt.Sprintf("%d-%s", testKeyLength, testHashName), func(t *testing.T) {
-				key, _ := GenerateRSAKey("", "password123", true, false, testKeyLength, 0, true)
+				key, _ := GenerateRSAKey("", "password123", true, false, testKeyLength, KeyUsageDefault, true)
 				defer key.Delete()
 				foundKey, _ := FindKey(key.Name(), "", true, false)
 				testRSASignDigestPKCS1v15(t, foundKey, testHash)
@@ -213,9 +213,9 @@ func TestRSASignPKCSWithPassPrompt(t *testing.T) {
 func TestRSASignPSSWithPassPrompt(t *testing.T) {
 
 	// At the time of writing, we have the following :
-	// 1 / Setting salt length in padding info always fails, whatever its value is.
+	// 1 / Signing with a salt length that is different from the salt length supported by the TPM chip fails.
 	// 2 / As a result, setting NCRYPT_TPM_PAD_PSS_IGNORE_SALT when signing is needed, which means
-	//	   the PCP KSP disregards any salt length passed in the padding info and always makes use of
+	//	   the PCP KSP disregards the salt length passed in the padding info and always makes use of
 	//     the TPM's chip default salt length.
 	// 3/ Signing SHA-384/512 digests with RSA-PSS always fails with NTE_NOT_SUPPORTED.
 	testKeyLengths := []uint32{1024, 2048}
@@ -234,7 +234,7 @@ func TestRSASignPSSWithPassPrompt(t *testing.T) {
 		for testHashName, testHash := range testHashes {
 			for testSaltLengthName, testSaltLength := range testSaltLengths {
 				t.Run(fmt.Sprintf("%d-%s-%s", testKeyLength, testHashName, testSaltLengthName), func(t *testing.T) {
-					key, _ := GenerateRSAKey("", "password123", true, false, testKeyLength, 0, true)
+					key, _ := GenerateRSAKey("", "password123", true, false, testKeyLength, KeyUsageDefault, true)
 					defer key.Delete()
 					foundKey, _ := FindKey(key.Name(), "", true, false)
 					testRSASignDigestPSS(t, foundKey, testHash, testSaltLength)
@@ -248,7 +248,7 @@ func TestRSASignPSSWithPassPrompt(t *testing.T) {
 func testRSAGenerateAndFindKey(t *testing.T, name string, password string, isUICompatible bool, length uint32, toBeDeleted bool) {
 
 	// Generate key
-	key, err := GenerateRSAKey(name, password, isUICompatible, false, length, 0, true)
+	key, err := GenerateRSAKey(name, password, isUICompatible, false, length, KeyUsageDefault, true)
 	require.NoError(t, err)
 	require.NotNil(t, key)
 	if toBeDeleted {
@@ -287,6 +287,7 @@ func testRSASignDigestPSS(t *testing.T, key crypto.Signer, hash crypto.Hash, sal
 
 	// Verify
 	rsaPubkey := key.Public().(*rsa.PublicKey)
+	pssOptions.SaltLength = rsa.PSSSaltLengthAuto
 	err = rsa.VerifyPSS(rsaPubkey, hash, digest, sig, pssOptions)
 	require.NoError(t, err)
 }
