@@ -322,9 +322,9 @@ func GenerateECDSAKey(
 	}, nil
 }
 
-// GenerateECKeyWithUIPolicy is a variant of GenerateECKey that allows to specify
+// GenerateECDSAKeyWithUIPolicy is a variant of GenerateECDSAKey that allows to specify
 // the key's UI policy instead of the key's password.
-func GenerateECKeyWithUIPolicy(
+func GenerateECDSAKeyKeyWithUIPolicy(
 	name string,
 	uiPolicy UIPolicy,
 	isLocalMachine bool,
